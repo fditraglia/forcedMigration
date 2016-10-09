@@ -59,7 +59,7 @@ double get_low_eq(double r, double V, double P, double s_h, double mu_h,
                   double tau_ell, double s_c, double mu_c, double tau_n,
                   double delta, double frac_n){
   const int max_iter = 500;
-  const double tol = 0.001;
+  const double tol = 0.0001;
   int i = 0;
   double x = 0.0;
   double f = Dstar(x, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n);
