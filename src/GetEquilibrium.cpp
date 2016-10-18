@@ -55,7 +55,7 @@ double get_Dstar(double D_e, double r, double V, double P, double s_h, double mu
 }
 
 // [[Rcpp::export]]
-double get_low_eq(double r, double V, double P, double s_h, double mu_h,
+double get_migration_eq(double r, double V, double P, double s_h, double mu_h,
                   double tau_ell, double s_c, double mu_c, double tau_n,
                   double delta, double frac_n){
   const int max_iter = 500;
