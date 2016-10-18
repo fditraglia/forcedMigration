@@ -28,8 +28,8 @@ class MigrationIntegrand: public Func
     {
       const double Q = V / (P * (1 - D_e));
       double F_c = R::plnorm(tau_ell * Q - r * h, mu_c, s_c, 1, 0);
-      double f_c = R::dlnorm(h, mu_h, s_h, 0);
-      return F_c * f_c;
+      double f_h = R::dlnorm(h, mu_h, s_h, 0);
+      return F_c * f_h;
     }
 };
 
@@ -97,8 +97,8 @@ class ViolenceIntegrand: public Func
     {
       const double Q = V / (P * (1 - Dstar));
       double F_c = R::plnorm(tau_ell * Q - r * h, mu_c, s_c, 1, 0);
-      double f_c = R::dlnorm(h, mu_h, s_h, 0);
-      return h * F_c * f_c;
+      double f_h = R::dlnorm(h, mu_h, s_h, 0);
+      return h * F_c * f_h;
     }
 };
 
