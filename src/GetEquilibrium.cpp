@@ -3,7 +3,7 @@
 #include <RcppNumerical.h>
 using namespace Numer;
 
-class LognormalIntegrand: public Func
+class MigrationIntegrand: public Func
 {
   private:
     double D_e;
@@ -16,7 +16,7 @@ class LognormalIntegrand: public Func
     double s_c;
     double mu_c;
   public:
-    LognormalIntegrand(double D_e_, double r_, double V_, double P_,
+    MigrationIntegrand(double D_e_, double r_, double V_, double P_,
                        double s_h_, double mu_h_, double tau_ell_,
                        double s_c_, double mu_c_) : D_e(D_e_),  r(r_), V(V_),
                                                     P(P_),  s_h(s_h_),
@@ -34,12 +34,12 @@ class LognormalIntegrand: public Func
 };
 
 // [[Rcpp::export]]
-double Dstar(double D_e, double r, double V, double P, double s_h, double mu_h,
+double get_Dstar(double D_e, double r, double V, double P, double s_h, double mu_h,
              double tau_ell, double s_c, double mu_c, double tau_n,
              double delta, double frac_n)
 {
   // Landholding families
-  LognormalIntegrand g(D_e, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c);
+  MigrationIntegrand g(D_e, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c);
   double err_est;
   int err_code;
   double upper = tau_ell * (V / (P * (1 - D_e))) / r;
@@ -62,10 +62,10 @@ double get_low_eq(double r, double V, double P, double s_h, double mu_h,
   const double tol = 0.0001;
   int i = 0;
   double x = 0.0;
-  double f = Dstar(x, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n);
+  double f = get_Dstar(x, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n);
   while((i < max_iter) & (std::abs(f - x) > tol)){
     x = f;
-    f = Dstar(x, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n);
+    f = get_Dstar(x, r, V, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n);
     i++;
   }
   return(x);
