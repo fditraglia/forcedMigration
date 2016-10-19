@@ -9,7 +9,7 @@ get_migration_eq <- function(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delt
     .Call('forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n)
 }
 
-get_surplus <- function(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n, gamma, V_cost) {
-    .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n, gamma, V_cost)
+get_surplus <- function(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n, gamma, alpha, beta, zeta) {
+    .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, tau_n, delta, frac_n, gamma, alpha, beta, zeta)
 }
 
