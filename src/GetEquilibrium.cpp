@@ -45,7 +45,8 @@ class MigrationIntegrand: public Func
 // [[Rcpp::export]]
 double get_Dstar(double D_e, double V, double r, double P, double s_h,
                  double mu_h, double tau_ell, double s_c, double mu_c,
-                 double rho, double tau_n, double delta, double frac_n)
+                 double mu_c_given_h0, double rho, double tau_n, double delta,
+                 double frac_n)
 {
   // Landholding families
   MigrationIntegrand g(D_e, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, rho);
@@ -57,7 +58,8 @@ double get_Dstar(double D_e, double V, double r, double P, double s_h,
 
   // Landless Families
   const double Q = V / (P * (1 - D_e));
-  const double D_n = (1 - delta) * R::plnorm(tau_n * Q, mu_c, s_c, 1, 0);
+  const double D_n = (1 - delta) * R::plnorm(tau_n * Q, mu_c_given_h0,
+                      s_c * sqrt(1 - rho * rho), 1, 0);
 
   return frac_n * D_n + (1 - frac_n) * D_ell;
 }
@@ -65,18 +67,20 @@ double get_Dstar(double D_e, double V, double r, double P, double s_h,
 
 // [[Rcpp::export]]
 double get_migration_eq(double V, double r, double P, double s_h, double mu_h,
-                        double tau_ell, double s_c, double mu_c, double rho,
-                        double tau_n, double delta, double frac_n)
+                        double tau_ell, double s_c, double mu_c,
+                        double mu_c_given_h0, double rho, double tau_n,
+                        double delta, double frac_n)
 {
   const int max_iter = 500;
   const double tol = 0.0001;
   int i = 0;
   double x = 0.0;
-  double f = get_Dstar(x, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, rho, tau_n,
-                       delta, frac_n);
+  double f = get_Dstar(x, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, mu_c_given_h0,
+                       rho, tau_n, delta, frac_n);
   while((i < max_iter) & (std::abs(f - x) > tol)){
     x = f;
-    f = get_Dstar(x, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, rho, tau_n, delta, frac_n);
+    f = get_Dstar(x, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, mu_c_given_h0, rho,
+                  tau_n, delta, frac_n);
     i++;
   }
   return(x);
@@ -120,12 +124,12 @@ class ViolenceIntegrand: public Func
 
 // [[Rcpp::export]]
 double get_surplus(double V, double r, double P, double s_h, double mu_h,
-                   double tau_ell, double s_c, double mu_c, double rho,
-                   double tau_n, double delta, double frac_n, double gamma,
-                   double alpha, double beta)
+                   double tau_ell, double s_c, double mu_c, double mu_c_given_h0,
+                   double rho, double tau_n, double delta, double frac_n,
+                   double gamma, double alpha, double beta)
 {
-  double Dstar = get_migration_eq(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, rho,
-                                  tau_n, delta, frac_n);
+  double Dstar = get_migration_eq(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c,
+                                  mu_c_given_h0, rho, tau_n, delta, frac_n);
   ViolenceIntegrand g(Dstar, V, r, P, s_h, mu_h, tau_ell, s_c, mu_c, rho);
   double err_est;
   int err_code;
