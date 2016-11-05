@@ -126,7 +126,7 @@ class ViolenceIntegrand: public Func
 double get_surplus(double V, double r, double P, double s_h, double mu_h,
                    double tau_ell, double s_c, double mu_c, double mu_c_given_h0,
                    double rho, double tau_n, double delta, double frac_n,
-                   double gamma, double alpha, double beta)
+                   double gamma, double beta)
 {
   double Dstar = get_migration_eq(V, r, P, s_h, mu_h, tau_ell, s_c, mu_c,
                                   mu_c_given_h0, rho, tau_n, delta, frac_n);
@@ -135,6 +135,6 @@ double get_surplus(double V, double r, double P, double s_h, double mu_h,
   int err_code;
   double upper = tau_ell * (V / (P * (1 - Dstar))) / r;
   const double res = integrate(g, 0.0, upper, err_est, err_code);
-  double Xstar = (1 - delta) * res;
-  return Xstar - gamma * Dstar - 0.5 * alpha * pow(V, 2.0) + beta;
+  double Xstar = (1 - delta) * (1 - frac_n) * res;
+  return Xstar - gamma * Dstar - beta;
 }
