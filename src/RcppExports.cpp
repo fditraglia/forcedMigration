@@ -7,74 +7,71 @@
 using namespace Rcpp;
 
 // get_Dstar
-double get_Dstar(double D_e, double V, double Gamma, double tau_ell, double tau_n, double r, double u_bar, double a0, double a1, double p, double q, double H, double delta, double omega_n);
-RcppExport SEXP forcedMigration_get_Dstar(SEXP D_eSEXP, SEXP VSEXP, SEXP GammaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP u_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP deltaSEXP, SEXP omega_nSEXP) {
+double get_Dstar(double D_e, double V, double delta, double tau_ell, double tau_n, double r, double C_bar, double a0, double a1, double p, double q, double H, double omega_n);
+RcppExport SEXP forcedMigration_get_Dstar(SEXP D_eSEXP, SEXP VSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP C_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP omega_nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< double >::type D_e(D_eSEXP);
     Rcpp::traits::input_parameter< double >::type V(VSEXP);
-    Rcpp::traits::input_parameter< double >::type Gamma(GammaSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
     Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
     Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type u_bar(u_barSEXP);
+    Rcpp::traits::input_parameter< double >::type C_bar(C_barSEXP);
     Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
     Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< double >::type H(HSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    __result = Rcpp::wrap(get_Dstar(D_e, V, Gamma, tau_ell, tau_n, r, u_bar, a0, a1, p, q, H, delta, omega_n));
+    __result = Rcpp::wrap(get_Dstar(D_e, V, delta, tau_ell, tau_n, r, C_bar, a0, a1, p, q, H, omega_n));
     return __result;
 END_RCPP
 }
 // get_migration_eq
-double get_migration_eq(double V, double Gamma, double tau_ell, double tau_n, double r, double u_bar, double a0, double a1, double p, double q, double H, double delta, double omega_n);
-RcppExport SEXP forcedMigration_get_migration_eq(SEXP VSEXP, SEXP GammaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP u_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP deltaSEXP, SEXP omega_nSEXP) {
+double get_migration_eq(double V, double delta, double tau_ell, double tau_n, double r, double C_bar, double a0, double a1, double p, double q, double H, double omega_n);
+RcppExport SEXP forcedMigration_get_migration_eq(SEXP VSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP C_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP omega_nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< double >::type V(VSEXP);
-    Rcpp::traits::input_parameter< double >::type Gamma(GammaSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
     Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
     Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type u_bar(u_barSEXP);
+    Rcpp::traits::input_parameter< double >::type C_bar(C_barSEXP);
     Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
     Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< double >::type H(HSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    __result = Rcpp::wrap(get_migration_eq(V, Gamma, tau_ell, tau_n, r, u_bar, a0, a1, p, q, H, delta, omega_n));
+    __result = Rcpp::wrap(get_migration_eq(V, delta, tau_ell, tau_n, r, C_bar, a0, a1, p, q, H, omega_n));
     return __result;
 END_RCPP
 }
 // get_surplus
-double get_surplus(double V, double Gamma, double tau_ell, double tau_n, double r, double u_bar, double a0, double a1, double p, double q, double H, double delta, double omega_n, double gamma, double beta);
-RcppExport SEXP forcedMigration_get_surplus(SEXP VSEXP, SEXP GammaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP u_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP deltaSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP betaSEXP) {
+double get_surplus(double V, double delta, double tau_ell, double tau_n, double r, double C_bar, double a0, double a1, double p, double q, double H, double omega_n, double gamma, double beta);
+RcppExport SEXP forcedMigration_get_surplus(SEXP VSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP C_barSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP HSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< double >::type V(VSEXP);
-    Rcpp::traits::input_parameter< double >::type Gamma(GammaSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
     Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
     Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type u_bar(u_barSEXP);
+    Rcpp::traits::input_parameter< double >::type C_bar(C_barSEXP);
     Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
     Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< double >::type H(HSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
-    __result = Rcpp::wrap(get_surplus(V, Gamma, tau_ell, tau_n, r, u_bar, a0, a1, p, q, H, delta, omega_n, gamma, beta));
+    __result = Rcpp::wrap(get_surplus(V, delta, tau_ell, tau_n, r, C_bar, a0, a1, p, q, H, omega_n, gamma, beta));
     return __result;
 END_RCPP
 }
