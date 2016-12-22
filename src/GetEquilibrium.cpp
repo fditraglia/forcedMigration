@@ -28,7 +28,7 @@ class MigrationIntegrand: public Func
     double operator()(const double& h) const
     {
       double Q = get_Q(V, D_e, delta);
-      double upper = (exp(tau_ell * Q - r * h) - 1) * C_bar;
+      double upper = (exp(tau_ell * Q - r * h) - 1) / C_bar;
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
       double log_f_h = R::dbeta(h / H, p, q, 1) - log(H);
       return exp(log_F_c_given_h + log_f_h);
@@ -50,7 +50,7 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
   const double D_ell = integrate(g, 0.0, landed_upper, err_est, err_code);
 
   // Landless Families
-  const double landless_upper = (exp(tau_n * Q) - 1) * C_bar;
+  const double landless_upper = (exp(tau_n * Q) - 1) / C_bar;
   const double D_n =  R::pbeta(landless_upper, a0, 1, 1, 0);
   return omega_n * D_n + (1 - omega_n) * D_ell;
 }
@@ -95,7 +95,7 @@ class ExpropriationIntegrand: public Func
     double operator()(const double& h) const
     {
       double Q = get_Q(V, D_e, delta);
-      double upper = (exp(tau_ell * Q - r * h) - 1) * C_bar;
+      double upper = (exp(tau_ell * Q - r * h) - 1) / C_bar;
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
       double log_f_h = R::dbeta(h / H, p, q, 1) - log(H);
       return exp(log(h) + log_F_c_given_h + log_f_h);
