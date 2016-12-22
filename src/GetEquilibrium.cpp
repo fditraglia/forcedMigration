@@ -30,8 +30,7 @@ class MigrationIntegrand: public Func
       double Q = get_Q(V, D_e, delta);
       double upper = (exp(tau_ell * Q - r * h) - 1) * C_bar;
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
-      double log_f_h = (p - 1) * log(h) + (q - 1) * log(H - h) -
-        R::lbeta(p, q) - (p + q - 1) * log(H);
+      double log_f_h = R::dbeta(h / H, p, q, 1) - log(H);
       return exp(log_F_c_given_h + log_f_h);
     }
 };
@@ -98,8 +97,7 @@ class ExpropriationIntegrand: public Func
       double Q = get_Q(V, D_e, delta);
       double upper = (exp(tau_ell * Q - r * h) - 1) * C_bar;
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
-      double log_f_h = (p - 1) * log(h) + (q - 1) * log(H - h) -
-        R::lbeta(p, q) - (p + q - 1) * log(H);
+      double log_f_h = R::dbeta(h / H, p, q, 1) - log(H);
       return exp(log(h) + log_F_c_given_h + log_f_h);
     }
 };
