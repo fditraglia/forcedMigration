@@ -16,25 +16,25 @@ double get_Q(double V, double D_e, double delta){
 class MigrationIntegrand: public Func
 {
   private:
-    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar;
+    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu;
   public:
     MigrationIntegrand(double D_e_, double V_,
                        double delta_, double tau_ell_,
                        double r_,
                        double a0_, double a1_,
-                       double p_, double q_, double H_bar_): D_e(D_e_), V(V_),
-                                                             delta(delta_),
-                                                             tau_ell(tau_ell_),
-                                                             r(r_), a0(a0_),
-                                                             a1(a1_), p(p_),
-                                                             q(q_),
-                                                             H_bar(H_bar_) {}
+                       double p_, double q_,
+                       double H_bar_, double mu_): D_e(D_e_), V(V_),
+                                                   delta(delta_),
+                                                   tau_ell(tau_ell_), r(r_),
+                                                   a0(a0_), a1(a1_),
+                                                   p(p_), q(q_),
+                                                   H_bar(H_bar_), mu(mu_) {}
 
     double operator()(const double& h) const
     {
       double Q = get_Q(V, D_e, delta);
-      double upper = (exp(tau_ell * Q - r * h) - 1);
-      double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
+      double upper = (exp(tau_ell * Q - r * h / mu) - 1);
+      double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
       return exp(log_F_c_given_h + log_f_h);
     }
@@ -44,14 +44,14 @@ class MigrationIntegrand: public Func
 // [[Rcpp::export]]
 double get_Dstar(double D_e, double V, double delta, double tau_ell,
                  double tau_n, double r, double a0, double a1,
-                 double p, double q, double H_bar, double omega_n)
+                 double p, double q, double H_bar, double mu, double omega_n)
 {
   // Landholding families
-  MigrationIntegrand g(D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar);
+  MigrationIntegrand g(D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu);
   double err_est;
   int err_code;
   const double Q = get_Q(V, D_e, delta);
-  const double landed_upper = tau_ell * Q / r;
+  const double landed_upper = mu * tau_ell * Q / r;
   const double D_ell = integrate(g, 0.0, landed_upper, err_est, err_code);
 
   // Landless Families
@@ -64,7 +64,7 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
 // [[Rcpp::export]]
 double get_migration_eq(double V, double delta, double tau_ell,
                         double tau_n, double r, double a0,
-                        double a1, double p, double q, double H_bar,
+                        double a1, double p, double q, double H_bar, double mu,
                         double omega_n)
 {
   const int max_iter = 500;
@@ -72,10 +72,11 @@ double get_migration_eq(double V, double delta, double tau_ell,
   int i = 0;
   double x = 0.0;
   double f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-                       omega_n);
+                       mu, omega_n);
   while((i < max_iter) & (std::abs(f - x) > tol)){
     x = f;
-    f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
+    f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+                  mu, omega_n);
     i++;
   }
   return(x);
@@ -84,24 +85,24 @@ double get_migration_eq(double V, double delta, double tau_ell,
 class ExpropriationIntegrand: public Func
 {
   private:
-    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar;
+    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu;
   public:
     ExpropriationIntegrand(double D_e_, double V_,
                            double delta_, double tau_ell_,
                            double r_,
                            double a0_, double a1_,
-                           double p_, double q_, double H_bar_): D_e(D_e_), V(V_),
-                                                                delta(delta_),
-                                                                tau_ell(tau_ell_),
-                                                                r(r_), a0(a0_),
-                                                                a1(a1_), p(p_),
-                                                                q(q_),
-                                                                H_bar(H_bar_) {}
+                           double p_, double q_,
+                           double H_bar_, double mu_): D_e(D_e_), V(V_),
+                                                       delta(delta_),
+                                                       tau_ell(tau_ell_),
+                                                       r(r_), a0(a0_), a1(a1_),
+                                                       p(p_), q(q_),
+                                                       H_bar(H_bar_), mu(mu_) {}
     double operator()(const double& h) const
     {
       double Q = get_Q(V, D_e, delta);
-      double upper = (exp(tau_ell * Q - r * h) - 1);
-      double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h, 1, 1, 1);
+      double upper = (exp(tau_ell * Q - r * h / mu) - 1);
+      double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
       return exp(log(h) + log_F_c_given_h + log_f_h);
     }
@@ -110,16 +111,16 @@ class ExpropriationIntegrand: public Func
 // [[Rcpp::export]]
 double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double r, double a0, double a1, double p, double q,
-                   double H_bar, double omega_n, double gamma, double beta,
-                   double alpha)
+                   double H_bar, double mu, double omega_n, double gamma,
+                   double beta, double alpha)
 {
   double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, a0,
-                        a1, p, q, H_bar, omega_n);
-  ExpropriationIntegrand g(Dstar, V, delta, tau_ell, r, a0, a1, p, q, H_bar);
+                        a1, p, q, H_bar, mu, omega_n);
+  ExpropriationIntegrand g(Dstar, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu);
   double err_est;
   int err_code;
   const double Q = get_Q(V, Dstar, delta);
-  const double upper = tau_ell * Q / r;
+  const double upper = mu * tau_ell * Q / r;
   const double res = integrate(g, 0.0, upper, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
   return Xstar - gamma * Dstar - beta - alpha * 0.5 * pow(V, 2.0);
