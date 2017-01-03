@@ -6,7 +6,11 @@ using namespace Numer;
 
 double get_Q(double V, double D_e, double delta){
   const double V_tilde = V / (1 - D_e);
-  return((delta / (1 - delta)) * (1 / (delta + (1 - delta) * exp(-V_tilde)) - 1));
+  if(fabs(1.0 - delta) > 0.00001){
+    return((delta / (1 - delta)) * (1 / (delta + (1 - delta) * exp(-V_tilde)) - 1));
+  }else{
+    return(1 - exp(-V_tilde));
+  }
 }
 
 class MigrationIntegrand: public Func
