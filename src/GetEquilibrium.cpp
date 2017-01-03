@@ -123,5 +123,5 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
   const double upper = mu * tau_ell * Q / r;
   const double res = integrate(g, 0.0, upper, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
-  return Xstar - gamma * Dstar - beta - alpha * 0.5 * pow(V, 2.0);
+  return Xstar - gamma * Dstar + beta - alpha * 0.5 * pow(V, 2.0);
 }
