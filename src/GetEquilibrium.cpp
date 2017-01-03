@@ -107,7 +107,8 @@ class ExpropriationIntegrand: public Func
 // [[Rcpp::export]]
 double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double r, double C_bar, double a0, double a1, double p,
-                   double q, double omega_n, double gamma, double beta)
+                   double q, double omega_n, double gamma, double beta,
+                   double alpha)
 {
   double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, C_bar, a0,
                         a1, p, q, omega_n);
@@ -118,5 +119,5 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
   const double upper = tau_ell * Q / r;
   const double res = integrate(g, 0.0, upper, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
-  return Xstar - gamma * Dstar - beta;
+  return Xstar - gamma * Dstar - beta - alpha * 0.5 * pow(V, 2.0);
 }
