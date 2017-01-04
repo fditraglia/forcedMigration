@@ -21,3 +21,15 @@ plot_surplus <- function(params, V_lower = 0, V_upper = 10, type = 'l'){
   plot(V_seq, surplus, type = type, col = 'blue', xlab = 'V', ylab = 'S(V)')
 }
 
+
+# params is a list with names that match the arguments of get_surplus_infeas
+plot_surplus_infeas <- function(params, V_tilde_lower = 0, V_tilde_upper = 10,
+                                type = 'l'){
+  V_tilde_seq <- seq(V_tilde_lower, V_tilde_upper, length.out = 500)
+  surplus <- rep(NA_real_, length((V_tilde_seq)))
+  for(i in 1:length(V_tilde_seq)){
+    surplus[i] <- do.call(get_surplus_infeas, c(V_tilde = V_tilde_seq[i], params))
+  }
+  plot(V_tilde_seq, surplus, type = type, col = 'blue', xlab = 'V_tilde',
+       ylab = 'S(V_tilde)')
+}
