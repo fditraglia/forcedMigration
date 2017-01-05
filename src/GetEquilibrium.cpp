@@ -129,12 +129,20 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
   int err_code;
   const double Q = get_Q(V, Dstar, delta);
   const double upper = mu * tau_ell * Q / r;
-  const double res = integrate(g, 0.0, upper, err_est, err_code);
-  double Xstar = (1 - omega_n) * res;
+  const double numerator = integrate(g, 0.0, upper, err_est, err_code);
+  const double denominator = get_D_ell(Dstar, V, delta, tau_ell, r, a0, a1,
+                                       p, q, H_bar, mu);
+  double Xstar = (1 - omega_n) * numerator / denominator;
   return Xstar - gamma * Dstar + beta - alpha * 0.5 * pow(V / (1 - Dstar), 2.0);
 }
 
 // [[Rcpp::export]]
+double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
+                          double tau_n, double r, double a0, double a1,
+                          double p, double q, double H_bar, double mu,
+                          double omega_n, double gamma, double beta,
+                          double alpha)
+{
 // This is an "infeasible" surplus function that pretends we could freely
 // choose V_tilde = V / (1 - Dstar). The idea is as follows. Imagine that a
 // dictator could freely assign Q, the dis-utility of violence. Q is a function
@@ -151,28 +159,26 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
 // leave behind. This involves integrating both the expropriation integrand
 // and the migration integrand. But again: it does not involve imposing
 // equilibrium and hence there is no fixed point problem to solve.
-double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
-                          double tau_n, double r, double a0, double a1,
-                          double p, double q, double H_bar, double mu,
-                          double omega_n, double gamma, double beta,
-                          double alpha)
-{
-  // Potentially infeasible migration from the Q that results from V_tilde,
-  // which we obtain by setting D_e = 0 and V = V_tilde
-  const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
-                                    a0, a1, p, q, H_bar, mu, omega_n);
+
   // Potentially infeasible Q that results from V_tilde, which we obtain by
   // setting D_e = 0 and V = V_tilde
   const double Q = get_Q(V_tilde, 0.0, delta);
 
   // Construct expropriation integrand using the potentially infeasible
   // level of migration D_infeas
-  ExpropriationIntegrand g(D_infeas, V_tilde, delta, tau_ell, r, a0, a1, p, q,
+  ExpropriationIntegrand g(0.0, V_tilde, delta, tau_ell, r, a0, a1, p, q,
                            H_bar, mu);
   double err_est;
   int err_code;
   const double upper = mu * tau_ell * Q / r;
-  const double res = integrate(g, 0.0, upper, err_est, err_code);
-  double Xstar = (1 - omega_n) * res;
+  const double numerator = integrate(g, 0.0, upper, err_est, err_code);
+  const double denominator = get_D_ell(0.0, V_tilde, delta, tau_ell, r, a0, a1,
+                                       p, q, H_bar, mu);
+  double Xstar = (1 - omega_n) * numerator / denominator;
+
+  // Potentially infeasible migration from the Q that results from V_tilde,
+  // which we obtain by setting D_e = 0 and V = V_tilde
+  const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
+                                    a0, a1, p, q, H_bar, mu, omega_n);
   return Xstar - gamma * D_infeas + beta - alpha * 0.5 * pow(V_tilde, 2.0);
 }
