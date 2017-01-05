@@ -129,10 +129,8 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
   int err_code;
   const double Q = get_Q(V, Dstar, delta);
   const double upper = mu * tau_ell * Q / r;
-  const double numerator = integrate(g, 0.0, upper, err_est, err_code);
-  const double denominator = get_D_ell(Dstar, V, delta, tau_ell, r, a0, a1,
-                                       p, q, H_bar, mu);
-  double Xstar = (1 - omega_n) * numerator / denominator;
+  const double res = integrate(g, 0.0, upper, err_est, err_code);
+  double Xstar = (1 - omega_n) * res;
   return Xstar - gamma * Dstar + beta - alpha * 0.5 * pow(V / (1 - Dstar), 2.0);
 }
 
@@ -171,10 +169,8 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
   double err_est;
   int err_code;
   const double upper = mu * tau_ell * Q / r;
-  const double numerator = integrate(g, 0.0, upper, err_est, err_code);
-  const double denominator = get_D_ell(0.0, V_tilde, delta, tau_ell, r, a0, a1,
-                                       p, q, H_bar, mu);
-  double Xstar = (1 - omega_n) * numerator / denominator;
+  const double res = integrate(g, 0.0, upper, err_est, err_code);
+  double Xstar = (1 - omega_n) * res;
 
   // Potentially infeasible migration from the Q that results from V_tilde,
   // which we obtain by setting D_e = 0 and V = V_tilde
