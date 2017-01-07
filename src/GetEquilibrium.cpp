@@ -16,23 +16,18 @@ double get_Q(double V, double D_e, double delta){
 class MigrationIntegrand: public Func
 {
   private:
-    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu;
+    double Q, tau_ell, r, a0, a1, p, q, H_bar, mu;
   public:
-    MigrationIntegrand(double D_e_, double V_,
-                       double delta_, double tau_ell_,
-                       double r_,
-                       double a0_, double a1_,
-                       double p_, double q_,
-                       double H_bar_, double mu_): D_e(D_e_), V(V_),
-                                                   delta(delta_),
-                                                   tau_ell(tau_ell_), r(r_),
-                                                   a0(a0_), a1(a1_),
-                                                   p(p_), q(q_),
-                                                   H_bar(H_bar_), mu(mu_) {}
+    MigrationIntegrand(double Q_, double tau_ell_,
+                       double r_, double a0_,
+                       double a1_, double p_,
+                       double q_, double H_bar_,
+                       double mu_): Q(Q_), tau_ell(tau_ell_), r(r_),
+                                    a0(a0_), a1(a1_), p(p_), q(q_),
+                                    H_bar(H_bar_), mu(mu_) {}
 
     double operator()(const double& h) const
     {
-      double Q = get_Q(V, D_e, delta);
       double upper = (exp(tau_ell * Q - r * h / mu) - 1);
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -41,30 +36,23 @@ class MigrationIntegrand: public Func
 };
 
 // [[Rcpp::export]]
-double get_D_ell(double D_e, double V, double delta, double tau_ell, double r,
-                 double a0, double a1, double p, double q, double H_bar,
-                 double mu){
-  // Landholding families
-  MigrationIntegrand g(D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu);
-  double err_est;
-  int err_code;
-  const double Q = get_Q(V, D_e, delta);
-  const double landed_upper = mu * tau_ell * Q / r;
-  const double D_ell = integrate(g, 0.0, landed_upper, err_est, err_code);
-  return D_ell;
-}
-
-// [[Rcpp::export]]
 double get_Dstar(double D_e, double V, double delta, double tau_ell,
                  double tau_n, double r, double a0, double a1,
                  double p, double q, double H_bar, double mu, double omega_n)
 {
-  // Landed families
-  const double D_ell = get_D_ell(D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar,
-                                 mu);
-  // Landless families
+  // Dis-utility of violence
   const double Q = get_Q(V, D_e, delta);
+
+  // Landholding families
+  MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  double err_est;
+  int err_code;
+  const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+
+  // Landless families
   const double D_n = R::pbeta(exp(tau_n * Q) - 1, a0, 1, 1, 0);
+
+  // Overall migration
   return omega_n * D_n + (1 - omega_n) * D_ell;
 }
 
