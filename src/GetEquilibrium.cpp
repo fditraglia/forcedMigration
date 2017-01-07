@@ -159,3 +159,20 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
                                     a0, a1, p, q, H_bar, mu, omega_n);
   return Xstar - gamma * D_infeas + beta - alpha * 0.5 * pow(V_tilde, 2.0);
 }
+
+// [[Rcpp::export]]
+double get_X_max(double tau_ell, double tau_n, double r, double a0, double a1,
+                 double p, double q, double H_bar, double mu, double omega_n,
+                 double gamma, double beta, double alpha)
+{
+// This function calculates the maximum amount of land (per capita) that can
+// be expropriated, given model parameters. This is essentially a limit as
+// violence V (or infeasible violence V_tilde ) goes to infinity. We calculate
+// this by setting Q = 1.0 when setting up the expropriation integrand.
+  const double Q = 1.0;
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  double err_est;
+  int err_code;
+  const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+  return (1 - omega_n) * res;
+}
