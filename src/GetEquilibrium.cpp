@@ -81,22 +81,15 @@ double get_migration_eq(double V, double delta, double tau_ell,
 class ExpropriationIntegrand: public Func
 {
   private:
-    double D_e, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu;
+    double Q, tau_ell, r, a0, a1, p, q, H_bar, mu;
   public:
-    ExpropriationIntegrand(double D_e_, double V_,
-                           double delta_, double tau_ell_,
-                           double r_,
-                           double a0_, double a1_,
-                           double p_, double q_,
-                           double H_bar_, double mu_): D_e(D_e_), V(V_),
-                                                       delta(delta_),
-                                                       tau_ell(tau_ell_),
-                                                       r(r_), a0(a0_), a1(a1_),
-                                                       p(p_), q(q_),
-                                                       H_bar(H_bar_), mu(mu_) {}
+    ExpropriationIntegrand(double Q_, double tau_ell_, double r_, double a0_,
+                           double a1_, double p_, double q_, double H_bar_,
+                           double mu_): Q(Q_), tau_ell(tau_ell_),
+                                        r(r_), a0(a0_), a1(a1_),
+                                        p(p_), q(q_), H_bar(H_bar_), mu(mu_) {}
     double operator()(const double& h) const
     {
-      double Q = get_Q(V, D_e, delta);
       double upper = (exp(tau_ell * Q - r * h / mu) - 1);
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -110,14 +103,16 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double H_bar, double mu, double omega_n, double gamma,
                    double beta, double alpha)
 {
+  // Equilibrium migration at violence level V
   double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, a0,
                         a1, p, q, H_bar, mu, omega_n);
-  ExpropriationIntegrand g(Dstar, V, delta, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  // Equilibrium dis-utility of violence at violence level V
+  const double Q = get_Q(V, Dstar, delta);
+  // Calculate total land expropriated (in per capita terms)
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
   double err_est;
   int err_code;
-  const double Q = get_Q(V, Dstar, delta);
-  const double upper = mu * tau_ell * Q / r;
-  const double res = integrate(g, 0.0, upper, err_est, err_code);
+  const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
   return Xstar - gamma * Dstar + beta - alpha * 0.5 * pow(V / (1 - Dstar), 2.0);
 }
@@ -136,8 +131,8 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
 // there is tipping. When this occurs, certain values of Q cannot be attained
 // and hence certain levels of migration cannot be attained. Nevertheless,
 // because households decisions depend only on Q, it remains a well-defined
-// question to ask what they *would* have done had Q taken on any particular
-// value. To carry out this exercise, we will not solve a fixed point problem
+// question to ask what they *would* have at any particular value of Q.
+// To carry out this exercise, we will not solve a fixed point problem
 // to determine equilibrium migration. Instead we will set Q via V_tilde. An
 // easy way to re-use our code from above rather than writing a new function
 // Q(V_tilde) is simply to call Q(V_tilde, D_e = 0, delta). Once we have the
@@ -147,21 +142,19 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
 // equilibrium and hence there is no fixed point problem to solve.
 
   // Potentially infeasible Q that results from V_tilde, which we obtain by
-  // setting D_e = 0 and V = V_tilde
+  // setting D_e = 0.0 and V = V_tilde
   const double Q = get_Q(V_tilde, 0.0, delta);
 
   // Construct expropriation integrand using the potentially infeasible
   // level of migration D_infeas
-  ExpropriationIntegrand g(0.0, V_tilde, delta, tau_ell, r, a0, a1, p, q,
-                           H_bar, mu);
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
   double err_est;
   int err_code;
-  const double upper = mu * tau_ell * Q / r;
-  const double res = integrate(g, 0.0, upper, err_est, err_code);
+  const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
 
   // Potentially infeasible migration from the Q that results from V_tilde,
-  // which we obtain by setting D_e = 0 and V = V_tilde
+  // which we obtain by setting D_e = 0.0 and V = V_tilde
   const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
                                     a0, a1, p, q, H_bar, mu, omega_n);
   return Xstar - gamma * D_infeas + beta - alpha * 0.5 * pow(V_tilde, 2.0);
