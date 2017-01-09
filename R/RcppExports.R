@@ -9,12 +9,12 @@ get_migration_eq <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, m
     .Call('forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n)
 }
 
-get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha) {
-    .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha)
+get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, alpha) {
+    .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, alpha)
 }
 
-get_surplus_infeas <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha) {
-    .Call('forcedMigration_get_surplus_infeas', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha)
+get_surplus_infeas <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, alpha) {
+    .Call('forcedMigration_get_surplus_infeas', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, alpha)
 }
 
 get_X_max <- function(tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha) {

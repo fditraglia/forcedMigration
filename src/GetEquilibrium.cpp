@@ -101,7 +101,7 @@ class ExpropriationIntegrand: public Func
 double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double r, double a0, double a1, double p, double q,
                    double H_bar, double mu, double omega_n, double gamma,
-                   double beta, double alpha)
+                   double alpha)
 {
   // Equilibrium migration at violence level V
   double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, a0,
@@ -114,15 +114,14 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
   int err_code;
   const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
-  return Xstar - gamma * Dstar + beta - alpha * 0.5 * pow(V / (1 - Dstar), 2.0);
+  return Xstar - gamma * Dstar - alpha * V / (1 - Dstar);
 }
 
 // [[Rcpp::export]]
 double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
                           double tau_n, double r, double a0, double a1,
                           double p, double q, double H_bar, double mu,
-                          double omega_n, double gamma, double beta,
-                          double alpha)
+                          double omega_n, double gamma, double alpha)
 {
 // This is an "infeasible" surplus function that pretends we could freely
 // choose V_tilde = V / (1 - Dstar). The idea is as follows. Imagine that a
@@ -157,7 +156,7 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
   // which we obtain by setting D_e = 0.0 and V = V_tilde
   const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
                                     a0, a1, p, q, H_bar, mu, omega_n);
-  return Xstar - gamma * D_infeas + beta - alpha * 0.5 * pow(V_tilde, 2.0);
+  return Xstar - gamma * D_infeas - alpha * V_tilde;
 }
 
 // [[Rcpp::export]]
