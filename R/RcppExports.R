@@ -17,7 +17,7 @@ get_surplus_infeas <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, 
     .Call('forcedMigration_get_surplus_infeas', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, alpha)
 }
 
-get_X_max <- function(tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha) {
-    .Call('forcedMigration_get_X_max', PACKAGE = 'forcedMigration', tau_ell, tau_n, r, a0, a1, p, q, H_bar, mu, omega_n, gamma, beta, alpha)
+get_X_max <- function(tau_ell, r, a0, a1, p, q, H_bar, mu, omega_n) {
+    .Call('forcedMigration_get_X_max', PACKAGE = 'forcedMigration', tau_ell, r, a0, a1, p, q, H_bar, mu, omega_n)
 }
 

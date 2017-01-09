@@ -160,9 +160,8 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
 }
 
 // [[Rcpp::export]]
-double get_X_max(double tau_ell, double tau_n, double r, double a0, double a1,
-                 double p, double q, double H_bar, double mu, double omega_n,
-                 double gamma, double beta, double alpha)
+double get_X_max(double tau_ell, double r, double a0, double a1,
+                 double p, double q, double H_bar, double mu, double omega_n)
 {
 // This function calculates the maximum amount of land (per capita) that can
 // be expropriated, given model parameters. This is essentially a limit as
