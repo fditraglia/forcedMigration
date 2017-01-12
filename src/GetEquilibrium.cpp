@@ -3,6 +3,7 @@
 
 #include <RcppNumerical.h>
 using namespace Numer;
+using namespace Rcpp;
 
 double get_Q(double V, double D_e, double delta){
   const double V_tilde = V / (1 - D_e);
@@ -59,7 +60,7 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
 
 
 // [[Rcpp::export]]
-double get_migration_eq(double V, double delta, double tau_ell,
+double get_migration_eq(double V, double start, double delta, double tau_ell,
                         double tau_n, double r, double a0,
                         double a1, double p, double q, double H_bar,
                         double omega_n)
@@ -67,7 +68,7 @@ double get_migration_eq(double V, double delta, double tau_ell,
   const int max_iter = 500;
   const double tol = 0.0001;
   int i = 0;
-  double x = 0.0;
+  double x = start; // Where to start the iteration? Use 0.0 unless you have a bound
   double f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
                        omega_n);
   while((i < max_iter) & (std::abs(f - x) > tol)){
@@ -77,6 +78,25 @@ double get_migration_eq(double V, double delta, double tau_ell,
   }
   return(x);
 }
+
+// [[Rcpp::export]]
+NumericVector get_migration_cum(NumericVector V_cum, double delta, double tau_ell,
+                                double tau_n, double r, double a0, double a1,
+                                double p, double q, double H_bar, double omega_n)
+{
+  int n = V_cum.length();
+  NumericVector Dstar_cum(n);
+  double start = 0.0;
+  double Dstar_temp;
+  for(int i = 0; i < n; ++i) {
+    Dstar_temp = get_migration_eq(V_cum[i], start, delta, tau_ell, tau_n, r,
+                                  a0, a1, p, q, H_bar, omega_n);
+    Dstar_cum[i] = Dstar_temp;
+    start = Dstar_temp;
+  }
+  return Dstar_cum;
+}
+
 
 class ExpropriationIntegrand: public Func
 {
@@ -104,7 +124,7 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double H_bar, double omega_n, double gamma, double alpha)
 {
   // Equilibrium migration at violence level V
-  double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, a0,
+  double Dstar = get_migration_eq(V, 0.0, delta, tau_ell, tau_n, r, a0,
                         a1, p, q, H_bar, omega_n);
   // Equilibrium dis-utility of violence at violence level V
   const double Q = get_Q(V, Dstar, delta);
