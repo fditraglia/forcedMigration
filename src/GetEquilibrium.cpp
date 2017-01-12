@@ -16,18 +16,18 @@ double get_Q(double V, double D_e, double delta){
 class MigrationIntegrand: public Func
 {
   private:
-    double Q, tau_ell, r, a0, a1, p, q, H_bar, mu;
+    double Q, tau_ell, r, a0, a1, p, q, H_bar;
   public:
     MigrationIntegrand(double Q_, double tau_ell_,
                        double r_, double a0_,
                        double a1_, double p_,
-                       double q_, double H_bar_,
-                       double mu_): Q(Q_), tau_ell(tau_ell_), r(r_),
-                                    a0(a0_), a1(a1_), p(p_), q(q_),
-                                    H_bar(H_bar_), mu(mu_) {}
+                       double q_, double H_bar_): Q(Q_), tau_ell(tau_ell_),
+                                                  r(r_), a0(a0_), a1(a1_),
+                                                  p(p_), q(q_), H_bar(H_bar_) {}
 
     double operator()(const double& h) const
     {
+      double mu = H_bar * p / (p + q);
       double upper = (exp(tau_ell * Q - r * h / mu) - 1);
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -38,13 +38,14 @@ class MigrationIntegrand: public Func
 // [[Rcpp::export]]
 double get_Dstar(double D_e, double V, double delta, double tau_ell,
                  double tau_n, double r, double a0, double a1,
-                 double p, double q, double H_bar, double mu, double omega_n)
+                 double p, double q, double H_bar, double omega_n)
 {
   // Dis-utility of violence
   const double Q = get_Q(V, D_e, delta);
+  const double mu = H_bar * p / (p + q);
 
   // Landholding families
-  MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
   double err_est;
   int err_code;
   const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
@@ -60,7 +61,7 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
 // [[Rcpp::export]]
 double get_migration_eq(double V, double delta, double tau_ell,
                         double tau_n, double r, double a0,
-                        double a1, double p, double q, double H_bar, double mu,
+                        double a1, double p, double q, double H_bar,
                         double omega_n)
 {
   const int max_iter = 500;
@@ -68,11 +69,10 @@ double get_migration_eq(double V, double delta, double tau_ell,
   int i = 0;
   double x = 0.0;
   double f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-                       mu, omega_n);
+                       omega_n);
   while((i < max_iter) & (std::abs(f - x) > tol)){
     x = f;
-    f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-                  mu, omega_n);
+    f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
     i++;
   }
   return(x);
@@ -81,15 +81,16 @@ double get_migration_eq(double V, double delta, double tau_ell,
 class ExpropriationIntegrand: public Func
 {
   private:
-    double Q, tau_ell, r, a0, a1, p, q, H_bar, mu;
+    double Q, tau_ell, r, a0, a1, p, q, H_bar;
   public:
-    ExpropriationIntegrand(double Q_, double tau_ell_, double r_, double a0_,
-                           double a1_, double p_, double q_, double H_bar_,
-                           double mu_): Q(Q_), tau_ell(tau_ell_),
-                                        r(r_), a0(a0_), a1(a1_),
-                                        p(p_), q(q_), H_bar(H_bar_), mu(mu_) {}
+    ExpropriationIntegrand(double Q_, double tau_ell_, double r_,
+                           double a0_, double a1_, double p_, double q_,
+                           double H_bar_): Q(Q_), tau_ell(tau_ell_),
+                                           r(r_), a0(a0_), a1(a1_),
+                                           p(p_), q(q_), H_bar(H_bar_) {}
     double operator()(const double& h) const
     {
+      const double mu = H_bar * p / (p + q);
       double upper = (exp(tau_ell * Q - r * h / mu) - 1);
       double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -100,16 +101,16 @@ class ExpropriationIntegrand: public Func
 // [[Rcpp::export]]
 double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double r, double a0, double a1, double p, double q,
-                   double H_bar, double mu, double omega_n, double gamma,
-                   double alpha)
+                   double H_bar, double omega_n, double gamma, double alpha)
 {
   // Equilibrium migration at violence level V
   double Dstar = get_migration_eq(V, delta, tau_ell, tau_n, r, a0,
-                        a1, p, q, H_bar, mu, omega_n);
+                        a1, p, q, H_bar, omega_n);
   // Equilibrium dis-utility of violence at violence level V
   const double Q = get_Q(V, Dstar, delta);
   // Calculate total land expropriated (in per capita terms)
-  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  const double mu = H_bar * p / (p + q);
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
   double err_est;
   int err_code;
   const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
@@ -120,8 +121,8 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
 // [[Rcpp::export]]
 double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
                           double tau_n, double r, double a0, double a1,
-                          double p, double q, double H_bar, double mu,
-                          double omega_n, double gamma, double alpha)
+                          double p, double q, double H_bar, double omega_n,
+                          double gamma, double alpha)
 {
 // This is an "infeasible" surplus function that pretends we could freely
 // choose V_tilde = V / (1 - Dstar). The idea is as follows. Imagine that a
@@ -146,31 +147,33 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
 
   // Construct expropriation integrand using the potentially infeasible
   // level of migration D_infeas
-  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
   double err_est;
   int err_code;
+  const double mu = H_bar * p / (p + q);
   const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   double Xstar = (1 - omega_n) * res;
 
   // Potentially infeasible migration from the Q that results from V_tilde,
   // which we obtain by setting D_e = 0.0 and V = V_tilde
   const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
-                                    a0, a1, p, q, H_bar, mu, omega_n);
+                                    a0, a1, p, q, H_bar, omega_n);
   return Xstar - gamma * D_infeas - alpha * V_tilde;
 }
 
 // [[Rcpp::export]]
 double get_X_max(double tau_ell, double r, double a0, double a1,
-                 double p, double q, double H_bar, double mu, double omega_n)
+                 double p, double q, double H_bar, double omega_n)
 {
 // This function calculates the maximum amount of land (per capita) that can
 // be expropriated, given model parameters. This is essentially a limit as
 // violence V (or infeasible violence V_tilde ) goes to infinity. We calculate
 // this by setting Q = 1.0 when setting up the expropriation integrand.
   const double Q = 1.0;
-  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar, mu);
+  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
   double err_est;
   int err_code;
+  const double mu = H_bar * p / (p + q);
   const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   return (1 - omega_n) * res;
 }
