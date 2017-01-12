@@ -29,13 +29,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_migration_eq
-double get_migration_eq(double V, double start, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
-RcppExport SEXP forcedMigration_get_migration_eq(SEXP VSEXP, SEXP startSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
+double get_migration_eq(double V, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
+RcppExport SEXP forcedMigration_get_migration_eq(SEXP VSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< double >::type V(VSEXP);
-    Rcpp::traits::input_parameter< double >::type start(startSEXP);
     Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
     Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
@@ -46,28 +45,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
     Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    __result = Rcpp::wrap(get_migration_eq(V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
-    return __result;
-END_RCPP
-}
-// get_migration_cum
-NumericVector get_migration_cum(NumericVector V_cum, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
-RcppExport SEXP forcedMigration_get_migration_cum(SEXP V_cumSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericVector >::type V_cum(V_cumSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    __result = Rcpp::wrap(get_migration_cum(V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
+    __result = Rcpp::wrap(get_migration_eq(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
     return __result;
 END_RCPP
 }

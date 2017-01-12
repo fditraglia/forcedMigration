@@ -1,6 +1,6 @@
 # params is a list with names that match the arguments of get_migration_eq
 plot_migration_eq <- function(params){
-  eq <- do.call(get_migration_eq, c(star = 0.0, params))
+  eq <- do.call(get_migration_eq, params)
   x <- seq(0, 1, 0.001)
   fx <- rep(NA_real_, length((x)))
   for(i in 1:length(x)){

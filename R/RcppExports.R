@@ -5,12 +5,8 @@ get_Dstar <- function(D_e, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, ome
     .Call('forcedMigration_get_Dstar', PACKAGE = 'forcedMigration', D_e, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
-get_migration_eq <- function(V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
-}
-
-get_migration_cum <- function(V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_migration_cum', PACKAGE = 'forcedMigration', V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
+get_migration_eq <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
+    .Call('forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
