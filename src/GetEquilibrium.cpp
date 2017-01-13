@@ -1,7 +1,15 @@
+// [[Rcpp::plugins("cpp11")]]
+// [[Rcpp::depends(BH)]]
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(RcppNumerical)]]
 
+#include <Rcpp.h>
 #include <RcppNumerical.h>
+#include <tuple>
+#include <boost/math/tools/minima.hpp>
+
+using namespace Rcpp;
+using namespace boost::math::tools;
 using namespace Numer;
 using namespace Rcpp;
 
@@ -197,3 +205,34 @@ double get_X_max(double tau_ell, double r, double a0, double a1,
   const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
   return (1 - omega_n) * res;
 }
+
+
+// [[Rcpp::export]]
+double get_V_tilde_optimal(double delta, double tau_ell, double tau_n,
+                           double r, double a0, double a1,
+                           double p, double q,  double H_bar, double omega_n,
+                           double gamma, double alpha){
+
+  // http://en.cppreference.com/w/cpp/language/lambda
+  const auto S_tilde = [delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
+                        gamma, alpha](double V_tilde){
+                          // We want to maximize so minimize the negative
+                          return -1 * get_surplus_infeas(V_tilde, delta, tau_ell,
+                                                         tau_n, r, a0, a1, p, q,
+                                                         H_bar, omega_n, gamma,
+                                                         alpha);};
+
+  double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
+  int digits = 7;
+  const auto result = brent_find_minima(S_tilde, 0.0, X_max / alpha, digits);
+  double min = 0.0, obj = 0.0;
+  std::tie(min, obj) = result; //http://en.cppreference.com/w/cpp/utility/tuple/tie
+  return min;
+}
+
+
+
+
+
+
+
