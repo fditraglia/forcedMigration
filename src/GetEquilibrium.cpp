@@ -208,10 +208,10 @@ double get_X_max(double tau_ell, double r, double a0, double a1,
 
 
 // [[Rcpp::export]]
-double get_V_tilde_optimal(double delta, double tau_ell, double tau_n,
-                           double r, double a0, double a1,
-                           double p, double q,  double H_bar, double omega_n,
-                           double gamma, double alpha){
+double get_V_tilde_star(double delta, double tau_ell, double tau_n,
+                        double r, double a0, double a1,
+                        double p, double q,  double H_bar, double omega_n,
+                        double gamma, double alpha){
 
   // http://en.cppreference.com/w/cpp/language/lambda
   const auto S_tilde = [delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
@@ -230,9 +230,40 @@ double get_V_tilde_optimal(double delta, double tau_ell, double tau_n,
   return min;
 }
 
+// [[Rcpp::export]]
+double get_V_star(double delta, double tau_ell, double tau_n,
+                  double r, double a0, double a1, double p, double q,
+                  double H_bar, double omega_n, double gamma, double alpha){
 
+  double V_star = 0.0; // "Default" return value is zero
+  double tol = 0.001;
+  double V_tilde_star = get_V_tilde_star(delta, tau_ell, tau_n, r, a0, a1,
+                                         p, q, H_bar, omega_n, gamma, alpha);
+  if(std::abs(V_tilde_star - 0.0) > tol){
 
+    double V_L = 0.0;
+    double V_U = V_tilde_star + tol;
+    int n_iter = 0;
 
+    while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
+      double V_M = 0.5 * (V_L + V_U);
+      double Dstar_M = get_migration_eq(V_M, 0.0, delta, tau_ell, tau_n, r,
+                                        a0, a1, p, q, H_bar, omega_n);
+      double V_tilde_M = V_M / (1 - Dstar_M);
+      if(V_tilde_M < V_tilde_star) V_L = V_M;
+      else V_U = V_M;
+      n_iter += n_iter;
+    }
 
+    double S_L = get_surplus(V_L, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+                             omega_n, gamma, alpha);
+    double S_U = get_surplus(V_U, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+                             omega_n, gamma, alpha);
+    if((S_L > 0) && (S_U > 0)){
+      if(S_L > S_U) V_star = V_L;
+      else V_star = V_U;
+    } // END if
 
-
+  }
+  return V_star;
+}
