@@ -43,21 +43,26 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
                  double tau_n, double r, double a0, double a1,
                  double p, double q, double H_bar, double omega_n)
 {
-  // Dis-utility of violence
-  const double Q = get_Q(V, D_e, delta);
-  const double mu = H_bar * p / (p + q);
+  if(V > 0.0){
+    // Dis-utility of violence
+    const double Q = get_Q(V, D_e, delta);
+    const double mu = H_bar * p / (p + q);
 
-  // Landholding families
-  MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
-  double err_est;
-  int err_code;
-  const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+    // Landholding families
+    MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
+    double err_est;
+    int err_code;
+    const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
 
-  // Landless families
-  const double D_n = R::pbeta(exp(tau_n * Q) - 1, a0, 1, 1, 0);
+    // Landless families
+    const double D_n = R::pbeta(exp(tau_n * Q) - 1, a0, 1, 1, 0);
 
-  // Overall migration
-  return omega_n * D_n + (1 - omega_n) * D_ell;
+    // Overall migration
+    return omega_n * D_n + (1 - omega_n) * D_ell;
+
+  } else {
+    return 0.0;
+  }
 }
 
 
@@ -125,19 +130,23 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
                    double r, double a0, double a1, double p, double q,
                    double H_bar, double omega_n, double gamma, double alpha)
 {
-  // Equilibrium migration at violence level V
-  double Dstar = get_migration_eq(V, 0.0, delta, tau_ell, tau_n, r, a0,
-                        a1, p, q, H_bar, omega_n);
-  // Equilibrium dis-utility of violence at violence level V
-  const double Q = get_Q(V, Dstar, delta);
-  // Calculate total land expropriated (in per capita terms)
-  const double mu = H_bar * p / (p + q);
-  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
-  double err_est;
-  int err_code;
-  const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
-  double Xstar = (1 - omega_n) * res;
-  return Xstar - gamma * Dstar - alpha * V / (1 - Dstar);
+  if(V > 0.0){
+    // Equilibrium migration at violence level V
+    double Dstar = get_migration_eq(V, 0.0, delta, tau_ell, tau_n, r, a0,
+                          a1, p, q, H_bar, omega_n);
+    // Equilibrium dis-utility of violence at violence level V
+    const double Q = get_Q(V, Dstar, delta);
+    // Calculate total land expropriated (in per capita terms)
+    const double mu = H_bar * p / (p + q);
+    ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
+    double err_est;
+    int err_code;
+    const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+    double Xstar = (1 - omega_n) * res;
+    return Xstar - gamma * Dstar - alpha * V / (1 - Dstar);
+  } else {
+    return 0.0;
+  }
 }
 
 // [[Rcpp::export]]
@@ -163,24 +172,28 @@ double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
 // and the migration integrand. But again: it does not involve imposing
 // equilibrium and hence there is no fixed point problem to solve.
 
-  // Potentially infeasible Q that results from V_tilde, which we obtain by
-  // setting D_e = 0.0 and V = V_tilde
-  const double Q = get_Q(V_tilde, 0.0, delta);
+  if(V_tilde > 0.0){
+    // Potentially infeasible Q that results from V_tilde, which we obtain by
+    // setting D_e = 0.0 and V = V_tilde
+    const double Q = get_Q(V_tilde, 0.0, delta);
 
-  // Construct expropriation integrand using the potentially infeasible
-  // level of migration D_infeas
-  ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
-  double err_est;
-  int err_code;
-  const double mu = H_bar * p / (p + q);
-  const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
-  double Xstar = (1 - omega_n) * res;
+    // Construct expropriation integrand using the potentially infeasible
+    // level of migration D_infeas
+    ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
+    double err_est;
+    int err_code;
+    const double mu = H_bar * p / (p + q);
+    const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+    double Xstar = (1 - omega_n) * res;
 
-  // Potentially infeasible migration from the Q that results from V_tilde,
-  // which we obtain by setting D_e = 0.0 and V = V_tilde
-  const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
-                                    a0, a1, p, q, H_bar, omega_n);
-  return Xstar - gamma * D_infeas - alpha * V_tilde;
+    // Potentially infeasible migration from the Q that results from V_tilde,
+    // which we obtain by setting D_e = 0.0 and V = V_tilde
+    const double D_infeas = get_Dstar(0.0, V_tilde, delta, tau_ell, tau_n, r,
+                                      a0, a1, p, q, H_bar, omega_n);
+    return Xstar - gamma * D_infeas - alpha * V_tilde;
+  } else {
+    return 0.0;
+  }
 }
 
 // [[Rcpp::export]]
