@@ -1,15 +1,9 @@
-// [[Rcpp::plugins("cpp11")]]
-// [[Rcpp::depends(BH)]]
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(RcppNumerical)]]
 
 #include <Rcpp.h>
 #include <RcppNumerical.h>
-#include <tuple>
-#include <boost/math/tools/minima.hpp>
 
-using namespace Rcpp;
-using namespace boost::math::tools;
 using namespace Numer;
 using namespace Rcpp;
 
@@ -208,62 +202,118 @@ double get_X_max(double tau_ell, double r, double a0, double a1,
 
 
 // [[Rcpp::export]]
-double get_V_tilde_star(double delta, double tau_ell, double tau_n,
-                        double r, double a0, double a1,
-                        double p, double q,  double H_bar, double omega_n,
-                        double gamma, double alpha){
+double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
+                 double p, double q, double H_bar, double omega_n)
+{
+// This function calculates the maximum fraction of families that can be
+// displaced, given model parameters. This is essentially a limit as
+// violence V (or infeasible violence V_tilde ) goes to infinity. We calculate
+// this by setting Q = 1.0 when setting up the migration integrand.
+  const double Q = 1.0;
+  const double mu = H_bar * p / (p + q);
 
-  // http://en.cppreference.com/w/cpp/language/lambda
-  const auto S_tilde = [delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
-                        gamma, alpha](double V_tilde){
-                          // We want to maximize so minimize the negative
-                          return -1 * get_surplus_infeas(V_tilde, delta, tau_ell,
-                                                         tau_n, r, a0, a1, p, q,
-                                                         H_bar, omega_n, gamma,
-                                                         alpha);};
+  // Landholding families
+  MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
+  double err_est;
+  int err_code;
+  const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
 
-  double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
-  int digits = 7;
-  const auto result = brent_find_minima(S_tilde, 0.0, X_max / alpha, digits);
-  double min = 0.0, obj = 0.0;
-  std::tie(min, obj) = result; //http://en.cppreference.com/w/cpp/utility/tuple/tie
-  return min;
+  // Landless families
+  const double D_n = R::pbeta(exp(tau_n * Q) - 1, a0, 1, 1, 0);
+
+  // Overall migration
+  return omega_n * D_n + (1 - omega_n) * D_ell;
 }
 
-// [[Rcpp::export]]
-double get_V_star(double delta, double tau_ell, double tau_n,
-                  double r, double a0, double a1, double p, double q,
-                  double H_bar, double omega_n, double gamma, double alpha){
 
-  double V_star = 0.0; // "Default" return value is zero
-  double tol = 0.001;
-  double V_tilde_star = get_V_tilde_star(delta, tau_ell, tau_n, r, a0, a1,
-                                         p, q, H_bar, omega_n, gamma, alpha);
-  if(std::abs(V_tilde_star - 0.0) > tol){
-
-    double V_L = 0.0;
-    double V_U = V_tilde_star + tol;
-    int n_iter = 0;
-
-    while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
-      double V_M = 0.5 * (V_L + V_U);
-      double Dstar_M = get_migration_eq(V_M, 0.0, delta, tau_ell, tau_n, r,
-                                        a0, a1, p, q, H_bar, omega_n);
-      double V_tilde_M = V_M / (1 - Dstar_M);
-      if(V_tilde_M < V_tilde_star) V_L = V_M;
-      else V_U = V_M;
-      n_iter += n_iter;
-    }
-
-    double S_L = get_surplus(V_L, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-                             omega_n, gamma, alpha);
-    double S_U = get_surplus(V_U, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-                             omega_n, gamma, alpha);
-    if((S_L > 0) && (S_U > 0)){
-      if(S_L > S_U) V_star = V_L;
-      else V_star = V_U;
-    } // END if
-
-  }
-  return V_star;
-}
+// // [[Rcpp::export]]
+// double get_V_tilde_star_cpp(double delta, double tau_ell, double tau_n,
+//                             double r, double a0, double a1, double p, double q,
+//                             double H_bar, double omega_n, double gamma,
+//                             double alpha){
+//
+//   // http://en.cppreference.com/w/cpp/language/lambda
+//   const auto S_tilde = [delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
+//                         gamma, alpha](double V_tilde){
+//                           // We want to maximize so minimize the negative
+//                           return -1 * get_surplus_infeas(V_tilde, delta, tau_ell,
+//                                                          tau_n, r, a0, a1, p, q,
+//                                                          H_bar, omega_n, gamma,
+//                                                          alpha);};
+//
+//   double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
+//   int digits = 7;
+//   const auto result = brent_find_minima(S_tilde, 0.0, X_max / alpha, digits);
+//   double min = 0.0, obj = 0.0;
+//   std::tie(min, obj) = result; //http://en.cppreference.com/w/cpp/utility/tuple/tie
+//   return min;
+// }
+//
+// // [[Rcpp::export]]
+// List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n,
+//                double r, double a0, double a1, double p, double q, double H_bar,
+//                double omega_n, double gamma, double alpha){
+//
+//   double tol = 0.001;
+//   double V_L = 0.0;
+//   double V_U = V_tilde + tol;
+//   int n_iter = 0;
+//   double start = 0.0;
+//
+//   while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
+//     double V_M = 0.5 * (V_L + V_U);
+//     double Dstar_M = get_migration_eq(V_M, start, delta, tau_ell, tau_n, r,
+//                                       a0, a1, p, q, H_bar, omega_n);
+//     double V_tilde_M = V_M / (1 - Dstar_M);
+//       if(V_tilde_M < V_tilde){
+//         V_L = V_M;
+//         start = Dstar_M;
+//       }
+//       else V_U = V_M;
+//       n_iter += 1;
+//   }
+//   return List::create(Named("lower") = V_L, Named("upper") = V_U,
+//                       Named("n_iter") = n_iter);
+// }
+//
+// // [[Rcpp::export]]
+// double get_V_star_cpp(double delta, double tau_ell, double tau_n, double r,
+//                       double a0, double a1, double p, double q, double H_bar,
+//                       double omega_n, double gamma, double alpha){
+//
+//   double V_star = 0.0; // "Default" return value is zero
+//   double tol = 0.001;
+//   double V_tilde_star = get_V_tilde_star_cpp(delta, tau_ell, tau_n, r, a0, a1,
+//                                          p, q, H_bar, omega_n, gamma, alpha);
+//   if(std::abs(V_tilde_star - 0.0) > tol){
+//
+//     double V_L = 0.0;
+//     double V_U = V_tilde_star + tol;
+//     int n_iter = 0;
+//     double start = 0.0;
+//
+//     while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
+//       double V_M = 0.5 * (V_L + V_U);
+//       double Dstar_M = get_migration_eq(V_M, start, delta, tau_ell, tau_n, r,
+//                                         a0, a1, p, q, H_bar, omega_n);
+//       double V_tilde_M = V_M / (1 - Dstar_M);
+//       if(V_tilde_M < V_tilde_star){
+//         V_L = V_M;
+//         start = Dstar_M;
+//       }
+//       else V_U = V_M;
+//       n_iter += 1;
+//     }
+//
+//     double S_L = get_surplus(V_L, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+//                              omega_n, gamma, alpha);
+//     double S_U = get_surplus(V_U, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+//                              omega_n, gamma, alpha);
+//     if((S_L > 0) && (S_U > 0)){
+//       if(S_L > S_U) V_star = V_L;
+//       else V_star = V_U;
+//     } // END if
+//
+//   }
+//   return V_star;
+// }
