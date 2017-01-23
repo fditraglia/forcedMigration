@@ -3,6 +3,7 @@
 
 #include <Rcpp.h>
 #include <RcppNumerical.h>
+#include "brent.hpp"
 
 using namespace Numer;
 using namespace Rcpp;
@@ -238,6 +239,57 @@ double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
   return omega_n * D_n + (1 - omega_n) * D_ell;
 }
 
+// Functor to pass to the BRENT optimization routine to maximize infeasible
+// surplus. Note that BRENT *minimizes* so the functor calculates *negative*
+// surplus.
+class negInfeasibleSurplus : public brent::func_base
+{
+private:
+  double delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha;
+public:
+  negInfeasibleSurplus (double delta_, double tau_ell_, double tau_n_,
+                        double r_, double a0_, double a1_, double p_,
+                        double q_, double H_bar_, double omega_n_,
+                        double gamma_, double alpha_) : delta(delta_),
+                                                        tau_ell(tau_ell_),
+                                                        tau_n(tau_n_),
+                                                        r(r_), a0(a0_), a1(a1_),
+                                                        p(p_), q(q_),
+                                                        H_bar(H_bar_),
+                                                        omega_n(omega_n_),
+                                                        gamma(gamma_),
+                                                        alpha(alpha_) {}
+  double operator() (double V_tilde) {
+    return -1.0 * get_surplus_infeas(V_tilde, delta, tau_ell, tau_n, r, a0, a1,
+                                     p, q, H_bar, omega_n, gamma, alpha);
+  }
+};
+
+// [[Rcpp::export]]
+double get_V_tilde_star(double delta, double tau_ell, double tau_n,
+                        double r, double a0, double a1, double p, double q,
+                        double H_bar, double omega_n, double gamma,
+                        double alpha){
+
+  negInfeasibleSurplus neg_V_tilde(delta, tau_ell, tau_n, r, a0, a1, p, q,
+                                   H_bar, omega_n, gamma, alpha);
+  double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
+  double upper = X_max / alpha;
+  double lower = 0.0;
+  double V_tilde_star;
+  double neg_S_tilde_star = brent::local_min(lower, upper, 0.0001,
+                                             neg_V_tilde, V_tilde_star);
+  return V_tilde_star;
+}
+// X_max <- get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n)
+//
+// g <- function(V_tilde){
+//   get_surplus_infeas(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+//                      omega_n, gamma, alpha)
+// }
+//
+// V_star_tilde <- optimize(g, lower = 0, upper = X_max / alpha,
+//                          maximum = TRUE)$maximum
 
 // // [[Rcpp::export]]
 // double get_V_tilde_star_cpp(double delta, double tau_ell, double tau_n,

@@ -29,3 +29,7 @@ get_D_max <- function(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
     .Call('forcedMigration_get_D_max', PACKAGE = 'forcedMigration', tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
+get_V_tilde_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
+    .Call('forcedMigration_get_V_tilde_star', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
+}
+
