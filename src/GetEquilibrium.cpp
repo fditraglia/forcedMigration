@@ -281,66 +281,80 @@ double get_V_tilde_star(double delta, double tau_ell, double tau_n,
                                              neg_V_tilde, V_tilde_star);
   return V_tilde_star;
 }
-// X_max <- get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n)
-//
-// g <- function(V_tilde){
-//   get_surplus_infeas(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
-//                      omega_n, gamma, alpha)
-// }
-//
-// V_star_tilde <- optimize(g, lower = 0, upper = X_max / alpha,
-//                          maximum = TRUE)$maximum
 
-// // [[Rcpp::export]]
-// double get_V_tilde_star_cpp(double delta, double tau_ell, double tau_n,
-//                             double r, double a0, double a1, double p, double q,
-//                             double H_bar, double omega_n, double gamma,
-//                             double alpha){
-//
-//   // http://en.cppreference.com/w/cpp/language/lambda
-//   const auto S_tilde = [delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
-//                         gamma, alpha](double V_tilde){
-//                           // We want to maximize so minimize the negative
-//                           return -1 * get_surplus_infeas(V_tilde, delta, tau_ell,
-//                                                          tau_n, r, a0, a1, p, q,
-//                                                          H_bar, omega_n, gamma,
-//                                                          alpha);};
-//
-//   double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
-//   int digits = 7;
-//   const auto result = brent_find_minima(S_tilde, 0.0, X_max / alpha, digits);
-//   double min = 0.0, obj = 0.0;
-//   std::tie(min, obj) = result; //http://en.cppreference.com/w/cpp/utility/tuple/tie
-//   return min;
-// }
-//
-// // [[Rcpp::export]]
-// List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n,
-//                double r, double a0, double a1, double p, double q, double H_bar,
-//                double omega_n, double gamma, double alpha){
-//
-//   double tol = 0.001;
-//   double V_L = 0.0;
-//   double V_U = V_tilde + tol;
-//   int n_iter = 0;
-//   double start = 0.0;
-//
-//   while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
-//     double V_M = 0.5 * (V_L + V_U);
-//     double Dstar_M = get_migration_eq(V_M, start, delta, tau_ell, tau_n, r,
-//                                       a0, a1, p, q, H_bar, omega_n);
-//     double V_tilde_M = V_M / (1 - Dstar_M);
-//       if(V_tilde_M < V_tilde){
-//         V_L = V_M;
-//         start = Dstar_M;
-//       }
-//       else V_U = V_M;
-//       n_iter += 1;
-//   }
-//   return List::create(Named("lower") = V_L, Named("upper") = V_U,
-//                       Named("n_iter") = n_iter);
-// }
-//
+
+// Object to contain result of bisection algorithm
+struct bisectObj{
+  double x_lower, x_upper;
+  double y_lower, y_upper;
+  int n_iter;
+};
+
+bisectObj get_V(double V_tilde, double delta, double tau_ell, double tau_n,
+               double r, double a0, double a1, double p, double q, double H_bar,
+               double omega_n){
+
+  double tol = 0.005;
+  double D_max = get_D_max(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
+  double V_L = V_tilde * (1.0 - D_max) - 0.1 * tol;
+  double V_U = V_tilde + 0.1 * tol;
+  int n_test = 10;
+  double inc = (V_U - V_L) / double(n_test - 1);
+  IntegerVector seq = seq_len(n_test) - 1;
+  NumericVector V_test = V_L + inc * as<NumericVector>(seq);
+  NumericVector D_test = get_migration_cum(V_test, delta, tau_ell, tau_n,
+                                           r, a0, a1, p, q, H_bar, omega_n);
+  NumericVector V_tilde_test = V_test / (1 - D_test);
+
+  //Which element of V_tilde_test is the *first* that exceeds V_tilde?
+  int i = 0;
+  while(V_tilde_test[i] < V_tilde) ++i;
+  V_L = V_test[i - 1];
+  V_U = V_test[i];
+  double start = D_test[i - 1];
+  double V_tilde_L = V_L;
+  double V_tilde_U = V_U;
+  int n_iter = 0;
+
+  while(std::abs(V_U - V_L) > tol && (n_iter <= 50)){
+    double V_M = 0.5 * (V_L + V_U);
+    double Dstar_M = get_migration_eq(V_M, start, delta, tau_ell, tau_n, r,
+                                      a0, a1, p, q, H_bar, omega_n);
+    double V_tilde_M = V_M / (1 - Dstar_M);
+      if(V_tilde_M < V_tilde){
+        V_L = V_M;
+        V_tilde_L = V_tilde_M;
+        start = Dstar_M;
+      } else {
+        V_U = V_M;
+        V_tilde_U = V_tilde_M;
+      }
+      n_iter += 1;
+  }
+  bisectObj out;
+  out.n_iter = n_iter;
+  out.x_lower = V_L;
+  out.x_upper = V_U;
+  out.y_lower = V_tilde_L;
+  out.y_upper = V_tilde_U;
+  return out;
+}
+
+// [[Rcpp::export]]
+List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n,
+               double r, double a0, double a1, double p, double q, double H_bar,
+               double omega_n){
+
+  bisectObj out = get_V(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+                        omega_n);
+
+  return List::create(Named("V_L") = out.x_lower,
+                      Named("V_U") = out.x_upper,
+                      Named("V_tilde_L") = out.y_lower,
+                      Named("V_tilde_U") = out.y_upper,
+                      Named("n_iter") = out.n_iter);
+}
+
 // // [[Rcpp::export]]
 // double get_V_star_cpp(double delta, double tau_ell, double tau_n, double r,
 //                       double a0, double a1, double p, double q, double H_bar,

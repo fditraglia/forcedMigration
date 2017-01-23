@@ -176,3 +176,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_V_cpp
+List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
+RcppExport SEXP forcedMigration_get_V_cpp(SEXP V_tildeSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type V_tilde(V_tildeSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
+    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
+    Rcpp::traits::input_parameter< double >::type r(rSEXP);
+    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
+    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
+    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_V_cpp(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
+    return rcpp_result_gen;
+END_RCPP
+}
