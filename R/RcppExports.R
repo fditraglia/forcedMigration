@@ -37,3 +37,7 @@ get_V_cpp <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, om
     .Call('forcedMigration_get_V_cpp', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
+get_V_star_cpp <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
+    .Call('forcedMigration_get_V_star_cpp', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
+}
+

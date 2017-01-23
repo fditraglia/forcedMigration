@@ -355,6 +355,34 @@ List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n,
                       Named("n_iter") = out.n_iter);
 }
 
+// [[Rcpp::export]]
+double get_V_star_cpp(double delta, double tau_ell, double tau_n, double r,
+                      double a0, double a1, double p, double q, double H_bar,
+                      double omega_n, double gamma, double alpha){
+
+  double V_tilde_star = get_V_tilde_star(delta, tau_ell, tau_n, r, a0, a1, p, q,
+                                         H_bar, omega_n, gamma, alpha);
+
+  double V_star = 0.0; // The default return value is zero
+  double tol = 0.001;
+  if(fabs(V_tilde_star) > tol){
+    bisectObj V_bisect = get_V(V_tilde_star, delta, tau_ell, tau_n, r, a0, a1,
+                             p, q, H_bar, omega_n);
+    double S_L = get_surplus_infeas(V_bisect.y_lower, delta, tau_ell, tau_n, r,
+                                                      a0, a1, p, q, H_bar,
+                                                      omega_n, gamma, alpha);
+    double S_U = get_surplus_infeas(V_bisect.y_upper, delta, tau_ell, tau_n, r,
+                                                      a0, a1,  p, q, H_bar,
+                                                      omega_n, gamma, alpha);
+    if((S_L > 0.0) && (S_U > 0.0)){
+      if(S_L > S_U) V_star = V_bisect.x_lower;
+      else V_star = V_bisect.x_upper;
+    }
+  }
+  return V_star;
+}
+
+
 // // [[Rcpp::export]]
 // double get_V_star_cpp(double delta, double tau_ell, double tau_n, double r,
 //                       double a0, double a1, double p, double q, double H_bar,
