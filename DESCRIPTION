@@ -16,3 +16,6 @@ LinkingTo:
     RcppEigen,
     RcppNumerical,
     BH
+Recommends:
+    haven
+    actuar
