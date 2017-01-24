@@ -356,9 +356,9 @@ List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n,
 }
 
 // [[Rcpp::export]]
-double get_V_star_cpp(double delta, double tau_ell, double tau_n, double r,
-                      double a0, double a1, double p, double q, double H_bar,
-                      double omega_n, double gamma, double alpha){
+double get_V_star(double delta, double tau_ell, double tau_n, double r,
+                  double a0, double a1, double p, double q, double H_bar,
+                  double omega_n, double gamma, double alpha){
 
   double V_tilde_star = get_V_tilde_star(delta, tau_ell, tau_n, r, a0, a1, p, q,
                                          H_bar, omega_n, gamma, alpha);

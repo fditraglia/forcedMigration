@@ -1,4 +1,4 @@
-get_V <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n){
+get_V_R <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n){
   tol <- 0.005
   n <- 10
   D_max <- get_D_max(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
@@ -32,7 +32,7 @@ get_V <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_
 }
 
 
-get_V_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
+get_V_star_R <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
                        gamma, alpha){
 
   X_max <- get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n)
@@ -45,7 +45,7 @@ get_V_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n,
   V_star_tilde <- optimize(g, lower = 0, upper = X_max / alpha,
                            maximum = TRUE)$maximum
   if(abs(V_star_tilde) > 0.001){
-    bisect_result <- get_V(V_star_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q,
+    bisect_result <- get_V_R(V_star_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q,
                            H_bar, omega_n)
     S_L <- get_surplus_infeas(bisect_result$V_tilde_L, delta, tau_ell, tau_n, r,
                               a0, a1, p, q, H_bar, omega_n, gamma, alpha)
