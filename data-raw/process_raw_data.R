@@ -2,7 +2,14 @@ cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
 
-# Construct land distribution from raw data on land ownership (in bins)
+# Calculate total land in each municipality
+landtotal_cols <- sapply(names(cross_section_raw), substr, 1, 9) == 'tot_land_'
+landtotal_bins <- cross_section_raw[, landtotal_cols]
+total_land <- rowSums(landtotal_bins)
+rm(landtotal_bins, landtotal_cols)
+
+# Construct land distribution from raw data on landowner counts binned by amount
+# of land
 landowner_cols <- sapply(names(cross_section_raw), substr, 1, 8) == 'landown_'
 landowner_bins <- cross_section_raw[, landowner_cols]
 names(landowner_bins) <- c('[0,1)', '[1,3)', '[3,5)', '[5,10)', '[10,15)',
@@ -10,20 +17,27 @@ names(landowner_bins) <- c('[0,1)', '[1,3)', '[3,5)', '[5,10)', '[10,15)',
                          '[200,500)', '[500,1000)', '[1000,2000)', '>=2000')
 rm(landowner_cols)
 
+# Calculate total number of landholders and mean landholdings
+n_landholders <- rowSums(landowner_bins)
+mean_land_owned <- total_land / n_landholders
+rm(total_land)
+
 h <- function(x){
   x <- x / sum(x)
   n <- length(x)
   cumsum(x)[1:(n-1)]
 }
+
 land_cdfs <- t(apply(landowner_bins, 1, h))
 colnames(land_cdfs) <- paste0('x=', c(1, 3, 5, 10, 15, 20, 50, 100, 200, 500,
                                      1000, 2000))
-rm(h, landowner_bins)
 
 land_cdf_list <- lapply(seq_len(nrow(land_cdfs)), function(i) land_cdfs[i,])
-rm(land_cdfs)
+highest_occupied <- apply(landowner_bins, 1, function(x) max(which(x > 0)))
+land_cdf_list <- lapply(seq_along(land_cdf_list),
+                        function(i) land_cdf_list[[i]][1:(highest_occupied[i] - 1)])
+rm(h, land_cdfs, landowner_bins, highest_occupied)
 
-mean_land_owned <- with(cross_section_raw, tot_land_owned / landowners_total)
 
 fit_3_param_beta <- function(Fhat, mu){
   x_full <- c(1, 3, 5, 10, 15, 20, 50, 100, 200, 500, 1000, 2000)
@@ -41,6 +55,7 @@ fit_3_param_beta <- function(Fhat, mu){
   return(c(shape1 = solution[1], shape2 = solution[2],
            scale = mu * (solution[1] + solution[2]) / solution[1]))
 }
+
 
 beta_params <- as.data.frame(t(mapply(fit_3_param_beta,
                                       Fhat = land_cdf_list,
@@ -60,6 +75,13 @@ names(panel) <- c("municipality", "year", "V_cum", "D_AS", "D_CODHES",
 
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
+
+# Keep only municipalities with at least 100 landowners
+keep_me <- n_landholders >= 100
+keep_municipalities <- cross_section[keep_me,]$municipality
+cross_section <- subset(cross_section, municipality %in% keep_municipalities)
+panel <- subset(panel, municipality %in% keep_municipalities)
+rm(keep_me, keep_municipalities)
 
 devtools::use_data(cross_section)
 devtools::use_data(panel)
