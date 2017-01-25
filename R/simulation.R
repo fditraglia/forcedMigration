@@ -26,9 +26,8 @@ simulate_from_model <- function(delta, tau_ell, tau_n, r, a0, a1,
                                              n_cores = n_cores)
 
   add_noise <- function(x) x + rnorm(length(x), mean = 0, sd = x / 3)
-  V_total_obs <- add_noise(V_total)
   D_flow_obs <- lapply(D_flow, add_noise)
-  out <- list(V_total = V_total, V_total_obs = V_total_obs,
+  out <- list(V_total = V_total, V_cum = V_cum_list,
               D_flow = D_flow, D_flow_obs = D_flow_obs)
 }
 
