@@ -12,7 +12,7 @@ solve_equilibrium_violence <- function(delta, tau_ell, tau_n, r, a0, a1,
   }
 
   if(!is.null(cluster)){
-    V_total <- parallel::parLapply(cluster, seq_along(land_parameters_list),
+    V_total <- parallel::clusterApplyLB(cluster, seq_along(land_parameters_list),
                                    get_V_star_i)
   } else {
     V_total <- parallel::mclapply(seq_along(land_parameters_list),
@@ -35,7 +35,7 @@ solve_equilibrium_migration_flow <- function(V_cum_list, delta, tau_ell, tau_n,
   }
 
   if(!is.null(cluster)){
-    D_cum <- parallel::parLapply(cluster, seq_along(land_parameters_list),
+    D_cum <- parallel::clusterApplyLB(cluster, seq_along(land_parameters_list),
                                  get_migration_cum_i)
   } else {
     D_cum <- parallel::mclapply(seq_along(land_parameters_list),
