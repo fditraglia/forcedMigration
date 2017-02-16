@@ -10,7 +10,6 @@ LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5),
     RcppNumerical,
-    BH
 LinkingTo:
     Rcpp,
     RcppEigen,
