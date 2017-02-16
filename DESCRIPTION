@@ -14,8 +14,7 @@ Imports:
 LinkingTo:
     Rcpp,
     RcppEigen,
-    RcppNumerical,
-    BH
+    RcppNumerical
 Recommends:
     haven
     actuar
