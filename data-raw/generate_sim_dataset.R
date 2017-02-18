@@ -1,16 +1,22 @@
 library(forcedMigration)
-set.seed(57)
 
-# Take a small random sample of municipalities
-n_sample <- 48
-municipalities <- cross_section$municipality
-municipality_sample <- sample(municipalities, n_sample)
-small_cross <- subset(cross_section, municipality %in% municipality_sample)
-land_parameters <- small_cross[,c('p', 'q', 'H_bar', 'omega_n')]
-land_parameters_list <- lapply(seq_len(nrow(land_parameters)),
+# set.seed(57)
+#
+# # Take a small random sample of municipalities
+# n_sample <- 48
+# municipalities <- cross_section$municipality
+# municipality_sample <- sample(municipalities, n_sample)
+# small_cross <- subset(cross_section, municipality %in% municipality_sample)
+# land_parameters <- small_cross[,c('p', 'q', 'H_bar', 'omega_n')]
+# land_parameters_list <- lapply(seq_len(nrow(land_parameters)),
+#                                function(i) as.list(land_parameters[i,]))
+#
+# rm(municipalities, municipality_sample, small_cross, land_parameters)
+
+land_parameters <- cross_section[, c('p', 'q', 'H_bar', 'omega_n')]
+land_parameters_list <- lapply(1:nrow(land_parameters),
                                function(i) as.list(land_parameters[i,]))
-
-rm(municipalities, municipality_sample, small_cross, land_parameters)
+rm(land_parameters)
 
 # "Fixed" Model parameters
 delta <- 0.2

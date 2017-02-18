@@ -17,17 +17,21 @@ simulate_from_model <- function(delta, tau_ell, tau_n, r, a0, a1,
                                 land_parameters_list, gamma, alpha,
                                 n_cores = 1){
 
+  add_noise <- function(x, c) x + rnorm(length(x), mean = 0, sd = c * x)
+
   V_total <- solve_equilibrium_violence(delta, tau_ell, tau_n, r, a0, a1,
                                         land_parameters_list, gamma, alpha,
-                                        n_cores = n_cores)
-  V_cum_list <- chop_violence(V_total)
+                                        n_cores)
+
+  V_total_obs <- add_noise(V_total, c = 0.2)
+  V_cum_list <- chop_violence(V_total_obs)
   D_flow <- solve_equilibrium_migration_flow(V_cum_list, delta, tau_ell, tau_n,
                                              r, a0, a1, land_parameters_list,
-                                             n_cores = n_cores)
+                                             n_cores)
 
-  add_noise <- function(x) x + rnorm(length(x), mean = 0, sd = x / 3)
-  D_flow_obs <- lapply(D_flow, add_noise)
-  out <- list(V_total = V_total, V_cum = V_cum_list,
+  D_flow_obs <- lapply(D_flow, add_noise, c = 0.33)
+  out <- list(V_total = V_total, V_total_obs = V_total_obs,
+              V_cum_obs = V_cum_list,
               D_flow = D_flow, D_flow_obs = D_flow_obs)
 }
 

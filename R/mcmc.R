@@ -2,14 +2,14 @@ moment_condition <- function(delta, tau_ell, tau_n, r, a0, a1,
                              land_parameters_list, gamma, alpha,
                              V_total_obs, V_cum_obs, D_flow_obs,
                              cluster = NULL, n_cores = 1){
+
   # Solve model
-  V_total_model <- solve_equilibrium_violence(delta, tau_ell, tau_n, r, a0, a1,
-                                              land_parameters_list, gamma, alpha,
-                                              cluster, n_cores)
-  D_flow_model <- solve_equilibrium_migration_flow(V_cum_obs, delta, tau_ell,
-                                                   tau_n, r, a0, a1,
-                                                   land_parameters_list,
-                                                   cluster, n_cores)
+  model_solution <- solve_model(V_cum_list = V_cum_obs, delta,
+                                tau_ell, tau_n, r, a0, a1, land_parameters_list,
+                                gamma, alpha, n_cores)
+  V_total_model <- model_solution$V_total
+  D_flow_model <- model_solution$D_flow
+
   # Convert migration flows to matrix
   n_periods <- length(D_flow_obs[[1]])
   matD_flow_obs <- matrix(unlist(D_flow_obs), ncol = n_periods, byrow = TRUE)
