@@ -23,13 +23,13 @@ simulate_from_model <- function(delta, tau_ell, tau_n, r, a0, a1,
                                         land_parameters_list, gamma, alpha,
                                         n_cores)
 
-  V_total_obs <- add_noise(V_total, c = 0.2)
+  V_total_obs <- add_noise(V_total, c = 0.1)
   V_cum_list <- chop_violence(V_total_obs)
   D_flow <- solve_equilibrium_migration_flow(V_cum_list, delta, tau_ell, tau_n,
                                              r, a0, a1, land_parameters_list,
                                              n_cores)
 
-  D_flow_obs <- lapply(D_flow, add_noise, c = 0.33)
+  D_flow_obs <- lapply(D_flow, add_noise, c = 0.2)
   out <- list(V_total = V_total, V_total_obs = V_total_obs,
               V_cum_obs = V_cum_list,
               D_flow = D_flow, D_flow_obs = D_flow_obs)

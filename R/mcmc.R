@@ -1,7 +1,7 @@
 moment_condition <- function(delta, tau_ell, tau_n, r, a0, a1,
                              land_parameters_list, gamma, alpha,
                              V_total_obs, V_cum_obs, D_flow_obs,
-                             cluster = NULL, n_cores = 1){
+                             n_cores = 1){
 
   # Solve model
   model_solution <- solve_model(V_cum_list = V_cum_obs, delta,
@@ -24,8 +24,8 @@ moment_condition <- function(delta, tau_ell, tau_n, r, a0, a1,
 
 # Hard-code the simulation data into this moment condition to save typing
 moment_condition_sim <- function(delta, tau_ell, tau_n, r, a0, a1, gamma,
-                                 alpha, cluster = NULL, n_cores = 1){
-
+                                 alpha, n_cores = 1){
+  sims <- sims_small
   out <- moment_condition(delta = delta, tau_ell = tau_ell,
                           tau_n = tau_n, r = r, a0 = a0, a1 = a1,
                           land_parameters_list = sims$land_params,
@@ -33,19 +33,18 @@ moment_condition_sim <- function(delta, tau_ell, tau_n, r, a0, a1, gamma,
                           V_total_obs = sims$V_total,
                           V_cum_obs = sims$V_cum,
                           D_flow_obs = sims$D_flow_obs,
-                          cluster = cluster,
                           n_cores = n_cores)
   return(out)
 }
 
 
-draw_CH_chain_simdata <- function(n_draws, sigma_scale = 3, cluster = NULL,
-                                  n_cores = 1){
+draw_CH_chain_simdata <- function(n_draws, sigma_scale = 3, n_cores = 1){
 
+  sims <- sims_small
   true_params <- unlist(sims$model_params)
-  lower <- true_params / c(10, 1, 1, 1, 1, 1, 10, 10)
-  upper <- true_params * c(10, 1, 1, 1, 1, 1, 10, 10)
-  starting_values <- true_params + c(0.8, 0, 0, 0, 0, 0, 0.75, 0.005)
+  lower <- true_params / c(10, 1, 1, 1, 10, 1, 10, 10)
+  upper <- true_params * c(10, 1, 1, 1, 10, 1, 10, 10)
+  starting_values <- true_params + c(0.8, 0, 0, 0, 2, 0, 0.75, 0.005)
   sigma <- (upper - lower) / sigma_scale
   n_params <- length(sigma)
 
@@ -56,8 +55,7 @@ draw_CH_chain_simdata <- function(n_draws, sigma_scale = 3, cluster = NULL,
   accept_count <- 0L
   draws[1,] <- starting_values
   Like[1] <- -1 * do.call(moment_condition_sim, c(as.list(starting_values),
-                                                  list(cluster = cluster,
-                                                       n_cores = n_cores)))
+                                                  list(n_cores = n_cores)))
   for(i in 2:(n_draws + 1)){
     proposal <- draws[i-1,] + rnorm(n_params, mean = 0, sd = sigma)
 
@@ -66,8 +64,7 @@ draw_CH_chain_simdata <- function(n_draws, sigma_scale = 3, cluster = NULL,
       Like[i] <- Like[i-1]
     } else {
       Like_proposal <- -1 * do.call(moment_condition_sim, c(as.list(proposal),
-                                                      list(cluster = cluster,
-                                                           n_cores = n_cores)))
+                                                      list(n_cores = n_cores)))
       rho <- min(exp(Like_proposal - Like[i-1]), 1)
       U <- runif(1)
       if(U < rho){
