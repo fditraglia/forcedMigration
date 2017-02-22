@@ -2,8 +2,8 @@ moment_condition <- function(delta, tau_ell, tau_n, r, a0, a1,
                              land_parameters_list, gamma, alpha,
                              V_total_obs, V_cum_obs, D_flow_obs,
                              n_cores = 1){
-
-  # Solve model
+  # Solves the model at specified parameter values and constructs matrix MC each
+  # column of which is an m_i(theta) for some municipality i
   model_solution <- solve_model(V_cum_list = V_cum_obs, delta,
                                 tau_ell, tau_n, r, a0, a1, land_parameters_list,
                                 gamma, alpha, n_cores)
@@ -15,56 +15,79 @@ moment_condition <- function(delta, tau_ell, tau_n, r, a0, a1,
   matD_flow_obs <- matrix(unlist(D_flow_obs), ncol = n_periods, byrow = TRUE)
   matD_flow_model <- matrix(unlist(D_flow_model), ncol = n_periods, byrow = TRUE)
 
-  # Construct moment conditions
-  D_MC <- colMeans(matD_flow_model - matD_flow_obs)
-  V_MC <- mean(V_total_model - V_total_obs)
-  MC <- c(D_MC, V_MC)
-  return(sum(MC^2))
+  # Construct moment functions m_i(theta) for each municipality
+  D_MC <- matD_flow_model - matD_flow_obs
+  colnames(D_MC) <- paste0('D_MC_t', 1:ncol(D_MC))
+  V_MC <- V_total_model - V_total_obs
+  MC <- t(cbind(V_MC, D_MC))
+  return(MC)
 }
 
-# Hard-code the simulation data into this moment condition to save typing
-moment_condition_sim <- function(delta, tau_ell, tau_n, r, a0, a1, gamma,
-                                 alpha, n_cores = 1){
-  sims <- sims_small
-  out <- moment_condition(delta = delta, tau_ell = tau_ell,
-                          tau_n = tau_n, r = r, a0 = a0, a1 = a1,
-                          land_parameters_list = sims$land_params,
-                          gamma = gamma, alpha = alpha,
-                          V_total_obs = sims$V_total,
-                          V_cum_obs = sims$V_cum,
-                          D_flow_obs = sims$D_flow_obs,
-                          n_cores = n_cores)
-  return(out)
+Like_CUE <- function(MC){
+  # Evaluates the pseudo-likelihood based on the continuous-updating GMM
+  # criterion function, where each row of MC is an m_i(theta) for some
+  # municipality i
+  n <- ncol(MC)
+  g <- rowMeans(MC)
+  Omega <- var(t(MC))
+  L <- t(chol(Omega))
+  g_weighted <- forwardsolve(L, g)
+  return(-0.5 * n * sum(g_weighted^2))
 }
 
+draw_CH_chain_simdata <- function(n_draws, sigma_divide = 3, n_cores = 1){
 
-draw_CH_chain_simdata <- function(n_draws, sigma_scale = 3, n_cores = 1){
+  sims <- sims_small # Change later to use the full set of municipalities
 
-  sims <- sims_small
+  # Use simulated dataset
+  land_parameters_list <- sims$land_params
+  V_total_obs <- sims$V_total_obs
+  V_cum_obs <- sims$V_cum_obs
+  D_flow_obs <- sims$D_flow_obs
+
+  # List of those parameters passed to moment_condition that will not change
+  # between iterations of the MCMC run
+  fixed_params_list <- list(n_cores = n_cores,
+                            land_parameters_list = land_parameters_list,
+                            V_total_obs = V_total_obs,
+                            V_cum_obs = V_cum_obs,
+                            D_flow_obs = D_flow_obs)
+
+  # Starting values, proposal variances, and bounds for uniform priors
   true_params <- unlist(sims$model_params)
   lower <- true_params / c(10, 1, 1, 1, 10, 1, 10, 10)
   upper <- true_params * c(10, 1, 1, 1, 10, 1, 10, 10)
   starting_values <- true_params + c(0.8, 0, 0, 0, 2, 0, 0.75, 0.005)
-  sigma <- (upper - lower) / sigma_scale
+  sigma <- (upper - lower) / sigma_divide
   n_params <- length(sigma)
 
+  # Matrix of NAs to store the MCMC draws, vector of NAs for the pseudo-Likelihood
   draws <- matrix(NA_real_, nrow = n_draws + 1, ncol = n_params)
   colnames(draws) <- names(sims$model_params)
   Like <- rep(NA, n_draws)
 
-  accept_count <- 0L
+  # Evaluate pseudo-Likelihood at MCMC starting values
   draws[1,] <- starting_values
-  Like[1] <- -1 * do.call(moment_condition_sim, c(as.list(starting_values),
-                                                  list(n_cores = n_cores)))
+  MC_temp <- do.call(moment_condition,
+                     c(as.list(starting_values), fixed_params_list))
+  Like[1] <- Like_CUE(MC_temp)
+
+  # Random walk Metroplis-Hastings updates with normal proposals
+  accept_count <- 0L
   for(i in 2:(n_draws + 1)){
     proposal <- draws[i-1,] + rnorm(n_params, mean = 0, sd = sigma)
 
+    # Reject a proposal that lies outside the support of the prior
     if(any(proposal > upper) || any(proposal < lower)){
       draws[i,] <- draws[i-1,]
       Like[i] <- Like[i-1]
+
+    # Otherwise evaluate the pseudo-Likelihood of the proposal
     } else {
-      Like_proposal <- -1 * do.call(moment_condition_sim, c(as.list(proposal),
-                                                      list(n_cores = n_cores)))
+      MC_temp <- do.call(moment_condition,
+                     c(as.list(proposal), fixed_params_list))
+      Like_proposal <- Like_CUE(MC_temp)
+
       rho <- min(exp(Like_proposal - Like[i-1]), 1)
       U <- runif(1)
       if(U < rho){
