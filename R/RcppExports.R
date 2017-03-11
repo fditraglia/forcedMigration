@@ -41,3 +41,7 @@ get_V_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, g
     .Call('forcedMigration_get_V_star', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
 }
 
+get_S <- function(X_star, y_star, Q, gamma) {
+    .Call('forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
+}
+

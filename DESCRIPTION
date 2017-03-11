@@ -8,12 +8,12 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 LazyData: TRUE
 Imports:
-    Rcpp (>= 0.12.5),
-    RcppNumerical,
+    Rcpp (>= 0.12.5)
 LinkingTo:
     Rcpp,
+    RcppArmadillo,
     RcppEigen,
-    RcppNumerical
+    RcppNumerical,
 Recommends:
     haven
     actuar

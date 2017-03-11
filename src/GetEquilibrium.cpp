@@ -1,7 +1,3 @@
-// [[Rcpp::depends(RcppEigen)]]
-// [[Rcpp::depends(RcppNumerical)]]
-
-#include <Rcpp.h>
 #include <RcppNumerical.h>
 #include "brent.hpp"
 
