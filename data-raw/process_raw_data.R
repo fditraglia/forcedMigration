@@ -66,12 +66,29 @@ omega_n <- with(cross_section_raw, landless_families / num_families)
 cross_section <- data.frame(municipality = cross_section_raw$municipality,
                                 beta_params, omega_n)
 
-panel <- panel_raw[,c("municipality", "year", "ac_vcivilparas_UR",
-                      "desplazados_paras_AS", "desplazados_CODHES",
-                      "desplazados_total_RUV", "desplazados_CEDE",
+panel <- panel_raw[,c("municipality",
+                      "year",
+                      "ac_vcivilparas_UR", # Cumulative paramilitary violence
+                      "vcivilparas_UR", # Flow of paramilitary violence
+                      "ac_vcivilnotparas_UR", # Cumulative non-paramilitary violence
+                      "vcivilnotparas_UR", # Flow of non-paramilitary violence
+                      "desplazados_paras_AS", # Five measures of displacement
+                      "desplazados_CODHES",
+                      "desplazados_total_RUV",
+                      "desplazados_CEDE",
                       "desplazados_JYP")]
-names(panel) <- c("municipality", "year", "V_cum", "D_AS", "D_CODHES",
-                  "D_RUV", "D_CEDE", "D_JYP")
+
+names(panel) <- c("municipality",
+                  "year",
+                  "V_cum",
+                  "V_flow",
+                  "placeboV_cum",
+                  "placeboV_flow",
+                  "D_AS",
+                  "D_CODHES",
+                  "D_RUV",
+                  "D_CEDE",
+                  "D_JYP")
 
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
@@ -83,8 +100,8 @@ cross_section <- subset(cross_section, municipality %in% keep_municipalities)
 panel <- subset(panel, municipality %in% keep_municipalities)
 rm(keep_me, keep_municipalities)
 
-devtools::use_data(cross_section)
-devtools::use_data(panel)
+devtools::use_data(cross_section, overwrite = TRUE)
+devtools::use_data(panel, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
