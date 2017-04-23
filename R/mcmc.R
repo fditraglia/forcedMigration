@@ -35,7 +35,30 @@ Like_CUE <- function(MC){
   return(-0.5 * n * sum(g_weighted^2))
 }
 
-draw_CH_chain_simdata <- function(n_draws, sigma_divide = 3, n_cores = 1){
+get_CUE_simdata <- function(params, n_cores = 1){
+  sims <- sims_small # Change later to use the full set of municipalities
+
+  # Use simulated dataset
+  land_parameters_list <- sims$land_params
+  V_total_obs <- sims$V_total_obs
+  V_cum_obs <- sims$V_cum_obs
+  D_flow_obs <- sims$D_flow_obs
+
+  # List of those parameters passed to moment_condition that will not change
+  # between iterations of the MCMC run
+  fixed_params_list <- list(n_cores = n_cores,
+                            land_parameters_list = land_parameters_list,
+                            V_total_obs = V_total_obs,
+                            V_cum_obs = V_cum_obs,
+                            D_flow_obs = D_flow_obs)
+
+  # params is assumed to be a named list with elements:
+  #     (delta, tau_ell, tau_n, r, a0, a1, gamma, alpha)
+  MC <- do.call(moment_condition, c(params, fixed_params_list))
+  return(Like_CUE(MC))
+}
+
+draw_CH_chain_simdata <- function(n_draws, proposal_scale = 3, n_cores = 1){
 
   sims <- sims_small # Change later to use the full set of municipalities
 
@@ -58,7 +81,7 @@ draw_CH_chain_simdata <- function(n_draws, sigma_divide = 3, n_cores = 1){
   lower <- true_params / c(10, 1, 1, 1, 10, 1, 10, 10)
   upper <- true_params * c(10, 1, 1, 1, 10, 1, 10, 10)
   starting_values <- true_params + c(0.8, 0, 0, 0, 2, 0, 0.75, 0.005)
-  sigma <- (upper - lower) / sigma_divide
+  sigma <- (upper - lower) / (2 * proposal_scale)
   n_params <- length(sigma)
 
   # Matrix of NAs to store the MCMC draws, vector of NAs for the pseudo-Likelihood
@@ -72,16 +95,22 @@ draw_CH_chain_simdata <- function(n_draws, sigma_divide = 3, n_cores = 1){
                      c(as.list(starting_values), fixed_params_list))
   Like[1] <- Like_CUE(MC_temp)
 
-  # Random walk Metroplis-Hastings updates with normal proposals
+  # Random walk Metroplis-Hastings updates with normal proposals and
+  # single-component updates (randomly chosen)
   accept_count <- 0L
   for(i in 2:(n_draws + 1)){
-    proposal <- draws[i-1,] + rnorm(n_params, mean = 0, sd = sigma)
+    # Randomly choose component to update
+    # --- Only select the components we haven't fixed! (Later no parameters fixed)
+    not_fixed <- c(1, 5, 7, 8)
+    update_me <- sample(not_fixed, 1)
+    proposal <- draws[i-1,]
+    proposal[update_me] <- sigma[update_me] * rnorm(1)
 
-    # Reject a proposal that lies outside the support of the prior
-    if(any(proposal > upper) || any(proposal < lower)){
+    # If proposal lies outside the support of the prior, reject it
+    if((proposal[update_me] > upper[update_me]) ||
+       (proposal[update_me] < lower[update_me])){
       draws[i,] <- draws[i-1,]
       Like[i] <- Like[i-1]
-
     # Otherwise evaluate the pseudo-Likelihood of the proposal
     } else {
       MC_temp <- do.call(moment_condition,
