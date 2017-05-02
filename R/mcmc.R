@@ -58,7 +58,10 @@ get_CUE_simdata <- function(params, n_cores = 1){
   return(Like_CUE(MC))
 }
 
-draw_CH_chain_simdata <- function(n_draws, proposal_scale = 3, n_cores = 1){
+draw_CH_chain_simdata <- function(n_draws, proposal_scale = 3, n_cores = 1,
+                                  lower = NULL, upper = NULL,
+                                  starting_values = NULL,
+                                  sigma = NULL){
 
   sims <- sims_small # Change later to use the full set of municipalities
 
@@ -76,12 +79,15 @@ draw_CH_chain_simdata <- function(n_draws, proposal_scale = 3, n_cores = 1){
                             V_cum_obs = V_cum_obs,
                             D_flow_obs = D_flow_obs)
 
-  # Starting values, proposal variances, and bounds for uniform priors
-  true_params <- unlist(sims$model_params)
-  lower <- true_params / c(10, 1, 1, 1, 10, 1, 10, 10)
-  upper <- true_params * c(10, 1, 1, 1, 10, 1, 10, 10)
-  starting_values <- true_params + c(0.8, 0, 0, 0, 2, 0, 0.75, 0.005)
-  sigma <- (upper - lower) / (2 * proposal_scale)
+  if(is.null(lower) || is.null(upper) || is.null(starting_values) || is.null(sigma)){
+    # Starting values, proposal variances, and bounds for uniform priors
+    true_params <- unlist(sims$model_params)
+    lower <- true_params / c(10, 1, 1, 1, 10, 1, 10, 10)
+    upper <- true_params * c(10, 1, 1, 1, 10, 1, 10, 10)
+    starting_values <- true_params + c(0.8, 0, 0, 0, 2, 0, 0.75, 0.005)
+    sigma <- (upper - lower) / (2 * proposal_scale)
+  }
+
   n_params <- length(sigma)
 
   # Matrix of NAs to store the MCMC draws, vector of NAs for the pseudo-Likelihood
