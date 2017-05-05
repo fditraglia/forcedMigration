@@ -17,7 +17,7 @@ alpha <- 0.005
 
 set.seed(2619)
 sims <- simulate_from_model(delta, tau_ell, tau_n, r, a0, a1,
-                            land_parameters_list, gamma, alpha, n_cores = 8)
+                            land_parameters_list, gamma, alpha, n_cores = 4)
 
 sims$land_params <- land_parameters_list
 sims$model_params <- list(delta = delta,

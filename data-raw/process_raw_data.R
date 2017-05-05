@@ -64,6 +64,7 @@ names(beta_params) <- c('p', 'q', 'H_bar')
 omega_n <- with(cross_section_raw, landless_families / num_families)
 
 cross_section <- data.frame(municipality = cross_section_raw$municipality,
+                            num_families = cross_section_raw$num_families,
                                 beta_params, omega_n)
 
 panel <- panel_raw[,c("municipality",
