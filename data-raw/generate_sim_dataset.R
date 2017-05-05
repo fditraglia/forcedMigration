@@ -14,11 +14,18 @@ a0 <- 5
 a1 <- 0
 gamma <- 0.25
 alpha <- 0.005
+num_families <- cross_section$num_families
+d_intercept <- 0.0003 # gives Poisson mean of 0.7 when scaled up by
+                      #median num_families (2330)
+V_intercept = 0.2 # already on the count scale since violence is not per-capita
 
 set.seed(2619)
 sims <- simulate_from_model(delta, tau_ell, tau_n, r, a0, a1,
-                            land_parameters_list, gamma, alpha, n_cores = 4)
+                            land_parameters_list, gamma, alpha,
+                            num_families, d_intercept, V_intercept,
+                            n_cores = 4)
 
+sims$num_families <- num_families
 sims$land_params <- land_parameters_list
 sims$model_params <- list(delta = delta,
                           tau_ell = tau_ell,
@@ -36,6 +43,7 @@ sims_small <- list(V_total = sims$V_total[random_municipalities],
                    V_cum_obs = sims$V_cum_obs[random_municipalities],
                    D_flow = sims$D_flow[random_municipalities],
                    D_flow_obs = sims$D_flow_obs[random_municipalities],
+                   num_families = sims$num_families[random_municipalities],
                    land_params = sims$land_params[random_municipalities],
                    model_params = sims$model_params)
 
