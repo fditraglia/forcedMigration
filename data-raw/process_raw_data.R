@@ -67,6 +67,15 @@ cross_section <- data.frame(municipality = cross_section_raw$municipality,
                             num_families = cross_section_raw$num_families,
                                 beta_params, omega_n)
 
+# Extract 1993 population from panel_raw and merge with cross_section
+popn1993 <- subset(panel_raw, year == 1996)[,c("municipality",
+                                               "Total_Poblacion1993")]
+names(popn1993) <- c('municipality', 'popn1993')
+cross_section <- merge(cross_section, popn1993)
+
+
+
+
 panel <- panel_raw[,c("municipality",
                       "year",
                       "ac_vcivilparas_UR", # Cumulative paramilitary violence
@@ -77,7 +86,8 @@ panel <- panel_raw[,c("municipality",
                       "desplazados_CODHES",
                       "desplazados_total_RUV",
                       "desplazados_CEDE",
-                      "desplazados_JYP")]
+                      "desplazados_JYP",
+                      "Total_Poblacion1993")]
 
 names(panel) <- c("municipality",
                   "year",
@@ -89,7 +99,8 @@ names(panel) <- c("municipality",
                   "D_CODHES",
                   "D_RUV",
                   "D_CEDE",
-                  "D_JYP")
+                  "D_JYP",
+                  "popn1993")
 
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
