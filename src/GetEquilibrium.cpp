@@ -147,6 +147,30 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
 }
 
 // [[Rcpp::export]]
+double get_surplus_new(double V, double delta, double tau_ell, double tau_n,
+                       double r, double a0, double a1, double p, double q,
+                       double H_bar, double omega_n, double gamma, double alpha)
+{
+  if(V > 0.0){
+    // Equilibrium migration at violence level V
+    double Dstar = get_migration_eq(V, 0.0, delta, tau_ell, tau_n, r, a0,
+                          a1, p, q, H_bar, omega_n);
+    // Equilibrium dis-utility of violence at violence level V
+    const double Q = get_Q(V, Dstar, delta);
+    // Calculate total land expropriated (in per capita terms)
+    const double mu = H_bar * p / (p + q);
+    ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
+    double err_est;
+    int err_code;
+    const double res = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
+    double Xstar = (1 - omega_n) * res;
+    return Xstar - gamma * Dstar - alpha * V;
+  } else {
+    return 0.0;
+  }
+}
+
+// [[Rcpp::export]]
 double get_surplus_infeas(double V_tilde, double delta, double tau_ell,
                           double tau_n, double r, double a0, double a1,
                           double p, double q, double H_bar, double omega_n,
