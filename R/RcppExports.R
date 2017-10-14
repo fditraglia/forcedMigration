@@ -37,26 +37,6 @@ get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_
     .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
 }
 
-get_surplus_new <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_surplus_new', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
-}
-
-get_surplus_infeas <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_surplus_infeas', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
-}
-
-get_V_tilde_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_V_tilde_star', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
-}
-
-get_V_cpp <- function(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_V_cpp', PACKAGE = 'forcedMigration', V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
-}
-
-get_V_star <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_V_star', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
-}
-
 get_S <- function(X_star, y_star, Q, gamma) {
     .Call('forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
 }

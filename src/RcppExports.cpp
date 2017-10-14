@@ -186,117 +186,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_surplus_new
-double get_surplus_new(double V, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n, double gamma, double alpha);
-RcppExport SEXP forcedMigration_get_surplus_new(SEXP VSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type V(VSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_surplus_new(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_surplus_infeas
-double get_surplus_infeas(double V_tilde, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n, double gamma, double alpha);
-RcppExport SEXP forcedMigration_get_surplus_infeas(SEXP V_tildeSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type V_tilde(V_tildeSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_surplus_infeas(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_V_tilde_star
-double get_V_tilde_star(double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n, double gamma, double alpha);
-RcppExport SEXP forcedMigration_get_V_tilde_star(SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_V_tilde_star(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_V_cpp
-List get_V_cpp(double V_tilde, double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
-RcppExport SEXP forcedMigration_get_V_cpp(SEXP V_tildeSEXP, SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type V_tilde(V_tildeSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_V_cpp(V_tilde, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_V_star
-double get_V_star(double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n, double gamma, double alpha);
-RcppExport SEXP forcedMigration_get_V_star(SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_ell(tau_ellSEXP);
-    Rcpp::traits::input_parameter< double >::type tau_n(tau_nSEXP);
-    Rcpp::traits::input_parameter< double >::type r(rSEXP);
-    Rcpp::traits::input_parameter< double >::type a0(a0SEXP);
-    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
-    Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_V_star(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
 // get_S
 List get_S(arma::mat X_star, arma::vec y_star, arma::mat Q, arma::vec gamma);
 RcppExport SEXP forcedMigration_get_S(SEXP X_starSEXP, SEXP y_starSEXP, SEXP QSEXP, SEXP gammaSEXP) {
@@ -322,11 +211,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"forcedMigration_get_D_max", (DL_FUNC) &forcedMigration_get_D_max, 9},
     {"forcedMigration_get_contract", (DL_FUNC) &forcedMigration_get_contract, 12},
     {"forcedMigration_get_surplus", (DL_FUNC) &forcedMigration_get_surplus, 13},
-    {"forcedMigration_get_surplus_new", (DL_FUNC) &forcedMigration_get_surplus_new, 13},
-    {"forcedMigration_get_surplus_infeas", (DL_FUNC) &forcedMigration_get_surplus_infeas, 13},
-    {"forcedMigration_get_V_tilde_star", (DL_FUNC) &forcedMigration_get_V_tilde_star, 12},
-    {"forcedMigration_get_V_cpp", (DL_FUNC) &forcedMigration_get_V_cpp, 11},
-    {"forcedMigration_get_V_star", (DL_FUNC) &forcedMigration_get_V_star, 12},
     {"forcedMigration_get_S", (DL_FUNC) &forcedMigration_get_S, 4},
     {NULL, NULL, 0}
 };
