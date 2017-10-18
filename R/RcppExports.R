@@ -2,42 +2,42 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 get_Q <- function(V, D_e, delta) {
-    .Call('forcedMigration_get_Q', PACKAGE = 'forcedMigration', V, D_e, delta)
+    .Call('_forcedMigration_get_Q', PACKAGE = 'forcedMigration', V, D_e, delta)
 }
 
 get_Dstar <- function(D_e, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_Dstar', PACKAGE = 'forcedMigration', D_e, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_Dstar', PACKAGE = 'forcedMigration', D_e, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_migration_eq <- function(V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_migration_eq', PACKAGE = 'forcedMigration', V, start, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_migration_cum <- function(V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_migration_cum', PACKAGE = 'forcedMigration', V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_migration_cum', PACKAGE = 'forcedMigration', V_cum, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_X <- function(Q, tau_ell, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_X', PACKAGE = 'forcedMigration', Q, tau_ell, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_X', PACKAGE = 'forcedMigration', Q, tau_ell, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_X_max <- function(tau_ell, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_X_max', PACKAGE = 'forcedMigration', tau_ell, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_X_max', PACKAGE = 'forcedMigration', tau_ell, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_D_max <- function(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n) {
-    .Call('forcedMigration_get_D_max', PACKAGE = 'forcedMigration', tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
+    .Call('_forcedMigration_get_D_max', PACKAGE = 'forcedMigration', tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n)
 }
 
 get_contract <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_contract', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
+    .Call('_forcedMigration_get_contract', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
 }
 
 get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
+    .Call('_forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
 }
 
 get_S <- function(X_star, y_star, Q, gamma) {
-    .Call('forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
+    .Call('_forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
 }
 

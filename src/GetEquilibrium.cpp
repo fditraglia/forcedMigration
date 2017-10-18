@@ -253,12 +253,21 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   double disc = pow(z_quantile, 2.0) + 4.0 * V_max;
   double upper = pow(0.5 * (std::sqrt(disc) - z_quantile), 2.0);
 
-  // Maximize expected surplus (minimize negative expected surplus)
+  // Maximize expected surplus (minimize negative expected surplus) using BRENT
   negExpectedSurplus neg_S_e(alpha, B_max, Bstar);
   double lambda_star;
   double neg_S_e_star = brent::local_min(0.0, upper, 0.0001, neg_S_e,
                                          lambda_star);
   double S_e_star = -1.0 * neg_S_e_star;
+
+  // Given the shape of the objective function, and the fact that zero lambda
+  // yields zero expected surplus, the only way for Brent to fail is if it finds
+  // a local optimum that gives a *negative* value for expected surplus. In this
+  // case set lambda_star to zero
+  if(S_e_star < 0.0) {
+    lambda_star = 0.0;
+    S_e_star = 0.0;
+  }
 
   return List::create(Named("lambda_upper") = upper,
                       Named("V_max") = V_max,
