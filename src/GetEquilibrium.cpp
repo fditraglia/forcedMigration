@@ -188,8 +188,8 @@ public:
                                               B_max(B_max_),
                                               Bstar(Bstar_){}
   double operator() (double lambda) {
-    NumericVector V_seq = wrap(seq_along(Bstar) - 1);
-    NumericVector probs = dpois(V_seq, lambda, 0);
+    NumericVector V_seq = wrap(seq_along(Bstar));
+    NumericVector probs = exp(dpois(V_seq, lambda, 1) - log(1 - exp(-lambda)));
     double ExpectedSurplus = sum(probs * Bstar) +
       (1 - sum(probs)) * B_max - alpha * lambda;
     return -1.0 * ExpectedSurplus;
@@ -213,10 +213,12 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   std::vector<double> Dstar;
   std::vector<double> Xstar;
 
-  unsigned int V_realized = 0; // Careful about types here!
-  double Dstar_temp = 0.0;
-  double Qstar_temp = 0.0;
-  double Xstar_temp = 0.0;
+  unsigned int V_realized = 1; // Careful about types here!
+  double Dstar_temp = get_migration_eq(double(V_realized), Dstar_temp, delta,
+                                       tau_ell, tau_n, r, a0, a1, p, q, H_bar,
+                                       omega_n);
+  double Qstar_temp = get_Q(double(V_realized), Dstar_temp, delta);
+  double Xstar_temp = get_X(Qstar_temp, tau_ell, r, a0, a1, p, q, H_bar, omega_n);
 
   Dstar.push_back(Dstar_temp);
   Xstar.push_back(Xstar_temp);
@@ -227,7 +229,7 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   // for the fixed point iteration in get_migration_eq. Maximum of 100
   // iterations to ensure that the loop terminates.
   while(((std::abs(Dstar_temp - D_max) > 0.0001) ||
-        (std::abs(Xstar_temp - X_max) > 0.01)) && (V_realized <= 100))
+        (std::abs(Xstar_temp - X_max) > 0.001)) && (V_realized <= 100))
   {
     ++V_realized;
     Dstar_temp = get_migration_eq(double(V_realized), Dstar_temp, delta, tau_ell,
@@ -248,7 +250,7 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   NumericVector Bstar = Xstar_NV - gamma * Dstar_NV;
 
   // Calculate upper bound for lambda_star
-  double tol = 0.00001; // Poisson mass below V_max
+  double tol = 0.00001; // Probability mass below V_max
   double z_quantile = R::qnorm(tol, 0.0, 1.0, 1, 0);
   double disc = pow(z_quantile, 2.0) + 4.0 * V_max;
   double upper = pow(0.5 * (std::sqrt(disc) - z_quantile), 2.0);
@@ -256,17 +258,20 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   // Maximize expected surplus (minimize negative expected surplus) using BRENT
   negExpectedSurplus neg_S_e(alpha, B_max, Bstar);
   double lambda_star;
-  double neg_S_e_star = brent::local_min(0.0, upper, 0.0001, neg_S_e,
+  double lower = 0.1; // Smallest lambda allowed: corresponds to approx. 95%
+                      // probability of drawing a 1 from a zero-truncated
+                      // Poisson distribution
+  double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
                                          lambda_star);
   double S_e_star = -1.0 * neg_S_e_star;
 
-  // Given the shape of the objective function, and the fact that zero lambda
-  // yields zero expected surplus, the only way for Brent to fail is if it finds
-  // a local optimum that gives a *negative* value for expected surplus. In this
-  // case set lambda_star to zero
-  if(S_e_star < 0.0) {
-    lambda_star = 0.0;
-    S_e_star = 0.0;
+  // Given the shape of the objective function, the only way for Brent to fail
+  // is if it finds a local optimum that gives a lower expected surplus than
+  // setting lambda equal to lower.
+  double S_e_lower = -1.0 * neg_S_e(lower);
+  if(S_e_star < S_e_lower) {
+    lambda_star = lower;
+    S_e_star = S_e_lower;
   }
 
   return List::create(Named("lambda_upper") = upper,
