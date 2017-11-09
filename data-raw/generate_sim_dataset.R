@@ -1,53 +1,64 @@
 library(forcedMigration)
 
-land_parameters <- cross_section[, c('p', 'q', 'H_bar', 'omega_n')]
-land_parameters_list <- lapply(1:nrow(land_parameters),
-                               function(i) as.list(land_parameters[i,]))
-rm(land_parameters)
+set.seed(1234)
 
-# "Fixed" Model parameters
-delta <- 0.2
-tau_ell <- 0.6
-tau_n <- 0.6
-r <- 0.1
-a0 <- 5
-a1 <- 0
-gamma <- 0.25
-alpha <- 0.005
-num_families <- cross_section$num_families
-d_intercept <- 0.0003 # gives Poisson mean of 0.7 when scaled up by
-                      #median num_families (2330)
-V_intercept = 0.2 # already on the count scale since violence is not per-capita
-
-set.seed(2619)
-sims <- simulate_from_model(delta, tau_ell, tau_n, r, a0, a1,
-                            land_parameters_list, gamma, alpha,
-                            num_families, d_intercept, V_intercept,
-                            n_cores = 4)
-
-sims$num_families <- num_families
-sims$land_params <- land_parameters_list
-sims$model_params <- list(delta = delta,
-                          tau_ell = tau_ell,
-                          tau_n = tau_n,
-                          r = r,
-                          a0 = a0,
-                          a1 = a1,
-                          gamma = gamma,
-                          alpha = alpha)
-
-# Take a random sample to create a "small" sim dataset
-random_municipalities <- sample(1:length(sims$V_total), size = 100)
-sims_small <- list(V_total = sims$V_total[random_municipalities],
-                   V_total_obs = sims$V_total_obs[random_municipalities],
-                   V_cum_obs = sims$V_cum_obs[random_municipalities],
-                   D_flow = sims$D_flow[random_municipalities],
-                   D_flow_obs = sims$D_flow_obs[random_municipalities],
-                   num_families = sims$num_families[random_municipalities],
-                   land_params = sims$land_params[random_municipalities],
-                   model_params = sims$model_params)
+# Set parameters of simulation
+model <- list(delta = 0.2,
+              tau_ell = 0.6,
+              tau_n = 0.6,
+              r = 0.1,
+              a0 = 5,
+              a1 = 0.5,
+              rho = 0.3)
+obs <- list(log_dbar = log(0.5),
+            nu = seq(-0.3, 0.3, length.out = 5),
+            eta = seq(-0.1, 0.1, length.out = 16)) # One fewer than T
+sim_params <- list(model = model, obs = obs)
+rm(model, obs)
 
 
-devtools::use_data(sims, overwrite = TRUE)
-devtools::use_data(sims_small, overwrite = TRUE)
+# Solve model at given values for structural parameters
+get_migration_flow_i <- function(i) {
+  Vcum_i <- as.matrix(Vcum[i,])
+  land_i <- land_parameters[i,]
+  par <- sim_params$model
+  migration_cum <- get_migration_cum(Vcum_i,
+                                     delta = par$delta,
+                                     tau_ell = par$tau_ell,
+                                     tau_n = par$tau_n,
+                                     r = par$r,
+                                     a0 = par$a0,
+                                     a1 = par$a1,
+                                     p = land_i$p,
+                                     q = land_i$q,
+                                     H_bar = land_i$H_bar,
+                                     omega_n = land_i$omega_n)
+  diff(c(0, migration_cum))
+}
+
+
+# test run
+get_migration_flow_i(278)
+
+dstar_list <- lapply(1:nrow(Vcum), get_migration_flow_i)
+dstar <- do.call(rbind, dstar_list)
+colnames(dstar) <- colnames(Vcum)
+rownames(dstar) <- rownames(Vcum)
+dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
+dstar_friction <- with(sim_params$model, (1 - rho) * dstar + rho * dstar_lag)
+
+# Clean up: only keep fam, pop, and dstar_friction
+rm(dstar, dstar_list, dstar_lag, get_migration_flow_i)
+
+
+# Simulate from observation model
+pop <- cross_section$popn1993
+fam <- cross_section$num_families
+mu <- with(sim_params$obs,
+           ((pop / fam) * t(t(dstar_friction + exp(log_dbar)) *
+                              exp(c(0, eta)))) %o% exp(nu))
+simZ <- array(rpois(length(mu), lambda = mu), dim = dim(mu))
+
+devtools::use_data(simZ, overwrite = TRUE)
+devtools::use_data(sim_params, overwrite = TRUE)
 rm(list = ls())
