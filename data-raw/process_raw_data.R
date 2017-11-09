@@ -104,6 +104,7 @@ names(panel) <- c("municipality",
 
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
+names(cross_section[, 'V_cum']) <- 'VTotal'
 
 # Keep only municipalities with at least 100 landowners
 keep_me <- n_landholders >= 100
@@ -112,8 +113,20 @@ cross_section <- subset(cross_section, municipality %in% keep_municipalities)
 panel <- subset(panel, municipality %in% keep_municipalities)
 rm(keep_me, keep_municipalities)
 
+# Create matrices of land parameters and cumulative violence
+land_parameters <- cross_section[, c('p', 'q', 'H_bar', 'omega_n')]
+
+Vcum <- reshape(as.data.frame(panel[,c('municipality', 'year', 'V_cum')]),
+                direction = 'wide', idvar = 'municipality',
+                timevar = 'year')
+colnames(Vcum)[-1] <- as.character(1996:2012)
+rownames(Vcum) <- Vcum$municipality
+Vcum <- Vcum[,-1]
+
 devtools::use_data(cross_section, overwrite = TRUE)
 devtools::use_data(panel, overwrite = TRUE)
+devtools::use_data(land_parameters, overwrite = TRUE)
+devtools::use_data(Vcum, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
