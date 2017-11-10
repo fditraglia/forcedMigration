@@ -37,8 +37,7 @@ negloglike_inner_D <- function(par_vec, Z, dstar_friction) {
   dbar <- exp(log_dbar)
   inner <- dbar + dstar_friction
   pop <- cross_section$popn1993
-  fam <- cross_section$num_families
-  mu <- ((pop / fam) * t(t(inner) * exp(c(0, eta)))) %o% exp(nu)
+  mu <- (pop * t(t(inner) * exp(c(0, eta)))) %o% exp(nu)
   out <- -1 * (sum(Z * log(mu) - mu - lfactorial(Z)))
 
   # Calculate gradient
