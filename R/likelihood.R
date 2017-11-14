@@ -61,7 +61,11 @@ negloglike_outer_D <- function(par_vec, Z) {
                     rho = par_vec[7])
 
   dstar_friction <- get_dstar_friction(par_model)
-  fn <- function(x) negloglike_inner_D(x, Z, dstar_friction)
-  suppressWarnings(opt <- nlm(f = fn, p = rep(0, 22)))
-  return(opt$minimum)
+  if(any((dstar_friction + 1) > 1)) {
+    fn <- function(x) negloglike_inner_D(x, Z, dstar_friction)
+    suppressWarnings(opt <- nlm(f = fn, p = rep(0, 22), iterlim = 300))
+    return(opt$minimum)
+  } else {
+    return(.Machine$double.xmax)
+  }
 }

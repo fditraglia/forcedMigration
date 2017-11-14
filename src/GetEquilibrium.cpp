@@ -82,7 +82,7 @@ double get_migration_eq(double V, double start, double delta, double tau_ell,
     f = get_Dstar(x, V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
     i++;
   }
-  return(x);
+  return(f);
 }
 
 // [[Rcpp::export]]
