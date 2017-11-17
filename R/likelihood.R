@@ -16,38 +16,45 @@ get_migration_flow_i <- function(i, par) {
   diff(c(0, migration_cum))
 }
 
-get_dstar_friction <- function(par) {
-  dstar_list <- lapply(1:nrow(Vcum), function(i) get_migration_flow_i(i, par))
-  dstar <- do.call(rbind, dstar_list)
-  colnames(dstar) <- colnames(Vcum)
-  rownames(dstar) <- rownames(Vcum)
-  dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
-  dstar_friction <- (1 - par$rho) * dstar + par$rho * dstar_lag
-  return(dstar_friction)
+# Concentrated negative log-likelihood as a function of dbar and rho
+negloglike_inner_D <- function(params, Z, dstar, dstar_lag) {
+  dbar <- params[1]
+  rho <- params[2]
+
+  pop <- cross_section$popn1993
+  D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
+  sqrtZsum <- sqrt(sum(Z))
+  Rt <- apply(Z, 2, sum) / sqrtZsum
+  Rj <- apply(Z, 3, sum) / sqrtZsum
+  Dsums <- colSums(D)
+  mu <- t((t(D) / Dsums) * Rt) %o% Rj
+  loglike <- (sum(Z * log(mu) - mu - lfactorial(Z)))
+
+  return(-1 * loglike)
 }
 
-negloglike_inner_D <- function(par_vec, Z, dstar_friction) {
 
-  # Unpack parameters
-  log_dbar <- par_vec[1]
-  eta <- par_vec[2:17]
-  nu <- par_vec[18:22]
+grad_inner_D <- function(params, Z, dstar, dstar_lag) {
+  dbar <- params[1]
+  rho <- params[2]
 
-  # Caclulate log-likelihood
-  dbar <- exp(log_dbar)
-  inner <- dbar + dstar_friction
+  # Calculate means \mu_{it}^j
   pop <- cross_section$popn1993
-  mu <- (pop * t(t(inner) * exp(c(0, eta)))) %o% exp(nu)
-  out <- -1 * (sum(Z * log(mu) - mu - lfactorial(Z)))
+  D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
+  sqrtZsum <- sqrt(sum(Z))
+  Rt <- apply(Z, 2, sum) / sqrtZsum
+  Rj <- apply(Z, 3, sum) / sqrtZsum
+  Dsums <- colSums(D)
+  mu <- t((t(D) / Dsums) * Rt) %o% Rj
 
   # Calculate gradient
-  dev <- Z - mu
-  D_log_dbar <- dbar * sum(apply(dev, 3, function(mat) mat / inner))
-  D_eta <- apply(dev, 2, sum)[-1] # The first time period doesn't have an eta
-  D_nu <- apply(dev, 3, sum)
-  attr(out, 'gradient') <- -1 * c(D_log_dbar, D_eta, D_nu)
+  dev <- (Z - mu)
+  onesJ <- rep(1, dim(Z)[3])
+  Deriv_dbar <- sum((t(t(pop / D) - (sum(pop) / Dsums)) %o% onesJ * dev))
+  popDiff <- pop * (dstar_lag - dstar)
+  Deriv_rho <- sum(t(t(popDiff / D) - (colSums(popDiff) / Dsums)) %o% onesJ * dev)
 
-  return(out)
+  return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
 negloglike_outer_D <- function(par_vec, Z) {
@@ -57,15 +64,17 @@ negloglike_outer_D <- function(par_vec, Z) {
                     tau_n = par_vec[3],
                     r = par_vec[4],
                     a0 = par_vec[5],
-                    a1 = par_vec[6],
-                    rho = par_vec[7])
+                    a1 = par_vec[6])
 
-  dstar_friction <- get_dstar_friction(par_model)
-  if(any((dstar_friction + 1) > 1)) {
-    fn <- function(x) negloglike_inner_D(x, Z, dstar_friction)
-    suppressWarnings(opt <- nlm(f = fn, p = rep(0, 22), iterlim = 300))
-    return(opt$minimum)
-  } else {
-    return(.Machine$double.xmax)
-  }
+  # Solve structural model
+  f <- function(i) get_migration_flow_i(i, par_model)
+  dstar <- do.call(rbind, lapply(1:nrow(Vcum), f))
+  dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
+
+  # Maximize concentrated log-likelihood over dbar and rho
+  f <- function(x) negloglike_inner_D(x, Z, dstar, dstar_lag)
+  Deriv_f <- function(x) grad_inner_D(x, Z, dstar, dstar_lag)
+  opt <- optim(c(0.01, 0.1), fn = f,  gr = Deriv_f,
+               lower = c(1e-10, 0), upper = c(1, 1), method = 'L-BFGS-B')
+  return(opt$value)
 }
