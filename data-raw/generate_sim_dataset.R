@@ -7,8 +7,8 @@ model <- list(delta = 0.2,
               tau_ell = 0.45,
               tau_n = 0.45,
               r = 0.1,
-              a0 = 1,
-              a1 = 1)
+              a0 = 2,
+              a1 = 0)
 obs <- list(dbar = 0.001,
             rho = 0.3,
             nu = seq(-0.3, 0.3, length.out = 5),
