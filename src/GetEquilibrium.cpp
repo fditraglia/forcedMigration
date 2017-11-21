@@ -189,9 +189,10 @@ public:
                                               Bstar(Bstar_){}
   double operator() (double lambda) {
     NumericVector V_seq = wrap(seq_along(Bstar));
-    NumericVector probs = exp(dpois(V_seq, lambda, 1) - log(1 - exp(-lambda)));
+    double log_denom = log(1 - exp(-lambda));
+    NumericVector probs = exp(dpois(V_seq, lambda, 1) - log_denom);
     double ExpectedSurplus = sum(probs * Bstar) +
-      (1 - sum(probs)) * B_max - alpha * lambda;
+      (1 - sum(probs)) * B_max - alpha * exp(log(lambda) - log_denom);
     return -1.0 * ExpectedSurplus;
   }
 };
@@ -249,18 +250,16 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   NumericVector Xstar_NV = wrap(Xstar), Dstar_NV = wrap(Dstar);
   NumericVector Bstar = Xstar_NV - gamma * Dstar_NV;
 
-  // Calculate upper bound for lambda_star
-  double tol = 0.00001; // Probability mass below V_max
-  double z_quantile = R::qnorm(tol, 0.0, 1.0, 1, 0);
-  double disc = pow(z_quantile, 2.0) + 4.0 * V_max;
-  double upper = pow(0.5 * (std::sqrt(disc) - z_quantile), 2.0);
-
   // Maximize expected surplus (minimize negative expected surplus) using BRENT
   negExpectedSurplus neg_S_e(alpha, B_max, Bstar);
-  double lambda_star;
   double lower = 0.1; // Smallest lambda allowed: corresponds to approx. 95%
                       // probability of drawing a 1 from a zero-truncated
                       // Poisson distribution
+  double S_e_lower = -1.0 * neg_S_e(lower); // Expected surplus at lamba = lower
+  double Bstar_max = max(Bstar);
+  double M = std::max(Bstar_max, B_max);
+  double upper = (M - S_e_lower) / alpha - 1;
+  double lambda_star;
   double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
                                          lambda_star);
   double S_e_star = -1.0 * neg_S_e_star;
@@ -268,7 +267,6 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   // Given the shape of the objective function, the only way for Brent to fail
   // is if it finds a local optimum that gives a lower expected surplus than
   // setting lambda equal to lower.
-  double S_e_lower = -1.0 * neg_S_e(lower);
   if(S_e_star < S_e_lower) {
     lambda_star = lower;
     S_e_star = S_e_lower;
