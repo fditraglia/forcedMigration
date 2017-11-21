@@ -118,7 +118,7 @@ class ExpropriationIntegrand: public Func
     {
       const double mu = H_bar * p / (p + q);
       double upper = (exp(tau_ell * Q - r * h / mu) - 1);
-      double log_F_c_given_h = R::pbeta(upper, a0 + a1 * h / mu, 1, 1, 1);
+      double log_F_c_given_h = R::pbeta(upper, 2 + a0 + a1 * h / mu, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
       return exp(log(h) + log_F_c_given_h + log_f_h);
     }
@@ -168,7 +168,7 @@ double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
   const double D_ell = integrate(g, 0.0, mu * tau_ell * Q / r, err_est, err_code);
 
   // Landless families
-  const double D_n = R::pbeta(exp(tau_n * Q) - 1, a0, 1, 1, 0);
+  const double D_n = R::pbeta(exp(tau_n * Q) - 1, 2 + a0, 1, 1, 0);
 
   // Overall migration
   return omega_n * D_n + (1 - omega_n) * D_ell;
