@@ -191,8 +191,8 @@ public:
     NumericVector V_seq = wrap(seq_along(Bstar));
     double log_denom = log(1 - exp(-lambda));
     NumericVector probs = exp(dpois(V_seq, lambda, 1) - log_denom);
-    double ExpectedSurplus = sum(probs * Bstar) + (1 - sum(probs)) * B_max
-      - 0.5 * alpha * exp(log(lambda) + log(1 + lambda) - log_denom);
+    double ExpectedSurplus = sum(probs * Bstar) +
+      (1 - sum(probs)) * B_max - alpha * exp(log(lambda) - log_denom);
     return -1.0 * ExpectedSurplus;
   }
 };
@@ -236,6 +236,9 @@ List get_payoffs(double delta, double tau_ell, double tau_n, double r,
     Xstar.push_back(Xstar_temp);
   }
 
+  // Convert to numeric vectors
+  //NumericVector Xstar_NV = wrap(Xstar), Dstar_NV = wrap(Dstar);
+
   return List::create(Named("D_max") = D_max,
                       Named("X_max") = X_max,
                       Named("Dstar") = Dstar,
@@ -261,7 +264,7 @@ List get_contract(double gamma, double alpha, double D_max, double X_max,
   double S_e_lower = -1.0 * neg_S_e(lower); // Expected surplus at lamba = lower
   double Bstar_max = max(Bstar);
   double M = std::max(Bstar_max, B_max);
-  double upper = 2 * (M - S_e_lower) / alpha;
+  double upper = (M - S_e_lower) / alpha;
   double lambda_star;
   double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
                                          lambda_star);
