@@ -197,16 +197,11 @@ public:
   }
 };
 
-// Object to store optimal contract
-struct contractObj{
-  double lambda_star;
-  double S_star;
-};
 
 // [[Rcpp::export]]
-List get_contract(double delta, double tau_ell, double tau_n, double r,
-                    double a0, double a1, double p, double q, double H_bar,
-                    double omega_n, double gamma, double alpha)
+List get_payoffs(double delta, double tau_ell, double tau_n, double r,
+                 double a0, double a1, double p, double q, double H_bar,
+                 double omega_n)
 {
   double D_max = get_D_max(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
   double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
@@ -241,9 +236,20 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
     Xstar.push_back(Xstar_temp);
   }
 
-  // Value of realized violence at which Xstar and Dstar are within tol1 of
-  // X_max and D_max
-  double V_max = double(V_realized);
+  // Convert to numeric vectors
+  //NumericVector Xstar_NV = wrap(Xstar), Dstar_NV = wrap(Dstar);
+
+  return List::create(Named("D_max") = D_max,
+                      Named("X_max") = X_max,
+                      Named("Dstar") = Dstar,
+                      Named("Xstar") = Xstar);
+}
+
+
+// [[Rcpp::export]]
+List get_contract(double gamma, double alpha, double D_max, double X_max,
+                  NumericVector Dstar, NumericVector Xstar)
+{
 
   // Let B denote X - gamma * D, i.e. surplus plus the cost of violence
   double B_max = X_max - gamma * D_max;
@@ -258,7 +264,7 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   double S_e_lower = -1.0 * neg_S_e(lower); // Expected surplus at lamba = lower
   double Bstar_max = max(Bstar);
   double M = std::max(Bstar_max, B_max);
-  double upper = (M - S_e_lower) / alpha - 1;
+  double upper = (M - S_e_lower) / alpha;
   double lambda_star;
   double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
                                          lambda_star);
@@ -273,16 +279,8 @@ List get_contract(double delta, double tau_ell, double tau_n, double r,
   }
 
   return List::create(Named("lambda_upper") = upper,
-                      Named("V_max") = V_max,
-                      Named("D_max") = D_max,
-                      Named("X_max") = X_max,
-                      Named("B_max") = B_max,
-                      Named("Dstar") = Dstar_NV,
-                      Named("Xstar") = Xstar_NV,
-                      Named("Bstar") = Bstar,
                       Named("lambda_star") = lambda_star,
                       Named("S_e_star") = S_e_star);
-
 }
 
 

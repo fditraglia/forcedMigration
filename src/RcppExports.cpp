@@ -141,9 +141,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_contract
-List get_contract(double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n, double gamma, double alpha);
-RcppExport SEXP _forcedMigration_get_contract(SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP, SEXP gammaSEXP, SEXP alphaSEXP) {
+// get_payoffs
+List get_payoffs(double delta, double tau_ell, double tau_n, double r, double a0, double a1, double p, double q, double H_bar, double omega_n);
+RcppExport SEXP _forcedMigration_get_payoffs(SEXP deltaSEXP, SEXP tau_ellSEXP, SEXP tau_nSEXP, SEXP rSEXP, SEXP a0SEXP, SEXP a1SEXP, SEXP pSEXP, SEXP qSEXP, SEXP H_barSEXP, SEXP omega_nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -157,9 +157,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< double >::type H_bar(H_barSEXP);
     Rcpp::traits::input_parameter< double >::type omega_n(omega_nSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_payoffs(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_contract
+List get_contract(double gamma, double alpha, double D_max, double X_max, NumericVector Dstar, NumericVector Xstar);
+RcppExport SEXP _forcedMigration_get_contract(SEXP gammaSEXP, SEXP alphaSEXP, SEXP D_maxSEXP, SEXP X_maxSEXP, SEXP DstarSEXP, SEXP XstarSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_contract(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha));
+    Rcpp::traits::input_parameter< double >::type D_max(D_maxSEXP);
+    Rcpp::traits::input_parameter< double >::type X_max(X_maxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Dstar(DstarSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Xstar(XstarSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_contract(gamma, alpha, D_max, X_max, Dstar, Xstar));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -209,7 +223,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_forcedMigration_get_X", (DL_FUNC) &_forcedMigration_get_X, 9},
     {"_forcedMigration_get_X_max", (DL_FUNC) &_forcedMigration_get_X_max, 8},
     {"_forcedMigration_get_D_max", (DL_FUNC) &_forcedMigration_get_D_max, 9},
-    {"_forcedMigration_get_contract", (DL_FUNC) &_forcedMigration_get_contract, 12},
+    {"_forcedMigration_get_payoffs", (DL_FUNC) &_forcedMigration_get_payoffs, 10},
+    {"_forcedMigration_get_contract", (DL_FUNC) &_forcedMigration_get_contract, 6},
     {"_forcedMigration_get_surplus", (DL_FUNC) &_forcedMigration_get_surplus, 13},
     {"_forcedMigration_get_S", (DL_FUNC) &_forcedMigration_get_S, 4},
     {NULL, NULL, 0}
