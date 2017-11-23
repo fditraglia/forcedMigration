@@ -4,8 +4,8 @@ set.seed(1234)
 
 # Set parameters of simulation
 model <- list(delta = 0.2,
-              tau_ell = 0.45,
-              tau_n = 0.45,
+              tau_ell = log(2),
+              tau_n = log(2),
               r = 0.1,
               a0 = 2,
               a1 = 0)
