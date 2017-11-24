@@ -21,14 +21,11 @@ get_migration_flow_i(275, sim_params$model)
 
 # Solve model at given values for structural parameters
 f <- function(i) get_migration_flow_i(i, sim_params$model)
-dstar <- do.call(rbind, lapply(1:nrow(Vcum), f))
-colnames(dstar) <- colnames(Vcum)
-rownames(dstar) <- rownames(Vcum)
-dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
-dstar_friction <- with(sim_params$obs, (1 - rho) * dstar + rho * dstar_lag)
-
-# Clean up: only keep fam, pop, and dstar_friction
-rm(dstar, dstar_lag, f)
+sim_dstar <- do.call(rbind, lapply(1:nrow(Vcum), f))
+colnames(sim_dstar) <- colnames(Vcum)
+rownames(sim_dstar) <- rownames(Vcum)
+dstar_lag <- cbind(rep(0, nrow(sim_dstar)), sim_dstar[,-ncol(sim_dstar)])
+dstar_friction <- with(sim_params$obs, (1 - rho) * sim_dstar + rho * dstar_lag)
 
 # Simulate from observation model
 pop <- cross_section$popn1993
@@ -38,4 +35,5 @@ simZ <- array(rpois(length(mu), lambda = mu), dim = dim(mu))
 
 devtools::use_data(simZ, overwrite = TRUE)
 devtools::use_data(sim_params, overwrite = TRUE)
+devtools::use_data(sim_dstar, overwrite = TRUE)
 rm(list = ls())
