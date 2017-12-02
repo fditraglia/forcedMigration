@@ -6,8 +6,8 @@ set.seed(1234)
 model <- list(delta = 5000,
               tau_ell = 0.5,
               tau_n = 0.3,
-              r = 0.05,
-              a0 = 1,
+              r = 0.4,
+              a0 = 2,
               a1 = 0)
 obs <- list(dbar = 0.001,
             rho = 0.3,
