@@ -1,8 +1,8 @@
 # Solve the model for municipality i at parameters par
 get_migration_flow_i <- function(i, par) {
-  Vcum_i <- as.matrix(Vcum[i,])
+  Vcum_pop_i <- as.matrix(Vcum_pop[i,])
   land_i <- land_parameters[i,]
-  migration_cum <- get_migration_cum(Vcum_i,
+  migration_cum <- get_migration_cum(Vcum_pop_i,
                                      delta = par$delta,
                                      tau_ell = par$tau_ell,
                                      tau_n = par$tau_n,
@@ -68,7 +68,7 @@ negloglike_outer_D <- function(par_vec, Z) {
 
   # Solve structural model
   f <- function(i) get_migration_flow_i(i, par_model)
-  dstar <- do.call(rbind, lapply(1:nrow(Vcum), f))
+  dstar <- do.call(rbind, lapply(1:nrow(Vcum_pop), f))
   dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
 
   # Maximize concentrated log-likelihood over dbar and rho

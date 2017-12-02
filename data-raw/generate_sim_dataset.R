@@ -3,11 +3,11 @@ library(forcedMigration)
 set.seed(1234)
 
 # Set parameters of simulation
-model <- list(delta = 0.2,
-              tau_ell = log(2),
-              tau_n = log(2),
-              r = 0.1,
-              a0 = 2,
+model <- list(delta = 5000,
+              tau_ell = 0.5,
+              tau_n = 0.3,
+              r = 0.05,
+              a0 = 1,
               a1 = 0)
 obs <- list(dbar = 0.001,
             rho = 0.3,

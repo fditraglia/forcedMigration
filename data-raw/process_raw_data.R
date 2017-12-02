@@ -122,11 +122,13 @@ Vcum <- reshape(as.data.frame(panel[,c('municipality', 'year', 'V_cum')]),
 colnames(Vcum)[-1] <- as.character(1996:2012)
 rownames(Vcum) <- Vcum$municipality
 Vcum <- Vcum[,-1]
+Vcum_pop <- Vcum / cross_section$popn1993
 
 devtools::use_data(cross_section, overwrite = TRUE)
 devtools::use_data(panel, overwrite = TRUE)
 devtools::use_data(land_parameters, overwrite = TRUE)
 devtools::use_data(Vcum, overwrite = TRUE)
+devtools::use_data(Vcum_pop, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
