@@ -33,7 +33,6 @@ negloglike_inner_D <- function(params, Z, dstar, dstar_lag) {
   return(-1 * loglike)
 }
 
-
 grad_inner_D <- function(params, Z, dstar, dstar_lag) {
   dbar <- params[1]
   rho <- params[2]
@@ -57,7 +56,7 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D <- function(par_vec, Z) {
+negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE) {
 
   par_model <- list(delta = par_vec[1],
                     tau_ell = par_vec[2],
@@ -76,5 +75,24 @@ negloglike_outer_D <- function(par_vec, Z) {
   Deriv_f <- function(x) grad_inner_D(x, Z, dstar, dstar_lag)
   opt <- optim(c(0.01, 0.1), fn = f,  gr = Deriv_f,
                lower = c(1e-10, 0), upper = c(1, 1), method = 'L-BFGS-B')
-  return(opt$value)
+
+  # Optionally return the optimal values of the "inner" parameters dbar, rho,
+  # eta, and nu. (The default is *not* to return these.)
+  if(return_inner) {
+    dbar <- opt$par[1]
+    rho <- opt$par[2]
+    negloglike <- opt$value
+
+    # Calculate the optimal values of eta and nu
+    pop <- cross_section$popn1993
+    D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
+    log_S <- log(colSums(D))
+    log_F <- log(apply(Z, 2, sum)) -  log(sum(Z))
+    eta <- log_F - log_F[1] + log_S[1] - log_S
+    nu <- log(apply(Z, 3, sum)) + log_F[1] - log_S[1]
+    return(list(negloglike = negloglike, dbar = dbar, rho = rho,
+                eta = eta[-1], nu = nu)) # First element of eta normalized to 0
+  } else {
+    return(opt$value)
+  }
 }
