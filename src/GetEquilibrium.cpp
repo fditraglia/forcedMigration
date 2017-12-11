@@ -244,13 +244,13 @@ List get_payoffs(double delta, double tau_ell, double tau_n, double r,
 
 // [[Rcpp::export]]
 List get_contract(double gamma, double alpha, double D_max, double X_max,
-                  NumericVector Dstar, NumericVector Xstar, double popn)
+                  NumericVector Dstar, NumericVector Xstar, double nfam)
 {
 
-  // Let B = popn * (X - gamma * D), i.e. surplus plus the cost of violence
-  double B_max = popn * (X_max - gamma * D_max);
+  // Let B = nfam * (X - gamma * D), i.e. surplus plus the cost of violence
+  double B_max = nfam * (X_max - gamma * D_max);
   NumericVector Xstar_NV = wrap(Xstar), Dstar_NV = wrap(Dstar);
-  NumericVector Bstar = popn * (Xstar_NV - gamma * Dstar_NV);
+  NumericVector Bstar = nfam * (Xstar_NV - gamma * Dstar_NV);
 
   // Maximize expected surplus (minimize negative expected surplus) using BRENT
   negExpectedSurplus neg_S_e(alpha, B_max, Bstar);
