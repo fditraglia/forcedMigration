@@ -29,7 +29,7 @@ class MigrationIntegrand: public Func
 
     double operator()(const double& h) const
     {
-      double med = R::qbeta(0.5, p, q, 1, 0);
+      double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
       double upper = (exp(tau_ell * Q - r * h / med) - 1);
       double log_F_c_given_h = R::pbeta(upper, 1 + a0 + a1 * h / med, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -45,7 +45,7 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
   if(V > 0.0){
     // Dis-utility of violence
     const double Q = get_Q(V, D_e, delta);
-    double med = R::qbeta(0.5, p, q, 1, 0);
+    double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
     // Landholding families
     MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
     double err_est;
@@ -115,7 +115,7 @@ class ExpropriationIntegrand: public Func
                                            p(p_), q(q_), H_bar(H_bar_) {}
     double operator()(const double& h) const
     {
-      double med = R::qbeta(0.5, p, q, 1, 0);
+      double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
       double upper = (exp(tau_ell * Q - r * h / med) - 1);
       double log_F_c_given_h = R::pbeta(upper, 1 + a0 + a1 * h / med, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
@@ -134,7 +134,7 @@ double get_X(double Q, double tau_ell, double r, double a0, double a1,
   ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
   double err_est;
   int err_code;
-  double med = R::qbeta(0.5, p, q, 1, 0);
+  double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
   const double res = integrate(g, 0.0, med * tau_ell * Q / r, err_est, err_code);
   return (1 - omega_n) * res;
 }
@@ -158,7 +158,7 @@ double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
 // violence V (or infeasible violence V_tilde ) goes to infinity. We calculate
 // this by setting Q = 1.0 when setting up the migration integrand.
   const double Q = 1.0;
-  double med = R::qbeta(0.5, p, q, 1, 0);
+  double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
 
   // Landholding families
   MigrationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
@@ -295,7 +295,7 @@ double get_surplus(double V, double delta, double tau_ell, double tau_n,
     // Equilibrium dis-utility of violence at violence level V
     const double Q = get_Q(V, Dstar, delta);
     // Calculate total land expropriated (in per capita terms)
-    double med = R::qbeta(0.5, p, q, 1, 0);
+    double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
     ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
     double err_est;
     int err_code;
