@@ -200,7 +200,7 @@ public:
 // [[Rcpp::export]]
 List get_payoffs(double delta, double tau_ell, double tau_n, double r,
                  double a0, double a1, double p, double q, double H_bar,
-                 double omega_n)
+                 double omega_n, double popn)
 {
   double D_max = get_D_max(tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
   double X_max = get_X_max(tau_ell, r, a0, a1, p, q, H_bar, omega_n);
@@ -209,10 +209,10 @@ List get_payoffs(double delta, double tau_ell, double tau_n, double r,
   std::vector<double> Xstar;
 
   unsigned int V_realized = 1; // Careful about types here!
-  double Dstar_temp = get_migration_eq(double(V_realized), Dstar_temp, delta,
+  double Dstar_temp = get_migration_eq(double(V_realized) / popn, 0.0, delta,
                                        tau_ell, tau_n, r, a0, a1, p, q, H_bar,
                                        omega_n);
-  double Qstar_temp = get_Q(double(V_realized), Dstar_temp, delta);
+  double Qstar_temp = get_Q(double(V_realized) / popn, Dstar_temp, delta);
   double Xstar_temp = get_X(Qstar_temp, tau_ell, r, a0, a1, p, q, H_bar, omega_n);
 
   Dstar.push_back(Dstar_temp);
@@ -227,10 +227,10 @@ List get_payoffs(double delta, double tau_ell, double tau_n, double r,
         (std::abs(Xstar_temp - X_max) > 0.001)) && (V_realized <= 100))
   {
     ++V_realized;
-    Dstar_temp = get_migration_eq(double(V_realized), Dstar_temp, delta, tau_ell,
-                                  tau_n, r, a0, a1, p, q, H_bar, omega_n);
+    Dstar_temp = get_migration_eq(double(V_realized) / popn, Dstar_temp, delta,
+                                  tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n);
     Dstar.push_back(Dstar_temp);
-    Qstar_temp = get_Q(double(V_realized), Dstar_temp, delta);
+    Qstar_temp = get_Q(double(V_realized) / popn, Dstar_temp, delta);
     Xstar_temp = get_X(Qstar_temp, tau_ell, r, a0, a1, p, q, H_bar, omega_n);
     Xstar.push_back(Xstar_temp);
   }
