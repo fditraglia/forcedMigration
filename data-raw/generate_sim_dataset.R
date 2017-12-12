@@ -3,7 +3,7 @@ library(forcedMigration)
 set.seed(1234)
 
 # Set parameters of simulation
-model <- list(delta = 5000,
+model <- list(delta = 10000,
               tau_ell = 0.5,
               tau_n = 0.3,
               r = 0.4,
