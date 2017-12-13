@@ -7,8 +7,8 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 double get_Q(double V, double D_e, double delta){
-  const double V_tilde = V / (1 - D_e); // V is assumed to be in per-capita terms
-  return(1 - exp(-delta * V_tilde));
+  const double V_tilde = V / (1.0 - D_e); // V is assumed to be in per-capita terms
+  return(1.0 - exp(-delta * V_tilde));
 }
 
 class MigrationIntegrand: public Func
@@ -26,8 +26,8 @@ class MigrationIntegrand: public Func
     double operator()(const double& h) const
     {
       double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
-      double upper = (exp(tau_ell * Q - r * h / med) - 1);
-      double log_F_c_given_h = R::pbeta(upper, 1 + a0 + a1 * h / med, 1, 1, 1);
+      double upper = (exp(tau_ell * Q - r * h / med) - 1.0);
+      double log_F_c_given_h = R::pbeta(upper, 1.0 + a0 + a1 * h / med, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
       return exp(log_F_c_given_h + log_f_h);
     }
@@ -49,10 +49,10 @@ double get_Dstar(double D_e, double V, double delta, double tau_ell,
     const double D_ell = integrate(g, 0.0, med * tau_ell * Q / r, err_est, err_code);
 
     // Landless families
-    const double D_n = R::pbeta(exp(tau_n * Q) - 1, 1 + a0, 1, 1, 0);
+    const double D_n = R::pbeta(exp(tau_n * Q) - 1.0, 1.0 + a0, 1, 1, 0);
 
     // Overall migration
-    return omega_n * D_n + (1 - omega_n) * D_ell;
+    return omega_n * D_n + (1.0 - omega_n) * D_ell;
 
   } else {
     return 0.0;
@@ -113,7 +113,7 @@ class ExpropriationIntegrand: public Func
     {
       double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
       double upper = (exp(tau_ell * Q - r * h / med) - 1);
-      double log_F_c_given_h = R::pbeta(upper, 1 + a0 + a1 * h / med, 1, 1, 1);
+      double log_F_c_given_h = R::pbeta(upper, 1.0 + a0 + a1 * h / med, 1, 1, 1);
       double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
       return exp(log(h) + log_F_c_given_h + log_f_h);
     }
@@ -132,7 +132,7 @@ double get_X(double Q, double tau_ell, double r, double a0, double a1,
   int err_code;
   double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
   const double res = integrate(g, 0.0, med * tau_ell * Q / r, err_est, err_code);
-  return (1 - omega_n) * res;
+  return (1.0 - omega_n) * res;
 }
 
 // [[Rcpp::export]]
@@ -163,10 +163,10 @@ double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
   const double D_ell = integrate(g, 0.0, med * tau_ell * Q / r, err_est, err_code);
 
   // Landless families
-  const double D_n = R::pbeta(exp(tau_n * Q) - 1, 1 + a0, 1, 1, 0);
+  const double D_n = R::pbeta(exp(tau_n * Q) - 1.0, 1.0 + a0, 1, 1, 0);
 
   // Overall migration
-  return omega_n * D_n + (1 - omega_n) * D_ell;
+  return omega_n * D_n + (1.0 - omega_n) * D_ell;
 }
 
 // Functor to pass to the BRENT optimization routine to maximize expected
@@ -184,10 +184,10 @@ public:
                                               Bstar(Bstar_){}
   double operator() (double lambda) {
     NumericVector V_seq = wrap(seq_along(Bstar));
-    double log_denom = log(1 - exp(-lambda));
+    double log_denom = log(1.0 - exp(-lambda));
     NumericVector probs = exp(dpois(V_seq, lambda, 1) - log_denom);
-    double ExpectedSurplus = sum(probs * Bstar) + (1 - sum(probs)) * B_max
-      - 0.5 * alpha * exp(log(lambda) + log(1 + lambda) - log_denom);
+    double ExpectedSurplus = sum(probs * Bstar) + (1.0 - sum(probs)) * B_max
+      - 0.5 * alpha * exp(log(lambda) + log(1.0 + lambda) - log_denom);
     return -1.0 * ExpectedSurplus;
   }
 };
@@ -256,7 +256,7 @@ List get_contract(double gamma, double alpha, double D_max, double X_max,
   double S_e_lower = -1.0 * neg_S_e(lower); // Expected surplus at lamba = lower
   double Bstar_max = max(Bstar);
   double M = std::max(Bstar_max, B_max);
-  double upper = 2 * (M - S_e_lower) / alpha;
+  double upper = 2.0 * (M - S_e_lower) / alpha;
   double lambda_star;
   double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
                                          lambda_star);
