@@ -102,6 +102,20 @@ names(panel) <- c("municipality",
                   "D_JYP",
                   "popn1993")
 
+
+
+cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
+cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
+names(cross_section[, 'V_cum']) <- 'VTotal'
+
+# Keep only municipalities with at least 100 landowners
+keep_me <- n_landholders >= 100
+keep_municipalities <- cross_section[keep_me,]$municipality
+cross_section <- subset(cross_section, municipality %in% keep_municipalities)
+panel <- subset(panel, municipality %in% keep_municipalities)
+rm(keep_me, keep_municipalities)
+
+# Arrange displacement measures into 3d array: municipality-year-measure
 rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
 g <- function(i) {
   temp <- data.frame(municipality = panel$municipality, year = panel$year,
@@ -117,18 +131,6 @@ g <- function(i) {
 obsZ <- sapply(1:ncol(rawZ), g, simplify = 'array')
 dimnames(obsZ)[[3]] <- unlist(lapply(strsplit(names(rawZ), '_'), function(x) x[2]))
 
-
-
-cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
-cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
-names(cross_section[, 'V_cum']) <- 'VTotal'
-
-# Keep only municipalities with at least 100 landowners
-keep_me <- n_landholders >= 100
-keep_municipalities <- cross_section[keep_me,]$municipality
-cross_section <- subset(cross_section, municipality %in% keep_municipalities)
-panel <- subset(panel, municipality %in% keep_municipalities)
-rm(keep_me, keep_municipalities)
 
 # Create matrices of land parameters and cumulative violence
 land_parameters <- cross_section[, c('p', 'q', 'H_bar', 'omega_n')]
