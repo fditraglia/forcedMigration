@@ -102,6 +102,23 @@ names(panel) <- c("municipality",
                   "D_JYP",
                   "popn1993")
 
+rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
+g <- function(i) {
+  temp <- data.frame(municipality = panel$municipality, year = panel$year,
+                     D = rawZ[,i])
+  temp <- reshape(temp, direction = 'wide', timevar = 'year',
+                  idvar = 'municipality')
+  colnames(temp)[-1] <- as.character(1996:2012)
+  rownames(temp) <- temp$municipality
+  temp <- as.matrix(temp)
+  temp <- temp[,-1]
+  return(temp)
+}
+obsZ <- sapply(1:ncol(rawZ), g, simplify = 'array')
+dimnames(obsZ)[[3]] <- unlist(lapply(strsplit(names(rawZ), '_'), function(x) x[2]))
+
+
+
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
 names(cross_section[, 'V_cum']) <- 'VTotal'
