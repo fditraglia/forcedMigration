@@ -1,4 +1,4 @@
-get_contractR <- function(gamma, alpha, D_max, X_max, Dstar, Xstar, nfam) {
+get_contract <- function(gamma, alpha, D_max, X_max, Dstar, Xstar, nfam) {
   # Let B = nfam * (X - gamma * D), i.e. surplus plus the cost of violence
   B_max <- nfam * (X_max - gamma * D_max)
   Bstar <- nfam * (Xstar - gamma * Dstar)

@@ -169,30 +169,6 @@ double get_D_max(double tau_ell, double tau_n, double r, double a0, double a1,
   return omega_n * D_n + (1.0 - omega_n) * D_ell;
 }
 
-// Functor to pass to the BRENT optimization routine to maximize expected
-// surplus. Note that BRENT *minimizes* so the functor calculates *negative*
-// expected surplus.
-class negExpectedSurplus : public brent::func_base
-{
-private:
-  double alpha, B_max;
-  NumericVector Bstar;
-public:
-  negExpectedSurplus (double alpha_, double B_max_,
-                      NumericVector Bstar_) : alpha(alpha_),
-                                              B_max(B_max_),
-                                              Bstar(Bstar_){}
-  double operator() (double lambda) {
-    NumericVector V_seq = wrap(seq_along(Bstar));
-    double log_denom = log(1.0 - exp(-lambda));
-    NumericVector probs = exp(dpois(V_seq, lambda, 1) - log_denom);
-    double ExpectedSurplus = sum(probs * Bstar) + (1.0 - sum(probs)) * B_max
-      - 0.5 * alpha * exp(log(lambda) + log(1.0 + lambda) - log_denom);
-    return -1.0 * ExpectedSurplus;
-  }
-};
-
-
 // [[Rcpp::export]]
 List get_payoffs(double delta, double tau_ell, double tau_n, double r,
                  double a0, double a1, double p, double q, double H_bar,
@@ -235,70 +211,4 @@ List get_payoffs(double delta, double tau_ell, double tau_n, double r,
                       Named("X_max") = X_max,
                       Named("Dstar") = Dstar,
                       Named("Xstar") = Xstar);
-}
-
-
-// [[Rcpp::export]]
-List get_contract(double gamma, double alpha, double D_max, double X_max,
-                  NumericVector Dstar, NumericVector Xstar, double nfam)
-{
-
-  // Let B = nfam * (X - gamma * D), i.e. surplus plus the cost of violence
-  double B_max = nfam * (X_max - gamma * D_max);
-  NumericVector Xstar_NV = wrap(Xstar), Dstar_NV = wrap(Dstar);
-  NumericVector Bstar = nfam * (Xstar_NV - gamma * Dstar_NV);
-
-  // Maximize expected surplus (minimize negative expected surplus) using BRENT
-  negExpectedSurplus neg_S_e(alpha, B_max, Bstar);
-  double lower = 0.1; // Smallest lambda allowed: corresponds to approx. 95%
-                      // probability of drawing a 1 from a zero-truncated
-                      // Poisson distribution
-  double S_e_lower = -1.0 * neg_S_e(lower); // Expected surplus at lamba = lower
-  double Bstar_max = max(Bstar);
-  double M = std::max(Bstar_max, B_max);
-  double upper = 2.0 * (M - S_e_lower) / alpha;
-  double lambda_star;
-  double neg_S_e_star = brent::local_min(lower, upper, 0.0001, neg_S_e,
-                                         lambda_star);
-  double S_e_star = -1.0 * neg_S_e_star;
-
-  // Given the shape of the objective function, the only way for Brent to fail
-  // is if it finds a local optimum that gives a lower expected surplus than
-  // setting lambda equal to lower.
-  if(S_e_star < S_e_lower) {
-    lambda_star = lower;
-    S_e_star = S_e_lower;
-  }
-
-  return List::create(Named("lambda_upper") = upper,
-                      Named("lambda_star") = lambda_star,
-                      Named("S_e_star") = S_e_star);
-}
-
-
-// [[Rcpp::export]]
-double get_surplus(double V, double delta, double tau_ell, double tau_n,
-                   double r, double a0, double a1, double p, double q,
-                   double H_bar, double omega_n, double gamma, double alpha)
-  // This function gives surplus at a particular level of *realized* violence.
-  // It is not used to solve for the optimal contract: it is only for plotting
-  // and diagnostic purposes.
-{
-  if(V > 0.0){
-    // Equilibrium migration at violence level V
-    double Dstar = get_migration_eq(V, 0.0, delta, tau_ell, tau_n, r, a0,
-                          a1, p, q, H_bar, omega_n);
-    // Equilibrium dis-utility of violence at violence level V
-    const double Q = get_Q(V, Dstar, delta);
-    // Calculate total land expropriated (in per capita terms)
-    double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
-    ExpropriationIntegrand g(Q, tau_ell, r, a0, a1, p, q, H_bar);
-    double err_est;
-    int err_code;
-    const double res = integrate(g, 0.0, med * tau_ell * Q / r, err_est, err_code);
-    double Xstar = (1 - omega_n) * res;
-    return Xstar - gamma * Dstar - alpha * V;
-  } else {
-    return 0.0;
-  }
 }
