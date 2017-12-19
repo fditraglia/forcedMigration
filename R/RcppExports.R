@@ -33,14 +33,6 @@ get_payoffs <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, 
     .Call('_forcedMigration_get_payoffs', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, popn)
 }
 
-get_contract <- function(gamma, alpha, D_max, X_max, Dstar, Xstar, nfam) {
-    .Call('_forcedMigration_get_contract', PACKAGE = 'forcedMigration', gamma, alpha, D_max, X_max, Dstar, Xstar, nfam)
-}
-
-get_surplus <- function(V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha) {
-    .Call('_forcedMigration_get_surplus', PACKAGE = 'forcedMigration', V, delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, gamma, alpha)
-}
-
 get_S <- function(X_star, y_star, Q, gamma) {
     .Call('_forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
 }
