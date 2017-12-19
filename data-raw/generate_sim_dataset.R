@@ -3,7 +3,8 @@ library(forcedMigration)
 set.seed(1234)
 
 #----------------------- Pump-priming run
-get_migration_flow_i(275, sim_params$model)
+get_migration_flow_i(275, list(delta = 10000, tau_ell = 0.5, tau_n = 0.3,
+                               r = 0.4, a0 = 2, a1 = 0))
 
 #----------------------- Solve for eq. migration given observed violence flows
 par_D_outer <- list(delta = 10000,
@@ -24,8 +25,8 @@ par_D_inner <- list(dbar = 0.001,
                 nu = seq(-0.3, 0.3, length.out = 5),
                 eta = seq(-0.1, 0.1, length.out = 16)) # One fewer than T
 
-dstar_lag <- cbind(rep(0, nrow(sim_dstar)), sim_dstar[,-ncol(sim_dstar)])
-true_displacement <- with(par_D_inner, dbar + (1 - rho) * sim_dstar + rho * dstar_lag)
+dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
+true_displacement <- with(par_D_inner, dbar + (1 - rho) * dstar + rho * dstar_lag)
 
 mu <- with(par_D_inner, (cross_section$popn1993 * t(t(true_displacement) *
                                                       exp(c(0, eta)))) %o% exp(nu))
@@ -62,6 +63,8 @@ Vobs <- drop(contract_indicator * Vstar)
 #------------------------- Store simulated data and parameters
 simulation <- list(par_D_inner = par_D_inner,
                    par_D_outer = par_D_outer,
+                   par_V_outer = par_V_outer,
+                   beta = beta,
                    dstar = dstar,
                    dstar_lag = dstar_lag,
                    true_displacement = true_displacement,
