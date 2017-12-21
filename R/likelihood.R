@@ -56,7 +56,7 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE) {
+negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE, ncores = 1) {
 
   par_model <- list(delta = par_vec[1],
                     tau_ell = par_vec[2],
@@ -67,7 +67,7 @@ negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE) {
 
   # Solve structural model
   f <- function(i) get_migration_flow_i(i, par_model)
-  dstar <- do.call(rbind, lapply(1:nrow(Vcum_pop), f))
+  dstar <- do.call(rbind, parallel::mclapply(1:nrow(Vcum_pop), f, mc.cores = ncores))
   dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
 
   # Maximize concentrated log-likelihood over dbar and rho
