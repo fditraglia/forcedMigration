@@ -3,14 +3,14 @@ library(forcedMigration)
 set.seed(1234)
 
 #----------------------- Pump-priming run
-get_migration_flow_i(275, list(delta = 10000, tau_ell = 0.5, tau_n = 0.3,
-                               r = 0.4, a0 = 2, a1 = 0))
+get_migration_flow_i(275, list(delta = 10000, tau_ell = 1, tau_n = 0.3,
+                               r = 0.8, a0 = 2, a1 = 0))
 
 #----------------------- Solve for eq. migration given observed violence flows
 par_D_outer <- list(delta = 10000,
-                tau_ell = 0.5,
+                tau_ell = 1,
                 tau_n = 0.3,
-                r = 0.4,
+                r = 0.8,
                 a0 = 2,
                 a1 = 0)
 
