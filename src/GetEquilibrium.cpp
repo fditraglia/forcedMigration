@@ -27,9 +27,13 @@ class MigrationIntegrand: public Func
     {
       double med = H_bar * R::qbeta(0.5, p, q, 1, 0);
       double upper = (exp(tau_ell * Q - r * h / med) - 1.0);
-      double log_F_c_given_h = R::pbeta(upper, 1.0 + a0 + a1 * h / med, 1, 1, 1);
-      double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
-      return exp(log_F_c_given_h + log_f_h);
+      if(upper <= 0.0) {
+        return(0.0);
+      } else {
+        double log_F_c_given_h = R::pbeta(upper, 1.0 + a0 + a1 * h / med, 1, 1, 1);
+        double log_f_h = R::dbeta(h / H_bar, p, q, 1) - log(H_bar);
+        return exp(log_F_c_given_h + log_f_h);
+      }
     }
 };
 
@@ -92,8 +96,13 @@ NumericVector get_migration_cum(NumericVector V_cum, double delta, double tau_el
   for(int i = 0; i < n; ++i) {
     Dstar_temp = get_migration_eq(V_cum[i], start, delta, tau_ell, tau_n, r,
                                   a0, a1, p, q, H_bar, omega_n);
-    Dstar_cum[i] = Dstar_temp;
-    start = Dstar_temp;
+    if(i == 0){
+      Dstar_cum[i] = Dstar_temp;
+      start = Dstar_temp;
+    } else {
+      Dstar_cum[i] = fmax(Dstar_temp, Dstar_cum[i - 1]);
+      start = Dstar_cum[i];
+    }
   }
   return Dstar_cum;
 }
