@@ -143,6 +143,70 @@ rownames(Vcum) <- Vcum$municipality
 Vcum <- Vcum[,-1]
 Vcum_pop <- Vcum / cross_section$popn1993
 
+# Covariates (cross-section data)
+bureaucracy <- with(cross_section_raw, local_bureaucracy_95 + state_bureaucracy_95)
+names(cross_section_raw[c(11:22, 25:31)])
+offices <- rowSums(cross_section_raw[,c(11:22, 25:31)])
+elec_comp <- with(cross_section_raw, 0.5 * ratio_votes_dif_alc +
+                    0.5 * ratio_votes_dif_asa )
+covariates <- cross_section_raw[, c('land_return',
+                                    'rainfall',
+                                    'ruggedness',
+                                    'coffee', # dummy variable
+                                    'predicted_signal_strength_1',
+                                    'elevation',
+                                    'dist_cap',
+                                    'drug_routes',
+                                    'mine_titles_90',
+                                    'oil_prod_98',
+                                    'guerrilla',
+                                    'grazing',
+                                    'grasses')]
+
+names(covariates)[which(names(covariates) %in% c('predicted_signal_strength_1',
+                               'mine_titles_90',
+                               'oil_prod_98'))] <- c('radio', 'mines', 'oil')
+
+covariates$offices <- offices
+covariates$bureaucracy <- bureaucracy
+covariates$elec_comp <- elec_comp
+rm(offices, bureaucracy, elec_comp)
+
+ihs <- function(x) {
+  y <- log(x + sqrt(x ^ 2 + 1))
+  return(y)
+}
+
+# Transform some variables to a more sensible scale
+drug_routes <- 1 * (covariates$drug_routes > 1) # at least 1km of drug routes?
+mines <- 1 * (covariates$mines > 0) # any mines?
+oil <- 1 * (covariates$oil > 0) # any oil production?
+guerrilla <- ihs(covariates$guerrilla)
+grazing <- ihs(covariates$grazing)
+grasses <- ihs(covariates$grasses)
+offices <- ihs(covariates$offices)
+bureaucracy <- ihs(covariates$bureaucracy)
+
+# Overwrite original, untransformed variables
+covariates$drug_routes <- drug_routes
+covariates$mines <- mines
+covariates$oil <- oil
+covariates$guerrilla <- guerrilla
+covariates$grazing <- grazing
+covariates$grasses <- grasses
+covariates$offices <- offices
+covariates$bureaucracy <- bureaucracy
+
+rm(drug_routes, mines, oil, guerrilla, grazing, grasses, offices, bureaucracy)
+
+# Center and standardize everything except the dummy variables
+standardize_me <- setdiff(names(covariates), c('coffee',
+                                               'drug_routes',
+                                               'mines',
+                                               'oil'))
+covariates[,standardize_me] <- scale(covariates[,standardize_me])
+
+devtools::use_data(covariates, overwrite = TRUE)
 devtools::use_data(cross_section, overwrite = TRUE)
 devtools::use_data(panel, overwrite = TRUE)
 devtools::use_data(obsZ, overwrite = TRUE)
@@ -152,3 +216,18 @@ devtools::use_data(Vcum_pop, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
