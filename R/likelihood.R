@@ -56,18 +56,76 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE, ncores = 1) {
+negloglike_outer_D <- function(par_vec, Z, X = NULL,
+                               return_inner = FALSE, ncores = 1) {
 
-  par_model <- list(delta = par_vec[1],
-                    tau_ell = par_vec[2],
-                    tau_n = par_vec[3],
-                    r = par_vec[4],
-                    a0 = par_vec[5],
-                    a1 = par_vec[6])
 
-  # Solve structural model
-  f <- function(i) get_migration_flow_i(i, par_model)
-  dstar <- do.call(rbind, parallel::mclapply(1:nrow(Vcum_pop), f, mc.cores = ncores))
+  # Case of no covariates (X): identical to what we had before so old code still works
+  # NOTE: in this case the parameters are *not* within an exp!
+  if(is.null(X)) {
+    stopifnot(length(par_vec) == 6)
+    par_model <- list(delta = par_vec[1],
+                      tau_ell = par_vec[2],
+                      tau_n = par_vec[3],
+                      r = par_vec[4],
+                      a0 = par_vec[5],
+                      a1 = par_vec[6])
+
+    # Solve structural model with common parameters for each municipality
+    solve_model_i <- function(i) get_migration_flow_i(i, par_model)
+
+  } else {
+    # In this case, the parameters are within an exp!
+
+    # X is a list with the following elements: (delta, tau_ell, tau_n, r, a0, a1)
+    # Each of these, in turn, is a vector of names corresponding to the columns
+    # of the data.frame covariates from forcedMigration. An entry of NULL
+    # indicates that there are no covariates for that parameter. For example,
+    # we could have:
+    #
+    #           X <- list(delta = c('bureaucracy', 'offices'),
+    #                     tau_ell = NULL, # This will be held fixed at 1
+    #                     tau_n = NULL, # This will be a constant parameter
+    #                     r = c('rainfall', 'land_return'),
+    #                     a0 = c('radio', 'dist_cap', 'elevation'),
+    #                     a1 = NULL) # This will be held fixed at zero
+
+    stopifnot(all.equal(names(X), c('delta', 'tau_ell', 'tau_n', 'r', 'a0', 'a1')))
+
+    # Ensure that the length of the parameter agrees with X (adding intercepts)
+    npars <- lapply(X, function(x) length(x) + 1)
+    stopifnot(sum(unlist(npars)) == length(par_vec))
+
+    # Indices for elements of par_vec that correspond to a given element of X
+    par_indices <- lapply(X, function(x) 1:(length(x) + 1))
+    for(j in 2:length(par_indices)) {
+      par_indices[[j]] <- par_indices[[j]] + max(par_indices[[j - 1]])
+    }
+    rm(j, npars)
+
+    ones <- rep(1, nrow(covariates))
+    get_par_j <- function(j){
+      covariates_j <- as.matrix(cbind(ones, covariates[,X[[j]]]))
+      coefficients_j <- par_vec[par_indices[[j]]]
+      return(exp(covariates_j %*% coefficients_j))
+    }
+    par_vectors <- lapply(1:length(X), get_par_j)
+    names(par_vectors) <- names(X)
+
+    # Function to solve structural model
+    solve_model_i <- function(i) {
+      par_model_i <- list(delta = par_vectors$delta[i],
+                          tau_ell = par_vectors$tau_ell[i],
+                          tau_n = par_vectors$tau_n[i],
+                          r = par_vectors$r[i],
+                          a0 = par_vectors$a0[i],
+                          a1 = par_vectors$a1[i])
+      get_migration_flow_i(i, par_model_i)
+    }
+  } # END else
+
+  dstar <- do.call(rbind, parallel::mclapply(1:nrow(Vcum_pop),
+                                             solve_model_i, mc.cores = ncores))
   dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
 
   # Maximize concentrated log-likelihood over dbar and rho
@@ -97,6 +155,7 @@ negloglike_outer_D <- function(par_vec, Z, return_inner = FALSE, ncores = 1) {
   }
 }
 
+  # THIS NEEDS TO BE UPDATED TO ALLOW PARAMETER HETEROGENEITY!
 # Payoffs for contract as a function of migration parameters
 get_payoffs_list <- function(delta, tau_ell, tau_n, r, a0, a1,
                              n_cores = 1) {
