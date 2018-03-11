@@ -113,7 +113,7 @@ keep_me <- n_landholders >= 100
 keep_municipalities <- cross_section[keep_me,]$municipality
 cross_section <- subset(cross_section, municipality %in% keep_municipalities)
 panel <- subset(panel, municipality %in% keep_municipalities)
-rm(keep_me, keep_municipalities)
+rm(keep_me)
 
 # Arrange displacement measures into 3d array: municipality-year-measure
 rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
@@ -149,7 +149,8 @@ names(cross_section_raw[c(11:22, 25:31)])
 offices <- rowSums(cross_section_raw[,c(11:22, 25:31)])
 elec_comp <- with(cross_section_raw, 0.5 * ratio_votes_dif_alc +
                     0.5 * ratio_votes_dif_asa )
-covariates <- cross_section_raw[, c('land_return',
+covariates <- cross_section_raw[, c('municipality',
+                                    'land_return',
                                     'rainfall',
                                     'ruggedness',
                                     'coffee', # dummy variable
@@ -200,11 +201,14 @@ covariates$bureaucracy <- bureaucracy
 rm(drug_routes, mines, oil, guerrilla, grazing, grasses, offices, bureaucracy)
 
 # Center and standardize everything except the dummy variables
-standardize_me <- setdiff(names(covariates), c('coffee',
+standardize_me <- setdiff(names(covariates), c('municipality',
+                                               'coffee',
                                                'drug_routes',
                                                'mines',
                                                'oil'))
+
 covariates[,standardize_me] <- scale(covariates[,standardize_me])
+covariates <- subset(covariates, municipality %in% keep_municipalities)
 
 devtools::use_data(covariates, overwrite = TRUE)
 devtools::use_data(cross_section, overwrite = TRUE)
