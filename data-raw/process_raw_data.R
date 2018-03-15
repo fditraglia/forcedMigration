@@ -173,42 +173,36 @@ covariates$bureaucracy <- bureaucracy
 covariates$elec_comp <- elec_comp
 rm(offices, bureaucracy, elec_comp)
 
-ihs <- function(x) {
-  y <- log(x + sqrt(x ^ 2 + 1))
-  return(y)
-}
+# Drop municipalities with fewer than 100 people
+covariates <- subset(covariates, municipality %in% keep_municipalities)
 
-# Transform some variables to a more sensible scale
+
+# Trasform some variables to dummies:
 drug_routes <- 1 * (covariates$drug_routes > 1) # at least 1km of drug routes?
 mines <- 1 * (covariates$mines > 0) # any mines?
 oil <- 1 * (covariates$oil > 0) # any oil production?
-guerrilla <- ihs(covariates$guerrilla)
-grazing <- ihs(covariates$grazing)
-grasses <- ihs(covariates$grasses)
-offices <- ihs(covariates$offices)
-bureaucracy <- ihs(covariates$bureaucracy)
 
 # Overwrite original, untransformed variables
 covariates$drug_routes <- drug_routes
 covariates$mines <- mines
 covariates$oil <- oil
-covariates$guerrilla <- guerrilla
-covariates$grazing <- grazing
-covariates$grasses <- grasses
-covariates$offices <- offices
-covariates$bureaucracy <- bureaucracy
+rm(drug_routes, mines, oil)
 
-rm(drug_routes, mines, oil, guerrilla, grazing, grasses, offices, bureaucracy)
+# Transform the non-dummy variables to Uniform(-0.5, 0.5)
+transform_me <- setdiff(names(covariates), c('municipality',
+                                             'coffee', # already a dummy
+                                             'drug_routes',
+                                             'mines',
+                                             'oil'))
+mytransform <- function(x) {
+  stopifnot(all(!is.na(x)))
+  (rank(x, ties.method = 'random') / length(x)) - 0.5
+}
+set.seed(1234) # for random tie-breaking in ranks within mytransform
+covariates[,transform_me] <- apply(covariates[,transform_me], 2, mytransform)
 
-# Center and standardize everything except the dummy variables
-standardize_me <- setdiff(names(covariates), c('municipality',
-                                               'coffee',
-                                               'drug_routes',
-                                               'mines',
-                                               'oil'))
-
-covariates[,standardize_me] <- scale(covariates[,standardize_me])
-covariates <- subset(covariates, municipality %in% keep_municipalities)
+# clean up
+rm(mytransform, transform_me)
 
 devtools::use_data(covariates, overwrite = TRUE)
 devtools::use_data(cross_section, overwrite = TRUE)
