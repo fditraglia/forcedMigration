@@ -58,6 +58,7 @@ get_par_j <- function(j){
 }
 
 par_D_outer <- lapply(1:length(X), get_par_j)
+par_D_outer <- as.data.frame(par_D_outer)
 names(par_D_outer) <- names(X)
 
 solve_model_i <- function(i) {
