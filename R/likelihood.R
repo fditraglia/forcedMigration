@@ -110,6 +110,7 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL,
       return(exp(covariates_j %*% coefficients_j))
     }
     par_vectors <- lapply(1:length(X), get_par_j)
+    par_vectors <- as.data.frame(par_vectors)
     names(par_vectors) <- names(X)
 
     # Function to solve structural model
