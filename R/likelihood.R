@@ -136,7 +136,7 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL,
                lower = c(1e-10, 0), upper = c(1, 1), method = 'L-BFGS-B')
 
   # Optionally return the optimal values of the "inner" parameters dbar, rho,
-  # eta, and nu. (The default is *not* to return these.)
+  # eta, and nu. (The default is *not* to return these.) Also return the
   if(return_inner) {
     dbar <- opt$par[1]
     rho <- opt$par[2]
@@ -149,8 +149,16 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL,
     log_F <- log(apply(Z, 2, sum)) -  log(sum(Z))
     eta <- log_F - log_F[1] + log_S[1] - log_S
     nu <- log(apply(Z, 3, sum)) + log_F[1] - log_S[1]
-    return(list(negloglike = negloglike, dbar = dbar, rho = rho,
-                eta = eta[-1], nu = nu)) # First element of eta normalized to 0
+
+    if(is.null(X)) {
+      return(list(negloglike = negloglike, dbar = dbar, rho = rho,
+                  eta = eta[-1], nu = nu)) # First element of eta normalized to 0
+    } else {
+      return(list(negloglike = negloglike,
+                  parvecs = par_vectors, # Heterogenous parameters
+                  dbar = dbar, rho = rho,
+                  eta = eta[-1], nu = nu)) # First element of eta normalized to 0
+    }
   } else {
     return(opt$value)
   }
