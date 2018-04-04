@@ -17,46 +17,33 @@ get_migration_flow_i <- function(i, par) {
 }
 
 # Concentrated negative log-likelihood as a function of dbar and rho
-negloglike_inner_D <- function(params, Z, dstar, dstar_lag,
-                               time_effects = TRUE) {
+negloglike_inner_D <- function(params, Z, dstar, dstar_lag) {
   dbar <- params[1]
   rho <- params[2]
 
   pop <- cross_section$popn1993
   D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
+  sqrtZsum <- sqrt(sum(Z))
+  Rt <- apply(Z, 2, sum) / sqrtZsum
+  Rj <- apply(Z, 3, sum) / sqrtZsum
   Dsums <- colSums(D)
-
-  if(time_effects) {
-    sqrtZsum <- sqrt(sum(Z))
-    Rt <- apply(Z, 2, sum) / sqrtZsum
-    Rj <- apply(Z, 3, sum) / sqrtZsum
-  } else {
-    Rj <- apply(Z, 3, sum)
-    Rt <- rep(1, dim(Z)[2])
-  }
   mu <- t((t(D) / Dsums) * Rt) %o% Rj
   loglike <- (sum(Z * log(mu) - mu - lfactorial(Z)))
 
   return(-1 * loglike)
 }
 
-grad_inner_D <- function(params, Z, dstar, dstar_lag, time_effects = TRUE) {
+grad_inner_D <- function(params, Z, dstar, dstar_lag) {
   dbar <- params[1]
   rho <- params[2]
 
   # Calculate means \mu_{it}^j
   pop <- cross_section$popn1993
   D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
+  sqrtZsum <- sqrt(sum(Z))
+  Rt <- apply(Z, 2, sum) / sqrtZsum
+  Rj <- apply(Z, 3, sum) / sqrtZsum
   Dsums <- colSums(D)
-
-  if(time_effects) {
-    sqrtZsum <- sqrt(sum(Z))
-    Rt <- apply(Z, 2, sum) / sqrtZsum
-    Rj <- apply(Z, 3, sum) / sqrtZsum
-  } else {
-    Rj <- apply(Z, 3, sum)
-    Rt <- rep(1, dim(Z)[2])
-  }
   mu <- t((t(D) / Dsums) * Rt) %o% Rj
 
   # Calculate gradient
@@ -69,7 +56,7 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag, time_effects = TRUE) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
+negloglike_outer_D <- function(par_vec, Z, X = NULL,
                                return_inner = FALSE, ncores = 1) {
 
 
@@ -143,10 +130,8 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
   dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
 
   # Maximize concentrated log-likelihood over dbar and rho
-  f <- function(x) negloglike_inner_D(x, Z, dstar, dstar_lag,
-                                      time_effects = time_effects)
-  Deriv_f <- function(x) grad_inner_D(x, Z, dstar, dstar_lag,
-                                      time_effects = time_effects)
+  f <- function(x) negloglike_inner_D(x, Z, dstar, dstar_lag)
+  Deriv_f <- function(x) grad_inner_D(x, Z, dstar, dstar_lag)
   opt <- optim(c(0.01, 0.1), fn = f,  gr = Deriv_f,
                lower = c(1e-10, 0), upper = c(1, 1), method = 'L-BFGS-B')
 
@@ -160,15 +145,10 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
     # Calculate the optimal values of eta and nu
     pop <- cross_section$popn1993
     D <- pop * (dbar + (1 - rho) * dstar + rho * dstar_lag)
-    if(time_effects) {
-      log_S <- log(colSums(D))
-      log_F <- log(apply(Z, 2, sum)) -  log(sum(Z))
-      eta <- log_F - log_F[1] + log_S[1] - log_S
-      nu <- log(apply(Z, 3, sum)) + log_F[1] - log_S[1]
-    } else {
-      eta <- rep(0, dim(Z)[2])
-      nu <- log(apply(Z, 3, sum)) - log(sum(D))
-    }
+    log_S <- log(colSums(D))
+    log_F <- log(apply(Z, 2, sum)) -  log(sum(Z))
+    eta <- log_F - log_F[1] + log_S[1] - log_S
+    nu <- log(apply(Z, 3, sum)) + log_F[1] - log_S[1]
 
     if(is.null(X)) {
       return(list(negloglike = negloglike, dbar = dbar, rho = rho,
