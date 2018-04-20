@@ -152,6 +152,7 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
 
   # Optionally return the optimal values of the "inner" parameters dbar, rho,
   # eta, and nu. (The default is *not* to return these.) Also return the
+  # heterogenous parameters
   if(return_inner) {
     dbar <- opt$par[1]
     rho <- opt$par[2]
@@ -170,15 +171,16 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
       nu <- log(apply(Z, 3, sum)) - log(sum(D))
     }
 
-    if(is.null(X)) {
-      return(list(negloglike = negloglike, dbar = dbar, rho = rho,
-                  eta = eta[-1], nu = nu)) # First element of eta normalized to 0
-    } else {
-      return(list(negloglike = negloglike,
-                  parvecs = par_vectors, # Heterogenous parameters
-                  dbar = dbar, rho = rho,
-                  eta = eta[-1], nu = nu)) # First element of eta normalized to 0
+    out <- list(negloglike = negloglike, dbar = dbar, rho = rho,
+                eta = eta[-1], nu = nu, D = D, dstar = dstar,
+                dstar_lag = dstar_lag, pop = pop)
+
+    if(!is.null(X)) {
+      out$X <- X
+      out$parvecs <- par_vectors # Heterogenous parameters
     }
+    return(out)
+
   } else {
     return(opt$value)
   }
