@@ -9,6 +9,7 @@ License: What license is it under?
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5),
+    numDeriv
 LinkingTo:
     Rcpp,
     RcppArmadillo,
