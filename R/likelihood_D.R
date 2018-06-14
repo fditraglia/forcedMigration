@@ -69,7 +69,7 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag, time_effects = TRUE) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D2 <- function(par_vec, Z, X = NULL, time_effects = TRUE,
+negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
                                return_inner = FALSE, ncores = 1) {
 
   # Case of no covariates (X): identical to what we had before so old code still works
