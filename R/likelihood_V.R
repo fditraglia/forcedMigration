@@ -111,8 +111,8 @@ neg_loglike_inner_V <- function(params, V, logit_covariates, contracts) {
   Vpos <- V != 0
   out1 <- -1 * sum(log(1 + exp(y[Vzero])))
   out2 <- -1 * sum(log(1 + exp(-y[Vpos])) + log(exp(lam[Vpos]) - 1) -
-                      V_obs[Vpos] * log(lam[Vpos]))
-  out3 <- -1 * sum(log(factorial(V_obs[Vpos]))) # This term is a constant
+                      V[Vpos] * log(lam[Vpos]))
+  out3 <- -1 * sum(log(factorial(V[Vpos]))) # This term is a constant
   out <- -1 * (out1 + out2 + out3)
 
   grad_zero <- -1 * t(X[Vzero,]) %*% (1 / (1 + exp(-y[Vzero])))
