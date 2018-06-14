@@ -69,7 +69,7 @@ grad_inner_D <- function(params, Z, dstar, dstar_lag, time_effects = TRUE) {
   return(-1 * c(Deriv_dbar, Deriv_rho))
 }
 
-negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
+negloglike_outer_D2 <- function(par_vec, Z, X = NULL, time_effects = TRUE,
                                return_inner = FALSE, ncores = 1) {
 
   # Case of no covariates (X): identical to what we had before so old code still works
@@ -87,52 +87,20 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
     solve_model_i <- function(i) get_migration_flow_i(i, par_model)
 
   } else {
-    # In this case, the parameters are within an exp!
-
-    # X is a list with the following elements: (delta, tau_ell, tau_n, r, a0, a1)
-    # Each of these, in turn, is a vector of names corresponding to the columns
-    # of the data.frame covariates from forcedMigration. An entry of NULL
-    # indicates that there are no covariates for that parameter. For example,
-    # we could have:
-    #
-    #           X <- list(delta = c('bureaucracy', 'offices'),
-    #                     tau_ell = NULL, # This will be held fixed at 1
-    #                     tau_n = NULL, # This will be a constant parameter
-    #                     r = c('rainfall', 'land_return'),
-    #                     a0 = c('radio', 'dist_cap', 'elevation'),
-    #                     a1 = NULL) # This will be held fixed at zero
+    # In this case, the parameters are within an exp! See the comments in
+    # likelihood_helper.R for more information
 
     stopifnot(all.equal(names(X), c('delta', 'tau_ell', 'tau_n', 'r', 'a0', 'a1')))
-
-    # Ensure that the length of the parameter agrees with X (adding intercepts)
-    npars <- lapply(X, function(x) length(x) + 1)
-    stopifnot(sum(unlist(npars)) == length(par_vec))
-
-    # Indices for elements of par_vec that correspond to a given element of X
-    par_indices <- lapply(X, function(x) 1:(length(x) + 1))
-    for(j in 2:length(par_indices)) {
-      par_indices[[j]] <- par_indices[[j]] + max(par_indices[[j - 1]])
-    }
-    rm(j, npars)
-
-    ones <- rep(1, nrow(covariates))
-    get_par_j <- function(j){
-      covariates_j <- as.matrix(cbind(ones, covariates[,X[[j]]]))
-      coefficients_j <- par_vec[par_indices[[j]]]
-      return(exp(covariates_j %*% coefficients_j))
-    }
-    par_vectors <- lapply(1:length(X), get_par_j)
-    par_vectors <- as.data.frame(par_vectors)
-    names(par_vectors) <- names(X)
+    heterog_pars <- get_heterog_pars(par_vec, X)
 
     # Function to solve structural model
     solve_model_i <- function(i) {
-      par_model_i <- list(delta = par_vectors$delta[i],
-                          tau_ell = par_vectors$tau_ell[i],
-                          tau_n = par_vectors$tau_n[i],
-                          r = par_vectors$r[i],
-                          a0 = par_vectors$a0[i],
-                          a1 = par_vectors$a1[i])
+      par_model_i <- list(delta = heterog_pars$delta[i],
+                          tau_ell = heterog_pars$tau_ell[i],
+                          tau_n = heterog_pars$tau_n[i],
+                          r = heterog_pars$r[i],
+                          a0 = heterog_pars$a0[i],
+                          a1 = heterog_pars$a1[i])
       get_migration_flow_i(i, par_model_i)
     }
   } # END else
@@ -176,7 +144,7 @@ negloglike_outer_D <- function(par_vec, Z, X = NULL, time_effects = TRUE,
 
     if(!is.null(X)) {
       out$X <- X
-      out$parvecs <- par_vectors # Heterogenous parameters
+      out$parvecs <- heterog_pars
     }
     return(out)
 

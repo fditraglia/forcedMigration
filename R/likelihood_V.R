@@ -22,53 +22,20 @@ get_payoffs_list <- function(par_vec, X = NULL, n_cores = 1) {
                   land_parameters[i,]$omega_n,
                   cross_section[i,]$popn1993)
     }
+
   } else {
     # NOTE: in this case the parameters are *are* within an exp!
-
-    # X is a list with the following elements: (delta, tau_ell, tau_n, r, a0, a1)
-    # Each of these, in turn, is a vector of names corresponding to the columns
-    # of the data.frame covariates from forcedMigration. An entry of NULL
-    # indicates that there are no covariates for that parameter. For example,
-    # we could have:
-    #
-    #           X <- list(delta = c('bureaucracy', 'offices'),
-    #                     tau_ell = NULL, # This will be held fixed at 1
-    #                     tau_n = NULL, # This will be a constant parameter
-    #                     r = c('rainfall', 'land_return'),
-    #                     a0 = c('radio', 'dist_cap', 'elevation'),
-    #                     a1 = NULL) # This will be held fixed at zero
-
     stopifnot(all.equal(names(X), c('delta', 'tau_ell', 'tau_n', 'r', 'a0', 'a1')))
-
-    # Ensure that the length of the parameter agrees with X (adding intercepts)
-    npars <- lapply(X, function(x) length(x) + 1)
-    stopifnot(sum(unlist(npars)) == length(par_vec))
-
-    # Indices for elements of par_vec that correspond to a given element of X
-    par_indices <- lapply(X, function(x) 1:(length(x) + 1))
-    for(j in 2:length(par_indices)) {
-      par_indices[[j]] <- par_indices[[j]] + max(par_indices[[j - 1]])
-    }
-    rm(j, npars)
-
-    ones <- rep(1, nrow(covariates))
-    get_par_j <- function(j){
-      covariates_j <- as.matrix(cbind(ones, covariates[,X[[j]]]))
-      coefficients_j <- par_vec[par_indices[[j]]]
-      return(exp(covariates_j %*% coefficients_j))
-    }
-    par_vectors <- lapply(1:length(X), get_par_j)
-    par_vectors <- as.data.frame(par_vectors)
-    names(par_vectors) <- names(X)
+    heterog_pars <- get_heterog_pars(par_vec, X)
 
     # Function to calculate payoffs for a given municipality
     get_payoffs_i <- function(i) {
-      get_payoffs(delta = par_vectors$delta[i],
-                  tau_ell = par_vectors$tau_ell[i],
-                  tau_n = par_vectors$tau_n[i],
-                  r = par_vectors$r[i],
-                  a0 = par_vectors$a0[i],
-                  a1 = par_vectors$a1[i],
+      get_payoffs(delta = heterog_pars$delta[i],
+                  tau_ell = heterog_pars$tau_ell[i],
+                  tau_n = heterog_pars$tau_n[i],
+                  r = heterog_pars$r[i],
+                  a0 = heterog_pars$a0[i],
+                  a1 = heterog_pars$a1[i],
                   land_parameters[i,]$p,
                   land_parameters[i,]$q,
                   land_parameters[i,]$H_bar,
