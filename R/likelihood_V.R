@@ -5,7 +5,7 @@ get_payoffs_list <- function(par_vec, X = NULL, n_cores = 1) {
   # NOTE: in this case the parameters are *not* within an exp!
   if (is.null(X)) {
 
-    stopifnot(length(parvec) == 6)
+    stopifnot(length(par_vec) == 6)
     delta <- par_vec[1]
     tau_ell <- par_vec[2]
     tau_n <- par_vec[3]
@@ -24,7 +24,7 @@ get_payoffs_list <- function(par_vec, X = NULL, n_cores = 1) {
     }
 
   } else {
-    # NOTE: in this case the parameters are *are* within an exp!
+    # NOTE: in this case the parameters *are* within an exp!
     stopifnot(all.equal(names(X), c('delta', 'tau_ell', 'tau_n', 'r', 'a0', 'a1')))
     heterog_pars <- get_heterog_pars(par_vec, X)
 
@@ -47,20 +47,44 @@ get_payoffs_list <- function(par_vec, X = NULL, n_cores = 1) {
 }
 
 
-#-------------------------------------------------------------------------------
-# NOTE 2018-06-14: this needs to be changed so that alpha and gamma can depend
-# on covariates. Other than that, it can stay the same.
-#-------------------------------------------------------------------------------
-# Contracts: lambda_star and S_e_star for each municipality as a function of payoffs
-# and contract parameters
-get_contracts <- function(gamma, alpha, payoffs) {
-  get_contract_i <- function(i) {
-    get_contract(gamma, alpha,
-                  payoffs[[i]]$D_max,
-                  payoffs[[i]]$X_max,
-                  payoffs[[i]]$Dstar,
-                  payoffs[[i]]$Xstar,
-                  cross_section$num_families[i])
+# Solve for optimal contracts: lambda_star and S_e_star for each municipality
+# as a function of payoffs and contract parameters (gamma, alpha). The covariates
+# X allow alpha and gamma to vary across municipalities.
+get_contracts <- function(par_vec, X = NULL, payoffs) {
+
+  # Case of no heterogenous parameters: (gamma, alpha) fixed across municipalities.
+  # Note that in this case the parameters are *not* within an exp!
+  if (is.null(X)) {
+    stopifnot(length(par_vec) == 2)
+    gamma <- par_vec[1]
+    alpha <- par_vec[2]
+
+    # Function to solve for optimal contracts
+    get_contract_i <- function(i) {
+      get_contract(gamma, alpha,
+                    payoffs[[i]]$D_max,
+                    payoffs[[i]]$X_max,
+                    payoffs[[i]]$Dstar,
+                    payoffs[[i]]$Xstar,
+                    cross_section$num_families[i])
+    }
+
+  } else {
+    # Case of heterogenous parameters. Note that in this case the parameters *are*
+    # within an exp!
+    stopifnot(all.equal(names(X), c('gamma', 'alpha')))
+    heterog_pars <- get_heterog_pars(par_vec, X)
+
+    get_contract_i <- function(i) {
+      get_contract(gamma = heterog_pars$gamma[i],
+                   alpha = heterog_pars$alpha[i],
+                   payoffs[[i]]$D_max,
+                   payoffs[[i]]$X_max,
+                   payoffs[[i]]$Dstar,
+                   payoffs[[i]]$Xstar,
+                   cross_section$num_families[i])
+    }
+
   }
   contracts <- lapply(seq_along(payoffs), get_contract_i)
   lambda_star <- sapply(contracts, function(x) x$lambda_star)
@@ -70,20 +94,17 @@ get_contracts <- function(gamma, alpha, payoffs) {
   return(out)
 }
 
-#-------------------------------------------------------------------------------
-# NOTE 2018-06-14: this is the "inner" logit regression, nothing needs to change!
-# But we may want to rename the argument "covariates" to be clearer about what
-# covariates we mean exactly, e.g. "inner_V_covariates" or cost_covariates or
-# something like that.
-#-------------------------------------------------------------------------------
-neg_loglike_inner_V <- function(params, V, covariates, contracts) {
+# The "inner" logistic regression that determines whether or not a contract
+# will exist. (get_contracts calculates the *optimal* contract, but if that
+# contract generates negative surplus, it will not take place.)
+neg_loglike_inner_V <- function(params, V, logit_covariates, contracts) {
   # Note: the covariates are assumed *not* to contain an intercept
   #       so we add one below.
 
   lam <- contracts$lam
   S_e <- contracts$S_e
   # We define y = S_e - x'beta, hence the negative signs in X
-  X <- cbind(S_e,  rep(-1, length(S_e)), -1 * covariates)
+  X <- cbind(S_e,  rep(-1, length(S_e)), -1 * logit_covariates)
   y <- X %*% params
 
   Vzero <- V == 0
@@ -101,21 +122,15 @@ neg_loglike_inner_V <- function(params, V, covariates, contracts) {
   return(out)
 }
 
-#-------------------------------------------------------------------------------
-# NOTE 2018-06-14: this only needs to change in terms of what arguments it takes
-# and how it unpacks them. Need to think carefully about the names of different
-# things here, e.g. "covariates"
-#-------------------------------------------------------------------------------
-# The argument covariates (a matrix) is assumed to *exclude* a constant term.
-# The constant is added by neg_loglike_inner_V
-neg_loglike_outer_V <- function(par_vec, V, covariates, payoffs) {
-  par_model <- list(gamma = par_vec[1],
-                    alpha = par_vec[2])
+# The argument logit_covariates (a matrix) is assumed to *exclude* a constant term.
+# The constant is added by neg_loglike_inner_V. The covariates X allow the parameters
+# of the contract (gamma, alpha) to vary between municipalities: see get_contracts
+# above for more details.
+neg_loglike_outer_V <- function(par_vec, X = NULL, V, logit_covariates, payoffs) {
 
-  contracts <- get_contracts(gamma = par_model$gamma,
-                             alpha = par_model$alpha, payoffs)
-  f <- function(x) neg_loglike_inner_V(x, V, covariates, contracts)
-  opt <- suppressWarnings(nlm(f, p = rep(0, ncol(covariates) + 2),
+  contracts <- get_contracts(par_vec, X, payoffs)
+  f <- function(x) neg_loglike_inner_V(x, V, logit_covariates, contracts)
+  opt <- suppressWarnings(nlm(f, p = rep(0, ncol(logit_covariates) + 2),
                               check.analyticals = FALSE))
   return(opt$minimum)
 }
