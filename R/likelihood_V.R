@@ -104,7 +104,7 @@ neg_loglike_inner_V <- function(params, V, logit_covariates, contracts) {
   lam <- contracts$lam
   S_e <- contracts$S_e
   # We define y = S_e - x'beta, hence the negative signs in X
-  X <- cbind(S_e,  rep(-1, length(S_e)), -1 * logit_covariates)
+  X <- cbind(S_e,  rep(-1, length(S_e)), -1 * as.matrix(logit_covariates))
   y <- X %*% params
 
   Vzero <- V == 0
@@ -112,7 +112,7 @@ neg_loglike_inner_V <- function(params, V, logit_covariates, contracts) {
   out1 <- -1 * sum(log(1 + exp(y[Vzero])))
   out2 <- -1 * sum(log(1 + exp(-y[Vpos])) + log(exp(lam[Vpos]) - 1) -
                       V[Vpos] * log(lam[Vpos]))
-  out3 <- -1 * sum(log(factorial(V[Vpos]))) # This term is a constant
+  out3 <- -1 * sum(lfactorial(V[Vpos])) # This term is a constant
   out <- -1 * (out1 + out2 + out3)
 
   grad_zero <- -1 * t(X[Vzero,]) %*% (1 / (1 + exp(-y[Vzero])))
@@ -126,11 +126,17 @@ neg_loglike_inner_V <- function(params, V, logit_covariates, contracts) {
 # The constant is added by neg_loglike_inner_V. The covariates X allow the parameters
 # of the contract (gamma, alpha) to vary between municipalities: see get_contracts
 # above for more details.
-neg_loglike_outer_V <- function(par_vec, X = NULL, V, logit_covariates, payoffs) {
+neg_loglike_outer_V <- function(par_vec, X = NULL, V, logit_covariates, payoffs,
+                                return_inner = FALSE) {
 
   contracts <- get_contracts(par_vec, X, payoffs)
   f <- function(x) neg_loglike_inner_V(x, V, logit_covariates, contracts)
   opt <- suppressWarnings(nlm(f, p = rep(0, ncol(logit_covariates) + 2),
                               check.analyticals = FALSE))
-  return(opt$minimum)
+  if (return_inner) {
+    out <- opt
+  } else {
+    out <- opt$minimum
+  }
+  return(out)
 }
