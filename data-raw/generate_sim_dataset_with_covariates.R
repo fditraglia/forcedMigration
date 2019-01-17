@@ -80,14 +80,31 @@ rownames(dstar) <- rownames(Vcum)
 par_D_inner <- list(dbar = 0.001,
                 rho = 0.3,
                 nu = seq(-0.3, 0.3, length.out = 5),
-                eta = seq(-0.1, 0.1, length.out = 16)) # One fewer than T
+                # For now, set the time biases to zero
+                eta = rep(0, 16), # One fewer than T
+                pi = 1:17/100)  # Censoring probabilities
+                #eta = seq(-0.1, 0.1, length.out = 16)) # One fewer than T
 
 dstar_lag <- cbind(rep(0, nrow(dstar)), dstar[,-ncol(dstar)])
 true_displacement <- with(par_D_inner, dbar + (1 - rho) * dstar + rho * dstar_lag)
 
 mu <- with(par_D_inner, (cross_section$popn1993 * t(t(true_displacement) *
                                                       exp(c(0, eta)))) %o% exp(nu))
-Z <- array(rpois(length(mu), lambda = mu), dim = dim(mu))
+Zstar <- array(rpois(length(mu), lambda = mu), dim = dim(mu))
+
+#----------------------- Simulate "censoring"
+# With probability pi_t, z_itj records a zero rather than an actual measurement
+censor_probs <- rep(1, dim(mu)[1]) %o% par_D_inner$pi %o% rep(1, dim(mu)[3])
+zeta <- array(rbinom(length(censor_probs), size = 1, prob = censor_probs),
+              dim = dim(censor_probs)) # Checked using apply(zeta, 2:3, mean)
+                                       # and apply(zeta, 2, mean)
+Z <- Zstar * (1 - zeta) # zeta is the indicator of censoring
+
+# Note that there will be *fewer* instances in which (Z != Zstar) then there will
+# be instances in which (zeta == 1). This is because you could have an observation
+# that is a "structural zero" *and* was censored. In this case (Z == Zstar) but
+# (zeta == 1)
+
 
 ##----------------------- Solve for payoffs to contract (Dstar, Xstar, Dmax, Xmax)
 #payoffs <- do.call(get_payoffs_list, c(par_D_outer, n_cores = 8))
