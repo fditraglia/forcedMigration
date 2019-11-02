@@ -115,6 +115,19 @@ cross_section <- subset(cross_section, municipality %in% keep_municipalities)
 panel <- subset(panel, municipality %in% keep_municipalities)
 rm(keep_me)
 
+#-------------------------------------------------------------------------------
+# Some displacement measures are zero for all municipalities during a given year.
+# These are not true" zeros, but rather missing observations: some agencies did
+# not choose to report in a given year:
+#-------------------------------------------------------------------------------
+# AS      did not record in: 1996, 2012
+# CEDE    did not record in: 1996, 2010, 2011, 2012
+#-------------------------------------------------------------------------------
+# Replace these zeros with NA.
+#-------------------------------------------------------------------------------
+panel[panel$year %in% c(1996, 2012),]$D_AS <- NA
+panel[panel$year %in% c(1996, 2010:2012),]$D_CEDE <- NA
+
 # Arrange displacement measures into 3d array: municipality-year-measure
 rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
 g <- function(i) {
@@ -204,13 +217,13 @@ covariates[,transform_me] <- apply(covariates[,transform_me], 2, mytransform)
 # clean up
 rm(mytransform, transform_me)
 
-devtools::use_data(covariates, overwrite = TRUE)
-devtools::use_data(cross_section, overwrite = TRUE)
-devtools::use_data(panel, overwrite = TRUE)
-devtools::use_data(obsZ, overwrite = TRUE)
-devtools::use_data(land_parameters, overwrite = TRUE)
-devtools::use_data(Vcum, overwrite = TRUE)
-devtools::use_data(Vcum_pop, overwrite = TRUE)
+usethis::use_data(covariates, overwrite = TRUE)
+usethis::use_data(cross_section, overwrite = TRUE)
+usethis::use_data(panel, overwrite = TRUE)
+usethis::use_data(obsZ, overwrite = TRUE)
+usethis::use_data(land_parameters, overwrite = TRUE)
+usethis::use_data(Vcum, overwrite = TRUE)
+usethis::use_data(Vcum_pop, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
