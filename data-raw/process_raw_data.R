@@ -128,6 +128,16 @@ rm(keep_me)
 panel[panel$year %in% c(1996, 2012),]$D_AS <- NA
 panel[panel$year %in% c(1996, 2010:2012),]$D_CEDE <- NA
 
+
+#-------------------------------------------------------------------------------
+# Create lagged violence flow
+#-------------------------------------------------------------------------------
+panel <- panel %>%
+  group_by(municipality) %>%
+  mutate(lag_V_flow = lag(V_flow, order_by = year)) %>%
+  ungroup()
+
+
 # Arrange displacement measures into 3d array: municipality-year-measure
 rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
 g <- function(i) {
