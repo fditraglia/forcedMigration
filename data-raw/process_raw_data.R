@@ -1,108 +1,115 @@
+library(dplyr) # not used elsewhere in the package: only for data prep
+
+# Load raw data in STATA format
 cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
 
-# Calculate total land in each municipality
-landtotal_cols <- sapply(names(cross_section_raw), substr, 1, 9) == 'tot_land_'
-landtotal_bins <- cross_section_raw[, landtotal_cols]
-total_land <- rowSums(landtotal_bins)
-rm(landtotal_bins, landtotal_cols)
+# We observe a discretized land distribution: we know the total amount of land and the
+# total number of landholders within each of the following "bins" measured in hectares
+#---------------------------------------------------------------------------------------
+# 0
+# (0,1)
+# [1,3)
+# [3,5)
+# [5,10)
+# [10,15)
+# [15, 20)
+# [20, 50)
+# [50,100)
+# [100, 200)
+# [200, 500)
+# [500, 1000)
+# >=2000
+#---------------------------------------------------------------------------------------
 
-# Construct land distribution from raw data on landowner counts binned by amount
-# of land
-landowner_cols <- sapply(names(cross_section_raw), substr, 1, 8) == 'landown_'
-landowner_bins <- cross_section_raw[, landowner_cols]
-names(landowner_bins) <- c('[0,1)', '[1,3)', '[3,5)', '[5,10)', '[10,15)',
-                         '[15,20)', '[20,50)', '[50,100)', '[100,200)',
-                         '[200,500)', '[500,1000)', '[1000,2000)', '>=2000')
-rm(landowner_cols)
+landowner_bins <- cross_section_raw %>% # Number of landowners in each bin
+  mutate(landown_0 = landless_families) %>% # landless families are those with exactly 0 land
+  select(starts_with('landown_')) %>%
+  relocate(landown_0) %>% # Make this the first column
+  rename(`0` = landown_0,
+         `(0,1)` = landown_less_1,
+         `[1,3)` = landown_1_3,
+         `[3,5)` = landown_3_5,
+         `[5,10)` = landown_5_10,
+         `[10,15)` = landown_10_15,
+         `[15,20)` = landown_15_20,
+         `[20,50)` = landown_20_50,
+         `[50,100)` = landown_50_100,
+         `[100,200)` = landown_100_200,
+         `[200,500)` = landown_200_500,
+         `[500,1000)` = landown_500_1000,
+         `[1000,2000)` = landown_1000_2000 ,
+         `>=2000` = landown_2000_plus)
 
-# Calculate total number of landholders and mean landholdings
-n_landholders <- rowSums(landowner_bins)
-mean_land_owned <- total_land / n_landholders
-rm(total_land)
+# How many landowners in each municipality?
+n_landowners <- rowSums(landowner_bins)
 
-h <- function(x){
-  x <- x / sum(x)
-  n <- length(x)
-  cumsum(x)[1:(n-1)]
+landtotal_bins <- cross_section_raw %>% # Total land in each bin
+  mutate(tot_land_0 = 0) %>% # landless families are those with exactly 0 land
+  select(starts_with('tot_land_')) %>%
+  relocate(tot_land_0) %>% # Make this the first column
+  rename(`0` = tot_land_0,
+         `(0,1)` = tot_land_1,
+         `[1,3)` = tot_land_2,
+         `[3,5)` = tot_land_3,
+         `[5,10)` = tot_land_4,
+         `[10,15)` = tot_land_5,
+         `[15,20)` = tot_land_6,
+         `[20,50)` = tot_land_7,
+         `[50,100)` = tot_land_8,
+         `[100,200)` = tot_land_9,
+         `[200,500)` = tot_land_10,
+         `[500,1000)` = tot_land_11,
+         `[1000,2000)` = tot_land_12,
+         `>=2000` = tot_land_13)
+
+
+# Construct a list of land distributions: one for each municipality
+make_land_dist <- function(i) {
+  total_land <- landtotal_bins[i,]
+  n_families <- landowner_bins[i,]
+  out <- data.frame(t(rbind(total_land = landtotal_bins[i,], n_families = landowner_bins[i,])))
+  out$mean_land <- ifelse(out$n_families > 0, out$total_land / out$n_families, 0)
+  out$frac_families <- out$n_families / sum(out$n_families)
+  return(out)
 }
+land_distributions <- lapply(seq_len(nrow(cross_section_raw)), make_land_dist)
+names(land_distributions) <- cross_section_raw$municipality
+rm(make_land_dist)
 
-land_cdfs <- t(apply(landowner_bins, 1, h))
-colnames(land_cdfs) <- paste0('x=', c(1, 3, 5, 10, 15, 20, 50, 100, 200, 500,
-                                     1000, 2000))
-
-land_cdf_list <- lapply(seq_len(nrow(land_cdfs)), function(i) land_cdfs[i,])
-highest_occupied <- apply(landowner_bins, 1, function(x) max(which(x > 0)))
-land_cdf_list <- lapply(seq_along(land_cdf_list),
-                        function(i) land_cdf_list[[i]][1:(highest_occupied[i] - 1)])
-rm(h, land_cdfs, landowner_bins, highest_occupied)
-
-
-fit_3_param_beta <- function(Fhat, mu){
-  x_full <- c(1, 3, 5, 10, 15, 20, 50, 100, 200, 500, 1000, 2000)
-  x <- x_full[1:length(Fhat)]
-  f <- function(params){
-    p <- params[1]
-    q <- params[2]
-    b <- mu * (p + q) / p
-    Fmodel <- actuar::pgenbeta(x, shape1 = p, shape2 = q, shape3 = 1,
-                               scale = b)
-    sum((Fmodel - Fhat)^2)
-  }
-  try(solution <- optim(c(1, 1), f, lower = c(0.01, 0.01),
-                        method = "L-BFGS-B")$par)
-  return(c(shape1 = solution[1], shape2 = solution[2],
-           scale = mu * (solution[1] + solution[2]) / solution[1]))
-}
-
-
-beta_params <- as.data.frame(t(mapply(fit_3_param_beta,
-                                      Fhat = land_cdf_list,
-                                      mu = mean_land_owned)))
-names(beta_params) <- c('p', 'q', 'H_bar')
-omega_n <- with(cross_section_raw, landless_families / num_families)
-
-cross_section <- data.frame(municipality = cross_section_raw$municipality,
-                            num_families = cross_section_raw$num_families,
-                                beta_params, omega_n)
+cross_section <- cross_section_raw %>%
+  mutate(omega_n = landless_families / num_families) %>%
+  select(municipality, n_families, omega_n)
 
 # Extract 1993 population from panel_raw and merge with cross_section
-popn1993 <- subset(panel_raw, year == 1996)[,c("municipality",
-                                               "Total_Poblacion1993")]
-names(popn1993) <- c('municipality', 'popn1993')
+popn1993 <- panel_raw %>%
+  filter(year == 1996) %>%
+  select(municipality, Total_Poblacion1993) %>%
+  rename(popn1993 = Total_Poblacion1993)
+
+
 cross_section <- merge(cross_section, popn1993)
 
 
 
+panel <- panel_raw %>%
+  select(municipality,
+         year,
+         V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
+         V_flow = vcivilparas_UR, # Flow of paramilitary violence
+         placeboV_cum = ac_vcivilnotparas_UR, # Cumulative non-paramilitary violence
+         placeboV_flow = vcivilnotparas_UR, # Flow of non-paramilitary violence
+         D_AS = desplazados_paras_AS, # Five measures of displacement
+         D_CODHES = desplazados_CODHES,
+         D_RUV = desplazados_total_RUV,
+         D_CEDE = desplazados_CEDE,
+         D_JYP = desplazados_JYP,
+         popn1993 = Total_Poblacion1993)
 
-panel <- panel_raw[,c("municipality",
-                      "year",
-                      "ac_vcivilparas_UR", # Cumulative paramilitary violence
-                      "vcivilparas_UR", # Flow of paramilitary violence
-                      "ac_vcivilnotparas_UR", # Cumulative non-paramilitary violence
-                      "vcivilnotparas_UR", # Flow of non-paramilitary violence
-                      "desplazados_paras_AS", # Five measures of displacement
-                      "desplazados_CODHES",
-                      "desplazados_total_RUV",
-                      "desplazados_CEDE",
-                      "desplazados_JYP",
-                      "Total_Poblacion1993")]
-
-names(panel) <- c("municipality",
-                  "year",
-                  "V_cum",
-                  "V_flow",
-                  "placeboV_cum",
-                  "placeboV_flow",
-                  "D_AS",
-                  "D_CODHES",
-                  "D_RUV",
-                  "D_CEDE",
-                  "D_JYP",
-                  "popn1993")
-
-
+#-------------------------------------------------
+# Update from here down! 2020-12-15
+#-------------------------------------------------
 
 cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
 cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
@@ -117,7 +124,7 @@ rm(keep_me)
 
 #-------------------------------------------------------------------------------
 # Some displacement measures are zero for all municipalities during a given year.
-# These are not true" zeros, but rather missing observations: some agencies did
+# These are not "true" zeros, but rather missing observations: some agencies did
 # not choose to report in a given year:
 #-------------------------------------------------------------------------------
 # AS      did not record in: 1996, 2012
