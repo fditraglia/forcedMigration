@@ -42,6 +42,18 @@ landowner_bins <- cross_section_raw %>% # Number of landowners in each bin
          `[1000,2000)` = landown_1000_2000 ,
          `>=2000` = landown_2000_plus)
 
+
+#------------------------------------------------------------------------------
+# We don't know what the RA did to construct the column landless_families in
+# the cross-section dta file. Here's how we'll create our version
+#------------------------------------------------------------------------------
+# 1. Sum number of landholders -> n_landholding_families
+# 2. If num_families >= n_landholding_families, set the difference as n_landless_families
+# 3. If num_families < n_landholding_families:
+#     a. Set num_families = n_landholding_families
+#     b. Set n_landless_families = 0
+#------------------------------------------------------------------------------
+
 # How many landowners in each municipality?
 n_landowners <- rowSums(landowner_bins)
 
