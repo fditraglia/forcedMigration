@@ -5,6 +5,7 @@ cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
 
+#---------------------------------------------------------------------------------------
 # We observe a discretized land distribution: we know the total amount of land and the
 # total number of landholders within each of the following "bins" measured in hectares
 #---------------------------------------------------------------------------------------
@@ -23,11 +24,36 @@ survey_raw <- haven::read_dta("data-raw/Survey.dta")
 # >=2000
 #---------------------------------------------------------------------------------------
 
-landowner_bins <- cross_section_raw %>% # Number of landowners in each bin
-  mutate(landown_0 = landless_families) %>% # landless families are those with exactly 0 land
-  select(starts_with('landown_')) %>%
-  relocate(landown_0) %>% # Make this the first column
-  rename(`0` = landown_0,
+
+#------------------------------------------------------------------------------
+# The column landless_families in from Cross_section.dta was constructed by
+# Camilo's original RA. We can't figure out what he did, but the results don't
+# make any sense. The following is our procedure for constructing a measure of
+# the number of landless families in a municipality from the underlying census
+# data. We assume, absent evidence to the contrary, that there is at most one
+# landowner per family.
+#------------------------------------------------------------------------------
+# 1. Calculate n_landowners by summing counts in each column "landown_*"
+# 2. Set n_families = pmax(num_families, n_landowners)
+# 3. Set n_landless = n_families - n_landowners
+#------------------------------------------------------------------------------
+
+cross_section <- cross_section_raw %>%
+  rowwise(municipality) %>%
+  mutate(n_landowners = sum(c_across(starts_with('landown_')))) %>%
+  ungroup() %>%
+  rename(n_families_census = num_families) %>%
+  mutate(n_families = pmax(n_families_census, n_landowners),
+         n_landless = n_families - n_landowners,
+         omega_n = n_landless / n_families) %>%
+  select(-landless_families)
+
+rm(cross_section_raw)
+
+landowner_bins <- cross_section %>% # Number of families in each landholding "bin"
+  select(n_landless, starts_with('landown_')) %>%
+  relocate(n_landless) %>% # Make this the first column
+  rename(`0` = n_landless,
          `(0,1)` = landown_less_1,
          `[1,3)` = landown_1_3,
          `[3,5)` = landown_3_5,
@@ -42,22 +68,7 @@ landowner_bins <- cross_section_raw %>% # Number of landowners in each bin
          `[1000,2000)` = landown_1000_2000 ,
          `>=2000` = landown_2000_plus)
 
-
-#------------------------------------------------------------------------------
-# We don't know what the RA did to construct the column landless_families in
-# the cross-section dta file. Here's how we'll create our version
-#------------------------------------------------------------------------------
-# 1. Sum number of landholders -> n_landholding_families
-# 2. If num_families >= n_landholding_families, set the difference as n_landless_families
-# 3. If num_families < n_landholding_families:
-#     a. Set num_families = n_landholding_families
-#     b. Set n_landless_families = 0
-#------------------------------------------------------------------------------
-
-# How many landowners in each municipality?
-n_landowners <- rowSums(landowner_bins)
-
-landtotal_bins <- cross_section_raw %>% # Total land in each bin
+landtotal_bins <- cross_section %>% # Total land in each landholding "bin"
   mutate(tot_land_0 = 0) %>% # landless families are those with exactly 0 land
   select(starts_with('tot_land_')) %>%
   relocate(tot_land_0) %>% # Make this the first column
@@ -86,25 +97,12 @@ make_land_dist <- function(i) {
   out$frac_families <- out$n_families / sum(out$n_families)
   return(out)
 }
-land_distributions <- lapply(seq_len(nrow(cross_section_raw)), make_land_dist)
-names(land_distributions) <- cross_section_raw$municipality
-rm(make_land_dist)
-
-cross_section <- cross_section_raw %>%
-  mutate(omega_n = landless_families / num_families) %>%
-  select(municipality, n_families, omega_n)
-
-# Extract 1993 population from panel_raw and merge with cross_section
-popn1993 <- panel_raw %>%
-  filter(year == 1996) %>%
-  select(municipality, Total_Poblacion1993) %>%
-  rename(popn1993 = Total_Poblacion1993)
+land_distributions <- lapply(seq_len(nrow(cross_section)), make_land_dist)
+names(land_distributions) <- cross_section$municipality
+rm(make_land_dist, landowner_bins, landtotal_bins)
 
 
-cross_section <- merge(cross_section, popn1993)
-
-
-
+# Select the panel variables we'll use and give them simpler names
 panel <- panel_raw %>%
   select(municipality,
          year,
@@ -119,13 +117,20 @@ panel <- panel_raw %>%
          D_JYP = desplazados_JYP,
          popn1993 = Total_Poblacion1993)
 
-#-------------------------------------------------
-# Update from here down! 2020-12-15
-#-------------------------------------------------
+# There are some variables in the panel dataset that are really cross-section
+# variables: e.g. 1993 population, cumulative violence in the final year of the
+# panel. Merge these into the cross-section dataset
 
-cum_violence <- subset(panel, year == max(panel$year))[,c("municipality", "V_cum")]
-cross_section <- tibble::as_tibble(merge(cross_section, cum_violence))
-names(cross_section[, 'V_cum']) <- 'VTotal'
+merge_me <- panel %>%
+  filter(year == max(year)) %>%
+  select(municipality, popn1993, V_cum)
+
+cross_section <- inner_join(cross_section, merge_me, by = 'municipality')
+rm(merge_me)
+
+#-------------------------------------------------
+# Update from here down! 2021-01-28
+#-------------------------------------------------
 
 # Keep only municipalities with at least 100 landowners
 keep_me <- n_landholders >= 100
