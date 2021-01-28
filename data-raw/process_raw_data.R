@@ -117,6 +117,8 @@ panel <- panel_raw %>%
          D_JYP = desplazados_JYP,
          popn1993 = Total_Poblacion1993)
 
+rm(panel_raw)
+
 # There are some variables in the panel dataset that are really cross-section
 # variables: e.g. 1993 population, cumulative violence in the final year of the
 # panel. Merge these into the cross-section dataset
@@ -128,16 +130,21 @@ merge_me <- panel %>%
 cross_section <- inner_join(cross_section, merge_me, by = 'municipality')
 rm(merge_me)
 
+
+#--------------------------------------------------------
+# Keep only municipalities with at least 100 landowners
+#--------------------------------------------------------
+keep_municipalities <- cross_section %>%
+  filter(n_landowners >= 100) %>%
+  pull(municipality)
+cross_section <- cross_section %>%
+  filter(municipality %in% keep_municipalities)
+panel <- panel %>%
+  filter(municipality %in% keep_municipalities)
+
 #-------------------------------------------------
 # Update from here down! 2021-01-28
 #-------------------------------------------------
-
-# Keep only municipalities with at least 100 landowners
-keep_me <- n_landholders >= 100
-keep_municipalities <- cross_section[keep_me,]$municipality
-cross_section <- subset(cross_section, municipality %in% keep_municipalities)
-panel <- subset(panel, municipality %in% keep_municipalities)
-rm(keep_me)
 
 #-------------------------------------------------------------------------------
 # Some displacement measures are zero for all municipalities during a given year.
