@@ -1,7 +1,10 @@
-get_tanh_fixed_point <- function(w, a, b, start = -1, tol = 1e-5, max_iter = 100) {
+get_tanh_fixed_point <- function(w, a, b, start = -1) {
 # Calculate the smallest fixed point of: f(x) = sum(w * tanh(a + b * x))
   stopifnot(is.atomic(w) && is.atomic(a) && (length(w) == length(a)))
   stopifnot(is.atomic(b) && length(b) == 1L)
+
+  tol <- 1e-5
+  max_iter <- 500
 
   x_prev <- start
   x <- sum(w * tanh(a + b * x_prev))
