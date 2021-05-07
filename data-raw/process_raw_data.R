@@ -142,10 +142,6 @@ cross_section <- cross_section %>%
 panel <- panel %>%
   filter(municipality %in% keep_municipalities)
 
-#-------------------------------------------------
-# Update from here down! 2021-01-28
-#-------------------------------------------------
-
 #-------------------------------------------------------------------------------
 # Some displacement measures are zero for all municipalities during a given year.
 # These are not "true" zeros, but rather missing observations: some agencies did
@@ -159,6 +155,43 @@ panel <- panel %>%
 panel[panel$year %in% c(1996, 2012),]$D_AS <- NA
 panel[panel$year %in% c(1996, 2010:2012),]$D_CEDE <- NA
 
+
+#-------------------------------------------------------------------------------
+# For all measures except JYP, there are some municipalities in which a single
+# measure reports zero total displacement over the sample period, while all other
+# measures report positive displacement. These "zeros" are really NAs.
+#-------------------------------------------------------------------------------
+disagreement <- panel %>%
+  select(municipality, year, starts_with('D_')) %>%
+  group_by(municipality) %>%
+  summarise(across(.cols = starts_with('D_'),
+                   .fns = sum, na.rm = TRUE)) %>%
+  rowwise() %>%
+  filter(sum(c_across(starts_with('D_')) == 0) == 1) %>%
+  ungroup()
+
+
+AS_replace <- disagreement %>%
+  filter(D_AS == 0) %>%
+  pull(municipality)
+panel[panel$municipality %in% AS_replace,]$D_AS <- NA
+
+CODHES_replace <- disagreement %>%
+  filter(D_CODHES == 0) %>%
+  pull(municipality)
+panel[panel$municipality %in% CODHES_replace,]$D_CODHES <- NA
+
+RUV_replace <- disagreement %>%
+  filter(D_RUV == 0) %>%
+  pull(municipality)
+panel[panel$municipality %in% RUV_replace,]$D_RUV <- NA
+
+CEDE_replace <- disagreement %>%
+  filter(D_CEDE == 0) %>%
+  pull(municipality)
+panel[panel$municipality %in% CEDE_replace,]$D_CEDE <- NA
+
+rm(disagreement, AS_replace, CODHES_replace, RUV_replace, CEDE_replace)
 
 #-------------------------------------------------------------------------------
 # Create lagged violence flow
