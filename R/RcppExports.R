@@ -33,6 +33,10 @@ get_payoffs <- function(delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, 
     .Call('_forcedMigration_get_payoffs', PACKAGE = 'forcedMigration', delta, tau_ell, tau_n, r, a0, a1, p, q, H_bar, omega_n, popn)
 }
 
+get_tanh_fixed_point_cpp <- function(w, a, b, start = -1) {
+    .Call('_forcedMigration_get_tanh_fixed_point_cpp', PACKAGE = 'forcedMigration', w, a, b, start)
+}
+
 get_S <- function(X_star, y_star, Q, gamma) {
     .Call('_forcedMigration_get_S', PACKAGE = 'forcedMigration', X_star, y_star, Q, gamma)
 }

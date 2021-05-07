@@ -162,6 +162,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_tanh_fixed_point_cpp
+double get_tanh_fixed_point_cpp(NumericVector w, NumericVector a, double b, double start);
+RcppExport SEXP _forcedMigration_get_tanh_fixed_point_cpp(SEXP wSEXP, SEXP aSEXP, SEXP bSEXP, SEXP startSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    Rcpp::traits::input_parameter< double >::type start(startSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_tanh_fixed_point_cpp(w, a, b, start));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_S
 List get_S(arma::mat X_star, arma::vec y_star, arma::mat Q, arma::vec gamma);
 RcppExport SEXP _forcedMigration_get_S(SEXP X_starSEXP, SEXP y_starSEXP, SEXP QSEXP, SEXP gammaSEXP) {
@@ -186,6 +200,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_forcedMigration_get_X_max", (DL_FUNC) &_forcedMigration_get_X_max, 8},
     {"_forcedMigration_get_D_max", (DL_FUNC) &_forcedMigration_get_D_max, 9},
     {"_forcedMigration_get_payoffs", (DL_FUNC) &_forcedMigration_get_payoffs, 11},
+    {"_forcedMigration_get_tanh_fixed_point_cpp", (DL_FUNC) &_forcedMigration_get_tanh_fixed_point_cpp, 4},
     {"_forcedMigration_get_S", (DL_FUNC) &_forcedMigration_get_S, 4},
     {NULL, NULL, 0}
 };

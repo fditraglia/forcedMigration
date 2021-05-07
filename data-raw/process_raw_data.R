@@ -186,9 +186,6 @@ obsZ <- sapply(1:ncol(rawZ), g, simplify = 'array')
 dimnames(obsZ)[[3]] <- unlist(lapply(strsplit(names(rawZ), '_'), function(x) x[2]))
 
 
-# Create matrices of land parameters and cumulative violence
-land_parameters <- cross_section[, c('p', 'q', 'H_bar', 'omega_n')]
-
 Vcum <- reshape(as.data.frame(panel[,c('municipality', 'year', 'V_cum')]),
                 direction = 'wide', idvar = 'municipality',
                 timevar = 'year')
@@ -198,12 +195,12 @@ Vcum <- Vcum[,-1]
 Vcum_pop <- Vcum / cross_section$popn1993
 
 # Covariates (cross-section data)
-bureaucracy <- with(cross_section_raw, local_bureaucracy_95 + state_bureaucracy_95)
-names(cross_section_raw[c(11:22, 25:31)])
-offices <- rowSums(cross_section_raw[,c(11:22, 25:31)])
-elec_comp <- with(cross_section_raw, 0.5 * ratio_votes_dif_alc +
+bureaucracy <- with(cross_section, local_bureaucracy_95 + state_bureaucracy_95)
+names(cross_section[c(11:22, 25:31)])
+offices <- rowSums(cross_section[,c(11:22, 25:31)])
+elec_comp <- with(cross_section, 0.5 * ratio_votes_dif_alc +
                     0.5 * ratio_votes_dif_asa )
-covariates <- cross_section_raw[, c('municipality',
+covariates <- cross_section[, c('municipality',
                                     'land_return',
                                     'rainfall',
                                     'ruggedness',
@@ -262,9 +259,9 @@ usethis::use_data(covariates, overwrite = TRUE)
 usethis::use_data(cross_section, overwrite = TRUE)
 usethis::use_data(panel, overwrite = TRUE)
 usethis::use_data(obsZ, overwrite = TRUE)
-usethis::use_data(land_parameters, overwrite = TRUE)
 usethis::use_data(Vcum, overwrite = TRUE)
 usethis::use_data(Vcum_pop, overwrite = TRUE)
+usethis::use_data(land_distributions, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
