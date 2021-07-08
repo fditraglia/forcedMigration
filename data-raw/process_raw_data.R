@@ -25,13 +25,16 @@ adjacent_municipalities <- lapply(1:nrow(adjacency_matrix), get_neighbors)
 names(adjacent_municipalities) <- municipality_codes
 rm(municipality_codes, adjacency_matrix, get_neighbors, row_indices)
 
-# Load csv file containing municipality and region codes
+# Load csv file with municipality and region codes, merge with cross_section_raw
 #-------------------------------------------------------------------------------
 # NOTE: the adjacency matrix above has only 1117 municipalities, whereas this
 # csv file has 1119. Why? We think this is because of two islands. Check this.
 #-------------------------------------------------------------------------------
 municipalities_and_regions <- read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
 names(municipalities_and_regions) <- c('department', 'region', 'municipality')
+municipalities_and_regions$municipality <- as.numeric(municipalities_and_regions$municipality)
+cross_section_raw <- left_join(cross_section_raw, municipalities_and_regions)
+rm(municipalities_and_regions)
 
 #---------------------------------------------------------------------------------------
 # We observe a discretized land distribution: we know the total amount of land and the
@@ -231,11 +234,11 @@ panel <- panel %>%
 
 
 # Arrange displacement measures into 3d array: municipality-year-measure
-rawZ <- panel %>%
+raw_displacement <- panel %>%
   select(starts_with('D_'))
 g <- function(i) {
   temp <- data.frame(municipality = panel$municipality, year = panel$year,
-                     D = rawZ[,i])
+                     D = raw_displacement[,i])
   temp <- reshape(temp, direction = 'wide', timevar = 'year',
                   idvar = 'municipality')
   colnames(temp)[-1] <- as.character(1996:2012)
@@ -244,8 +247,8 @@ g <- function(i) {
   temp <- temp[,-1]
   return(temp)
 }
-obsZ <- sapply(1:ncol(rawZ), g, simplify = 'array')
-dimnames(obsZ)[[3]] <- unlist(lapply(strsplit(names(rawZ), '_'), function(x) x[2]))
+displacement <- sapply(1:ncol(raw_displacement), g, simplify = 'array')
+dimnames(displacement)[[3]] <- unlist(lapply(strsplit(names(raw_displacement), '_'), function(x) x[2]))
 
 
 Vcum <- reshape(as.data.frame(panel[,c('municipality', 'year', 'V_cum')]),
@@ -317,15 +320,15 @@ covariates[,transform_me] <- apply(covariates[,transform_me], 2, mytransform)
 # clean up
 rm(mytransform, transform_me)
 
-usethis::use_data(covariates, overwrite = TRUE)
+#usethis::use_data(covariates, overwrite = TRUE)
 usethis::use_data(cross_section, overwrite = TRUE)
 usethis::use_data(panel, overwrite = TRUE)
-usethis::use_data(obsZ, overwrite = TRUE)
-usethis::use_data(Vcum, overwrite = TRUE)
-usethis::use_data(Vcum_pop, overwrite = TRUE)
+#usethis::use_data(displacement, overwrite = TRUE)
+#usethis::use_data(Vcum, overwrite = TRUE)
+#usethis::use_data(Vcum_pop, overwrite = TRUE)
 usethis::use_data(land_distributions, overwrite = TRUE)
 usethis::use_data(adjacent_municipalities, overwrite = TRUE)
-usethis::use_data(municipalities_and_regions, overwrite = TRUE)
+#usethis::use_data(municipalities_and_regions, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
