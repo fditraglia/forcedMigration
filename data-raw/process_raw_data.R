@@ -203,7 +203,8 @@ panel <- panel %>%
 
 
 # Arrange displacement measures into 3d array: municipality-year-measure
-rawZ <- as.data.frame(panel[,c('D_AS', 'D_CODHES', 'D_RUV', 'D_CEDE', 'D_JYP')])
+rawZ <- panel %>%
+  select(starts_with('D_'))
 g <- function(i) {
   temp <- data.frame(municipality = panel$municipality, year = panel$year,
                      D = rawZ[,i])
