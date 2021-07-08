@@ -4,8 +4,7 @@
 \alias{dgp_threshold}
 \title{Generate test dataset to test for threshold effects}
 \usage{
-dgp_threshold(d = 1, n_i = 200, n_t = 17, gamma = 6, b1 = 1,
-  b2 = -0.1)
+dgp_threshold(d = 1, n_i = 200, n_t = 17, gamma = 6, b1 = 1, b2 = -0.1)
 }
 \arguments{
 \item{d}{Size of the threshold effect}

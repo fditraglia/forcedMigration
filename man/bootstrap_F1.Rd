@@ -4,8 +4,14 @@
 \alias{bootstrap_F1}
 \title{Bootstrap test for threshold effect following Hansen (1999, JOE)}
 \usage{
-bootstrap_F1(X, Y, n_bootstrap = 500, q_lower = 0.05, q_upper = 0.95,
-  n_grid = 180)
+bootstrap_F1(
+  X,
+  Y,
+  n_bootstrap = 500,
+  q_lower = 0.05,
+  q_upper = 0.95,
+  n_grid = 180
+)
 }
 \arguments{
 \item{X}{Panel data for x. Assumes that each row is an individual and each
