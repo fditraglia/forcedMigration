@@ -1,9 +1,37 @@
 library(dplyr) # not used elsewhere in the package: only for data prep
+library(readr) # likewise
 
 # Load raw data in STATA format
 cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
+
+# The adjacency matrix for Colombian municipalities is stored as an excel file
+adjacency_matrix <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
+
+# Check that the codes in column 1 match the names in columns 2, 3, ...
+municipality_codes <- adjacency_matrix$codes
+adjacency_matrix <- adjacency_matrix[,-1]
+row_indices <- as.integer(substr(colnames(adjacency_matrix), start = 13, stop = 100L))
+sum(abs(municipality_codes - row_indices))
+
+# Convert adjacency matrix into a list of neighbors for each municipality
+get_neighbors <- function(row_index) {
+  adj_row <- adjacency_matrix[row_index,]
+  adj_row <- if_else(adj_row == 1, TRUE, FALSE)
+  municipality_codes[adj_row]
+}
+adjacent_municipalities <- lapply(1:nrow(adjacency_matrix), get_neighbors)
+names(adjacent_municipalities) <- municipality_codes
+rm(municipality_codes, adjacency_matrix, get_neighbors, row_indices)
+
+# Load csv file containing municipality and region codes
+#-------------------------------------------------------------------------------
+# NOTE: the adjacency matrix above has only 1117 municipalities, whereas this
+# csv file has 1119. Why? We think this is because of two islands. Check this.
+#-------------------------------------------------------------------------------
+municipalities_and_regions <- read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
+names(municipalities_and_regions) <- c('department', 'region', 'municipality')
 
 #---------------------------------------------------------------------------------------
 # We observe a discretized land distribution: we know the total amount of land and the
@@ -296,6 +324,8 @@ usethis::use_data(obsZ, overwrite = TRUE)
 usethis::use_data(Vcum, overwrite = TRUE)
 usethis::use_data(Vcum_pop, overwrite = TRUE)
 usethis::use_data(land_distributions, overwrite = TRUE)
+usethis::use_data(adjacent_municipalities, overwrite = TRUE)
+usethis::use_data(municipalities_and_regions, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
