@@ -17,7 +17,7 @@ munigraph <- read.graph("munigraph.txt")
 
 # Figure out which PCA version to use (roads or no roads)
 
-cross_section_merged <- read.csv("data/full_geographic_covariates")
+cross_section_merged <- read.csv("data/full_geographic_covariates.csv")
   
 pca <- read.csv("data/pca")
 if(metric == 3){
