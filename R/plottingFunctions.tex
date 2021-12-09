@@ -1,0 +1,417 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={plottingFunctions.R},
+  pdfauthor={G1PXS05},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{plottingFunctions.R}
+\author{G1PXS05}
+\date{2021-12-09}
+
+\begin{document}
+\maketitle
+
+Helper function to run Dijkstra given parameters and create
+corresponding distance dataframe. @param metric Distance metric being
+used. Metric 0 corresponds to hops in the graph, metric 1 to crow-flies
+distance, metric 2 to PCA without roads, and metric 3 to PCA with roads.
+@param a Parameter for first principal component. @param b Parameter for
+second principal component. @param epicenter\_1 First epicenter for
+violence origin (municipality code), allowing us to create models of
+outward spread from different origin pairs. @param epicenter\_2 Second
+epicenter for violence origin (municipality code).
+
+@return Dataframe containing distance, ring and municipality code.
+Dataframe containing Municipality code, Year, Share, Ring, and Standard
+Deviation.
+
+\itemize{
+   \item \code{total_dist} Distance between given pair of adjacent municipalities under metric. 
+ }
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{generate\_distances }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)\{}
+
+\CommentTok{\# Figure out which PCA version to use (roads or no roads)}
+
+\NormalTok{cross\_section\_merged }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"data/full\_geographic\_covariates"}\NormalTok{)}
+  
+\NormalTok{pca }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"data/pca"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{(metric }\SpecialCharTok{==} \DecValTok{3}\NormalTok{)\{}
+\NormalTok{  pca }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"data/pca\_roads"}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{\# Shift PCA\textquotesingle{}s to positive range. }
+\NormalTok{pca}\SpecialCharTok{$}\NormalTok{PC1 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC1}\SpecialCharTok{{-}}\FunctionTok{min}\NormalTok{(pca}\SpecialCharTok{$}\NormalTok{PC1)}
+\NormalTok{pca}\SpecialCharTok{$}\NormalTok{PC2 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC2}\SpecialCharTok{{-}}\FunctionTok{min}\NormalTok{(pca}\SpecialCharTok{$}\NormalTok{PC2)}
+\NormalTok{pca}\SpecialCharTok{$}\NormalTok{PC1 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC1 }\SpecialCharTok{/}\NormalTok{ (}\FunctionTok{max}\NormalTok{(pca}\SpecialCharTok{$}\NormalTok{PC1))}
+\NormalTok{pca}\SpecialCharTok{$}\NormalTok{PC2 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC2 }\SpecialCharTok{/}\NormalTok{ (}\FunctionTok{max}\NormalTok{(pca}\SpecialCharTok{$}\NormalTok{PC2))}
+
+\CommentTok{\# Generate distances for each adjacent pair of municipalities. }
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{1120}\NormalTok{)\{}
+  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{1120}\NormalTok{)\{}
+    
+    \CommentTok{\# Initially, set total\_dist (distance between municipalities i and j) to }
+    \CommentTok{\# an effectively infinite number. }
+\NormalTok{    total\_dist}\OtherTok{\textless{}{-}}\DecValTok{1000000}
+    
+    \CommentTok{\# Check that the municipalities are adjacent. }
+    \ControlFlowTok{if}\NormalTok{(}\FunctionTok{are.connected}\NormalTok{(munigraph,i,j))\{}
+      
+      \CommentTok{\# If we have no geographic covariates for at least one municipality in the pair }
+      \CommentTok{\# (and therefore did not calculate a PCA distance for this pair), set }
+      \CommentTok{\# total\_dist to 1. (This is the "pure graph hops" case {-} we may want to revisit this later as an edge case). }
+\NormalTok{      total\_dist }\OtherTok{\textless{}{-}} \DecValTok{1}
+      
+      \CommentTok{\# If using the crow{-}flies distance metric (or hiking, for cases where we }
+      \CommentTok{\# lack elevation covariate), then set total\_dist to d1. }
+      \ControlFlowTok{if}\NormalTok{(metric }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{|}\NormalTok{ metric }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\&}\NormalTok{ i }\SpecialCharTok{\textless{}} \FunctionTok{nrow}\NormalTok{(cross\_section\_merged) }\SpecialCharTok{\&}\NormalTok{ j }\SpecialCharTok{\textless{}} \FunctionTok{nrow}\NormalTok{(cross\_section\_merged))\{}
+        
+        \CommentTok{\# Calculate crow{-}flies{-}distance. }
+\NormalTok{        d1 }\OtherTok{\textless{}{-}} \FunctionTok{calcdist}\NormalTok{(cross\_section\_merged}\SpecialCharTok{$}\NormalTok{latnum[i],cross\_section\_merged}\SpecialCharTok{$}\NormalTok{lonnum[i]}
+\NormalTok{                       ,cross\_section\_merged}\SpecialCharTok{$}\NormalTok{latnum[j],cross\_section\_merged}\SpecialCharTok{$}\NormalTok{lonnum[j])}
+        
+\NormalTok{        total\_dist }\OtherTok{\textless{}{-}}\NormalTok{ d1}
+\NormalTok{      \}}
+      
+      \CommentTok{\# For distinct municipalities for which we have all covariates, calculate }
+      \CommentTok{\# the distance. (For municipalities lacking geographic covariates, we }
+      \CommentTok{\# default to crow distance). }
+      
+      \ControlFlowTok{if}\NormalTok{(metric}\SpecialCharTok{\textgreater{}}\DecValTok{1} \SpecialCharTok{\&}\NormalTok{ i}\SpecialCharTok{!=}\NormalTok{ j }\SpecialCharTok{\&}\NormalTok{ i}\SpecialCharTok{\textless{}}\FunctionTok{nrow}\NormalTok{(cross\_section\_merged) }\SpecialCharTok{\&}\NormalTok{ j}\SpecialCharTok{\textless{}}\FunctionTok{nrow}\NormalTok{(cross\_section\_merged))\{}
+        \CommentTok{\# Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  }
+\NormalTok{        pcode\_i }\OtherTok{\textless{}{-}}\NormalTok{ cross\_section\_merged}\SpecialCharTok{$}\NormalTok{ADM2\_PCODE[i]}
+\NormalTok{        pcode\_j }\OtherTok{\textless{}{-}}\NormalTok{ cross\_section\_merged}\SpecialCharTok{$}\NormalTok{ADM2\_PCODE[j]}
+\NormalTok{        row }\OtherTok{\textless{}{-}}\NormalTok{ pca[pca}\SpecialCharTok{$}\NormalTok{muni\_i }\SpecialCharTok{==}\NormalTok{ pcode\_i }\SpecialCharTok{\&}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{muni\_j }\SpecialCharTok{==}\NormalTok{ pcode\_j,]}\SpecialCharTok{$}\NormalTok{index}
+\NormalTok{        PCA\_1 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC1[row]}
+\NormalTok{        PCA\_2 }\OtherTok{\textless{}{-}}\NormalTok{ pca}\SpecialCharTok{$}\NormalTok{PC2[row]}
+        
+        
+        \CommentTok{\# Calculate total distance using our distance formula and save for summary statistics. }
+\NormalTok{        total\_dist }\OtherTok{\textless{}{-}} \FunctionTok{exp}\NormalTok{((a}\SpecialCharTok{*}\NormalTok{PCA\_1}\SpecialCharTok{+}\NormalTok{b}\SpecialCharTok{*}\NormalTok{PCA\_2))}
+\NormalTok{        summary\_db[row] }\OtherTok{\textless{}{-}}\NormalTok{ total\_dist}
+        
+        \CommentTok{\# If we are using the hiking metric (and both municipalities are among }
+        \CommentTok{\# the 1,076 for which we have geographic covariates), calculate and }
+        \CommentTok{\# update distance. Where we don\textquotesingle{}t have covariates, the default is d1.  }
+        \ControlFlowTok{if}\NormalTok{(metric}\SpecialCharTok{==}\DecValTok{4} \SpecialCharTok{\&}\NormalTok{ i}\SpecialCharTok{\textless{}}\FunctionTok{nrow}\NormalTok{(cross\_section\_merged) }\SpecialCharTok{\&}\NormalTok{ j}\SpecialCharTok{\textless{}}\FunctionTok{nrow}\NormalTok{(cross\_section\_merged) )\{}
+\NormalTok{          elev\_difference }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{((cross\_section\_merged}\SpecialCharTok{$}\NormalTok{alt\_mean[i]}\SpecialCharTok{{-}}
+\NormalTok{                                    cross\_section\_merged}\SpecialCharTok{$}\NormalTok{alt\_mean[j]),}\DecValTok{0}\NormalTok{)}
+\NormalTok{          total\_dist }\OtherTok{\textless{}{-}}\NormalTok{ d1 }\SpecialCharTok{+} \FloatTok{0.6} \SpecialCharTok{*}\NormalTok{ elev\_difference}
+\NormalTok{          summary\_db[row] }\OtherTok{\textless{}{-}}\NormalTok{ total\_dist}
+\NormalTok{        \}}
+\NormalTok{      \}}
+      
+      \CommentTok{\# Update and set edge weight. }
+\NormalTok{      edge }\OtherTok{\textless{}{-}} \FunctionTok{get.edge.ids}\NormalTok{(munigraph,}\FunctionTok{c}\NormalTok{(i,j))}
+\NormalTok{      munigraph }\OtherTok{\textless{}{-}} \FunctionTok{set\_edge\_attr}\NormalTok{(munigraph,}\StringTok{"weight"}\NormalTok{,edge,total\_dist)}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{\}}
+
+\NormalTok{vertex\_ids }\OtherTok{=} \FunctionTok{vector}\NormalTok{(}\AttributeTok{length =} \DecValTok{1120}\NormalTok{)}
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{1120}\NormalTok{)\{}
+\NormalTok{  vertex\_ids[i]}\OtherTok{\textless{}{-}}\NormalTok{ AttributeTableFinal}\SpecialCharTok{$}\NormalTok{ADM2\_PCODE[i]}
+\NormalTok{\}}
+
+\CommentTok{\# Calculate Dijkstra distances }
+\NormalTok{delta\_1 }\OtherTok{=} \FunctionTok{distances}\NormalTok{(munigraph,}\AttributeTok{v =} \FunctionTok{which}\NormalTok{(vertex\_ids }\SpecialCharTok{==}\NormalTok{ epicenter\_1),}\AttributeTok{to =} \FunctionTok{V}\NormalTok{(munigraph),}\AttributeTok{algorithm =} \StringTok{"dijkstra"}\NormalTok{)}
+\NormalTok{delta\_2 }\OtherTok{=} \FunctionTok{distances}\NormalTok{(munigraph,}\AttributeTok{v =} \FunctionTok{which}\NormalTok{(vertex\_ids }\SpecialCharTok{==}\NormalTok{ epicenter\_2),}\AttributeTok{to =} \FunctionTok{V}\NormalTok{(munigraph),}\AttributeTok{algorithm =} \StringTok{"dijkstra"}\NormalTok{)}
+\NormalTok{deltas }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\FunctionTok{c}\NormalTok{(delta\_1,delta\_2),}\AttributeTok{ncol =} \DecValTok{2}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(deltas) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"delta\_1"}\NormalTok{,}\StringTok{"delta\_2"}\NormalTok{);}
+\NormalTok{deltas }\OtherTok{\textless{}{-}} \FunctionTok{mutate}\NormalTok{(deltas, }\AttributeTok{delta\_min =} \FunctionTok{as.numeric}\NormalTok{(purrr}\SpecialCharTok{::}\FunctionTok{map2}\NormalTok{(delta\_1,delta\_2,min)))}
+
+
+\CommentTok{\# Merge our distances (from specified epicenter) into dataframe containing map polygons. }
+\NormalTok{distances }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(deltas[,}\DecValTok{3}\NormalTok{])}
+
+
+\CommentTok{\# Dataset for merging delta and ring\_num into other datasets by ADM2\_PCODE. }
+\NormalTok{merge\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{delta =}\NormalTok{ distances,}\AttributeTok{ADM2\_PCODE =}\NormalTok{ vertex\_ids)}
+
+\CommentTok{\# Calculate ring as 10 * decile in distance distribution plus 1.  }
+\NormalTok{merge\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{mutate}\NormalTok{(merge\_deltas, }\AttributeTok{ring\_num =} \FunctionTok{as.integer}\NormalTok{(}\DecValTok{10}\SpecialCharTok{*}\FunctionTok{ecdf}\NormalTok{(merge\_deltas}\SpecialCharTok{$}\NormalTok{delta)(delta))}\SpecialCharTok{+}\DecValTok{1}\NormalTok{)}
+
+
+\CommentTok{\# For the single largest delta in the dataset, decile is 10 and so ring is 11. }
+\CommentTok{\# Set ring\_num to 10 for this case. }
+\NormalTok{merge\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{mutate}\NormalTok{(merge\_deltas, }\AttributeTok{ring\_num =} \FunctionTok{ifelse}\NormalTok{(ring\_num }\SpecialCharTok{==} \DecValTok{11}\NormalTok{,}\DecValTok{10}\NormalTok{,ring\_num))}
+\FunctionTok{return}\NormalTok{(merge\_deltas)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Helper function to create distances given epicenter and metric
+parameters. @param merge\_deltas Output from generate\_distances;
+contains mapping of municipality to distance and ring under given
+metric, a, b, and epicenter.
+
+@return Dataframe containing municipality, ring, share of total violence
+for ring in given year, and standard deviation of violence across
+municipalities in a given ring-year. \itemize{
+\item \code{FinalWithDeltas} Dataframe containing geographic covariates and final distances. 
+   \item \code{vdf} Dataframe containing year-ring violence. 
+   \item \code{sdf} Dataframe containing standard errors of year-ring violence. 
+   \item \code{sharedf} Dataframe containing final output. 
+}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{get\_df }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(merge\_deltas)\{}
+\NormalTok{FinalWithDeltas }\OtherTok{\textless{}{-}} \FunctionTok{merge}\NormalTok{(cross\_section\_merged,merge\_deltas,}\AttributeTok{by =} \StringTok{"ADM2\_PCODE"}\NormalTok{)}
+\NormalTok{violence\_data }\OtherTok{\textless{}{-}}\NormalTok{ violence\_data[violence\_data}\SpecialCharTok{$}\NormalTok{year }\SpecialCharTok{\textless{}} \DecValTok{2009}\NormalTok{,]}
+\NormalTok{violence\_set }\OtherTok{\textless{}{-}} \FunctionTok{merge}\NormalTok{(violence\_data,FinalWithDeltas,}\AttributeTok{by=}\StringTok{"ADM2\_PCODE"}\NormalTok{)}
+
+\CommentTok{\#print(summary(FinalWithDeltas$delta))}
+
+\CommentTok{\# Take out municipalities with 0 violence. }
+
+\NormalTok{violence\_subset }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(violence\_set,year }\SpecialCharTok{==} \DecValTok{2008}\NormalTok{)}
+\NormalTok{has\_violence\_list }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(violence\_subset,cum\_victims\_UR }\SpecialCharTok{\textgreater{}}\DecValTok{0}\NormalTok{)}\SpecialCharTok{$}\NormalTok{ADM2\_PCODE}
+\NormalTok{violence\_set }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(violence\_set, ADM2\_PCODE }\SpecialCharTok{\%in\%}\NormalTok{ has\_violence\_list)}
+
+
+\CommentTok{\# For each ring and year, stores total number of deaths in that ring in that year. }
+\NormalTok{victimsUR\_matrix }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{,}\AttributeTok{nrow =} \DecValTok{10}\NormalTok{,}\AttributeTok{ncol =} \DecValTok{13}\NormalTok{)}
+
+\CommentTok{\# For each ring and year, stores standard deviation of the set \{deaths in municipality in year : municipality in ring\} . }
+\NormalTok{stderr\_matrix }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\DecValTok{0}\NormalTok{,}\AttributeTok{nrow =} \DecValTok{10}\NormalTok{,}\AttributeTok{ncol =} \DecValTok{13}\NormalTok{)}
+
+\CommentTok{\# Stores the two above quantities in their respective matrices. }
+\ControlFlowTok{for}\NormalTok{(ring }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{10}\NormalTok{)\{}
+  \ControlFlowTok{for}\NormalTok{(year }\ControlFlowTok{in} \DecValTok{1996}\SpecialCharTok{:}\DecValTok{2008}\NormalTok{)\{}
+\NormalTok{    victimsUR\_matrix[ring,year}\DecValTok{{-}1995}\NormalTok{] }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(violence\_set[violence\_set}\SpecialCharTok{$}\NormalTok{year }\SpecialCharTok{==}\NormalTok{ year }\SpecialCharTok{\&}\NormalTok{ violence\_set}\SpecialCharTok{$}\NormalTok{ring }\SpecialCharTok{==}\NormalTok{ ring,]}\SpecialCharTok{$}\NormalTok{victims\_\_UR)}
+\NormalTok{    stderr\_matrix[ring,year}\DecValTok{{-}1995}\NormalTok{] }\OtherTok{\textless{}{-}} \FunctionTok{std.error}\NormalTok{(violence\_set[violence\_set}\SpecialCharTok{$}\NormalTok{year }\SpecialCharTok{==}\NormalTok{ year }\SpecialCharTok{\&}\NormalTok{ violence\_set}\SpecialCharTok{$}\NormalTok{ring }\SpecialCharTok{==}\NormalTok{ ring,]}\SpecialCharTok{$}\NormalTok{victims\_\_UR)}
+\NormalTok{  \}}
+\NormalTok{\}}
+
+\CommentTok{\# Convert matrices to dataframes. }
+\NormalTok{vdf }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(victimsUR\_matrix))}
+\NormalTok{sdf }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(stderr\_matrix)}
+
+\CommentTok{\# Generate share of total ring deaths that occur in a given year by dividing each ring{-}year death figure by total ring deaths. }
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{mutate}\NormalTok{(vdf,}\AttributeTok{V1 =}\NormalTok{ V1}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V1),}\AttributeTok{V2 =}\NormalTok{ V2}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V2),}\AttributeTok{V3 =}\NormalTok{ V3}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V3),}\AttributeTok{V4 =}\NormalTok{ V4}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V4), }\AttributeTok{V5 =}\NormalTok{ V5}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V5), }\AttributeTok{V6 =}\NormalTok{ V6}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V6), }\AttributeTok{V7 =}\NormalTok{ V7}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V7), }\AttributeTok{V8 =}\NormalTok{ V8}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V8), }\AttributeTok{V9 =}\NormalTok{ V9}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V9), }\AttributeTok{V10 =}\NormalTok{ V10}\SpecialCharTok{/}\FunctionTok{sum}\NormalTok{(V10))}
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(sharedf))}
+
+\NormalTok{cnames }\OtherTok{=} \FunctionTok{paste}\NormalTok{(}\DecValTok{1996}\SpecialCharTok{:}\DecValTok{2008}\NormalTok{)}
+\FunctionTok{colnames}\NormalTok{(sharedf) }\OtherTok{\textless{}{-}}\NormalTok{ cnames}
+\FunctionTok{colnames}\NormalTok{(sdf) }\OtherTok{\textless{}{-}}\NormalTok{ cnames}
+\FunctionTok{rownames}\NormalTok{(sharedf) }\OtherTok{\textless{}{-}} \DecValTok{1}\SpecialCharTok{:}\DecValTok{10}
+\FunctionTok{rownames}\NormalTok{(sdf) }\OtherTok{\textless{}{-}} \DecValTok{1}\SpecialCharTok{:}\DecValTok{10}
+
+\CommentTok{\# Since the rows represent rings, explicitly create a ring variable corresponding to row number. }
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(}\StringTok{"ring"} \OtherTok{=} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(sharedf)),sharedf)}
+
+\CommentTok{\# Make dataframes long to allow for plotting. }
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{pivot\_longer}\NormalTok{(sharedf,cnames,}\AttributeTok{names\_to =} \StringTok{"year"}\NormalTok{,}\AttributeTok{values\_to =} \StringTok{"share"}\NormalTok{)}
+\NormalTok{sdf }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(}\StringTok{"ring"} \OtherTok{=} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(sdf)),sdf)}
+\NormalTok{sdf }\OtherTok{\textless{}{-}} \FunctionTok{pivot\_longer}\NormalTok{(sdf,cnames,}\AttributeTok{names\_to =} \StringTok{"year"}\NormalTok{,}\AttributeTok{values\_to =} \StringTok{"sd"}\NormalTok{)}
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{merge}\NormalTok{(sharedf,sdf,}\AttributeTok{by =} \FunctionTok{c}\NormalTok{(}\StringTok{"ring"}\NormalTok{,}\StringTok{"year"}\NormalTok{))}
+
+\FunctionTok{return}\NormalTok{(sharedf)}
+
+\NormalTok{\}  }
+\end{Highlighting}
+\end{Shaded}
+
+Heatmap plot to visualize distribution of violence in rings over time.
+
+@param metric Distance metric being used. Metric 0 corresponds to hops
+in the graph, metric 1 to crow-flies distance, metric 2 to PCA without
+roads, and metric 3 to PCA with roads. @param a Parameter for first
+principal component. @param b Parameter for second principal component.
+@param epicenter\_1 First epicenter for violence origin (municipality
+code), allowing us to create models of outward spread from different
+origin pairs. @param epicenter\_2 Second epicenter for violence origin
+(municipality code).
+
+@return NULL (plots corresponding graph).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{heatmap }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)\{}
+\NormalTok{merged\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{generate\_distances}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)}
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{get\_df}\NormalTok{(merged\_deltas)}
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data=}\NormalTok{sharedf,}\AttributeTok{mapping=}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{year,}\AttributeTok{y=}\NormalTok{ring,}\AttributeTok{fill=}\NormalTok{share))}\SpecialCharTok{+}
+  \FunctionTok{geom\_tile}\NormalTok{()}\SpecialCharTok{+}\FunctionTok{theme\_minimal}\NormalTok{()}\SpecialCharTok{+}\FunctionTok{scale\_fill\_gradient}\NormalTok{(}\AttributeTok{name=}\StringTok{"Violence Share"}\NormalTok{,}\AttributeTok{low=}\StringTok{"darkblue"}\NormalTok{,}\AttributeTok{high=}\StringTok{"red"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{scale\_x\_discrete}\NormalTok{(}\AttributeTok{breaks =} \FunctionTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{10}\NormalTok{,}\DecValTok{3}\NormalTok{),}\AttributeTok{label =} \FunctionTok{paste}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{10}\NormalTok{,}\DecValTok{3}\NormalTok{)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Star Wars plot (without bars) to visualize violence over time within
+rings.
+
+@param metric Distance metric being used. Metric 0 corresponds to hops
+in the graph, metric 1 to crow-flies distance, metric 2 to PCA without
+roads, and metric 3 to PCA with roads. @param a Parameter for first
+principal component. @param b Parameter for second principal component.
+@param epicenter\_1 First epicenter for violence origin (municipality
+code), allowing us to create models of outward spread from different
+origin pairs. @param epicenter\_2 Second epicenter for violence origin
+(municipality code).
+
+@return NULL (plots corresponding graph).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{starwars }\OtherTok{\textless{}{-}}  \ControlFlowTok{function}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)\{}
+\NormalTok{merged\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{generate\_distances}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)}
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{get\_df}\NormalTok{(merged\_deltas)}
+\FunctionTok{ggplot}\NormalTok{(sharedf,}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ year,}\AttributeTok{y =}\NormalTok{ share,}\AttributeTok{group =} \FunctionTok{factor}\NormalTok{(ring)))}\SpecialCharTok{+}\FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{colour =} \FunctionTok{factor}\NormalTok{(ring)))}\SpecialCharTok{+}\FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ ring)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Star Wars plot (with bars) to visualize violence over time within rings.
+
+@param metric Distance metric being used. Metric 0 corresponds to hops
+in the graph, metric 1 to crow-flies distance, metric 2 to PCA without
+roads, and metric 3 to PCA with roads. @param a Parameter for first
+principal component. @param b Parameter for second principal component.
+@param epicenter\_1 First epicenter for violence origin (municipality
+code), allowing us to create models of outward spread from different
+origin pairs. @param epicenter\_2 Second epicenter for violence origin
+(municipality code).
+
+@return NULL (plots corresponding graph).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{starwars\_bars }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)\{}
+\NormalTok{merged\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{generate\_distances}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)}
+\NormalTok{sharedf }\OtherTok{\textless{}{-}} \FunctionTok{get\_df}\NormalTok{(merged\_deltas)}
+\FunctionTok{ggplot}\NormalTok{(sharedf,}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ year,}\AttributeTok{y =}\NormalTok{ share,}\AttributeTok{group =} \FunctionTok{factor}\NormalTok{(ring)))}\SpecialCharTok{+}\FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{colour =} \FunctionTok{factor}\NormalTok{(ring)))}\SpecialCharTok{+}\FunctionTok{geom\_errorbar}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ share}\SpecialCharTok{{-}}\NormalTok{sd, }\AttributeTok{ymax =}\NormalTok{ share}\SpecialCharTok{+}\NormalTok{sd,}\AttributeTok{colour =} \FunctionTok{factor}\NormalTok{(ring)))}\SpecialCharTok{+}\FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ ring)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Spatial map plot to visualize distances.
+
+@param metric Distance metric being used. Metric 0 corresponds to hops
+in the graph, metric 1 to crow-flies distance, metric 2 to PCA without
+roads, and metric 3 to PCA with roads. @param a Parameter for first
+principal component. @param b Parameter for second principal component.
+@param epicenter\_1 First epicenter for violence origin (municipality
+code), allowing us to create models of outward spread from different
+origin pairs. @param epicenter\_2 Second epicenter for violence origin
+(municipality code).
+
+@return NULL (plots corresponding graph).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spatial\_map }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)\{}
+\NormalTok{merged\_deltas }\OtherTok{\textless{}{-}} \FunctionTok{generate\_distances}\NormalTok{(metric,a,b,epicenter\_1,epicenter\_2)}
+\NormalTok{muni\_pol }\OtherTok{\textless{}{-}} \FunctionTok{st\_read}\NormalTok{(}\StringTok{"Data/col muni polygons/col\_admbnda\_adm2\_mgn\_20200416.shp"}\NormalTok{)}
+\NormalTok{muni\_pol }\OtherTok{\textless{}{-}} \FunctionTok{select}\NormalTok{(muni\_pol,}\StringTok{"ADM2\_PCODE"}\NormalTok{)}
+\NormalTok{merged\_map }\OtherTok{\textless{}{-}} \FunctionTok{merge}\NormalTok{(merged\_deltas,muni\_pol)}
+\FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_sf}\NormalTok{(}\AttributeTok{data =} \FunctionTok{st\_as\_sf}\NormalTok{(merged\_map), }\FunctionTok{aes}\NormalTok{(}\AttributeTok{fill=}\NormalTok{ring\_num),}\AttributeTok{color =} \StringTok{\textquotesingle{}grey34\textquotesingle{}}\NormalTok{,}\AttributeTok{lwd=}\NormalTok{.}\DecValTok{05}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_stepsn}\NormalTok{(}\AttributeTok{colors =} \FunctionTok{c}\NormalTok{(}\StringTok{"red"}\NormalTok{,}\StringTok{"gold"}\NormalTok{,}\StringTok{"darkgreen"}\NormalTok{,}\StringTok{"blue"}\NormalTok{,}\StringTok{"violet"}\NormalTok{),}\AttributeTok{values =} \ConstantTok{NULL}\NormalTok{,}\AttributeTok{space =} \StringTok{"Lab"}\NormalTok{,}\AttributeTok{na.value =} \StringTok{"grey50"}\NormalTok{,}\AttributeTok{guide =} \StringTok{"coloursteps"}\NormalTok{,}\AttributeTok{aesthetics =} \StringTok{"fill"}\NormalTok{,}\AttributeTok{breaks =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\DecValTok{10}\NormalTok{),}\AttributeTok{limits=} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{10}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}
