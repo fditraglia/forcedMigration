@@ -1,3 +1,11 @@
+#' ### Dependencies:
+
+   library("sf")
+   library("igraph")
+   library("geosphere")
+
+
+ 
 #' Helper function to run Dijkstra given parameters and create corresponding distance dataframe. 
 #' @param metric Distance metric being used. Metric 0 corresponds to hops in the graph, metric 1 to crow-flies distance, metric 2 to PCA without roads, and metric 3 to PCA with roads. 
 #' @param a Parameter for first principal component.
@@ -22,9 +30,9 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #cross_section_merged <- forcedMigration::cross_section_merged
   
 # Figure out which PCA version to use (roads or no roads)
-for_pca <- pca
+for_pca <- forcedMigration::pca
 if(metric == 3){
-  for_pca <- roads_pca
+  for_pca <- forcedMigration::roads_pca
 }
 
 # Shift PCA's to positive range. 
@@ -248,7 +256,7 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 #'
 spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
-muni_pol <- forcedMigration::municipalities_shapefile
+muni_pol <- forcedMigration::municipalities_shapefile.shp
 muni_pol <- select(muni_pol,"ADM2_PCODE")
 merged_map <- merge(merged_deltas,muni_pol)
 ggplot() +
