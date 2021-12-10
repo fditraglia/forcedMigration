@@ -19,7 +19,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 
 # Figure out which PCA version to use (roads or no roads)
 
-cross_section_merged <- forcedMigration::full_geographic_covariates
+cross_section_merged <- forcedMigration::cross_section_merged
   
 pca <- forcedMigration::pca_noroad
 if(metric == 3){
