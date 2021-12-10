@@ -1,12 +1,12 @@
 Package: forcedMigration
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Contains data and code for Camilo Garcia-Jimeno and Francis DiTraglia's Forced Migration project. 
 Version: 0.1.0
 Encoding: UTF-8
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Francis DiTraglia and Parker Snipes
+Maintainer: Parker Snipes (Parker.Snipes@chi.frb.org)
+Description: Provides functions to graph different spatial metrics and 
+License: What license is it under? use_gpl3_license()
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5),
