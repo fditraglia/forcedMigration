@@ -50,11 +50,11 @@ for(i in 1:1120){
       
       # If using the crow-flies distance metric (or hiking, for cases where we 
       # lack elevation covariate), then set total_dist to d1. 
-      if(metric == 1 | metric == 4 & i < nrow(cross_section_merged) & j < nrow(cross_section_merged)){
+      if(metric == 1 | metric == 4 & i < nrow(AttributeTableFinal) & j < nrow(AttributeTableFinal)){
         
         # Calculate crow-flies-distance. 
-        d1 <- calcdist(cross_section_merged$latnum[i],cross_section_merged$lonnum[i]
-                       ,cross_section_merged$latnum[j],cross_section_merged$lonnum[j])
+        d1 <- calcdist(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]
+                       ,AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j])
         
         total_dist <- d1
       }
@@ -87,6 +87,7 @@ for(i in 1:1120){
       
       # Update and set edge weight. 
       edge <- get.edge.ids(munigraph,c(i,j))
+      print("have edge")
       munigraph <- set_edge_attr(munigraph,"weight",edge,total_dist)
     }
   }
