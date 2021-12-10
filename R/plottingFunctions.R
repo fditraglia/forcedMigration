@@ -13,7 +13,9 @@
 #'  }
 generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
-munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
+
+
+  munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 # Figure out which PCA version to use (roads or no roads)
 
@@ -72,7 +74,6 @@ for(i in 1:1120){
         
         # Calculate total distance using our distance formula and save for summary statistics. 
         total_dist <- exp((a*PCA_1+b*PCA_2))
-        summary_db[row] <- total_dist
         
         # If we are using the hiking metric (and both municipalities are among 
         # the 1,076 for which we have geographic covariates), calculate and 
@@ -81,7 +82,6 @@ for(i in 1:1120){
           elev_difference <- max((cross_section_merged$alt_mean[i]-
                                     cross_section_merged$alt_mean[j]),0)
           total_dist <- d1 + 0.6 * elev_difference
-          summary_db[row] <- total_dist
         }
       }
       
