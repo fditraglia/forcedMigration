@@ -19,9 +19,9 @@ munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 cross_section_merged <- forcedMigration::full_geographic_covariates
   
-pca <- forcedMigration::pca_noroads
+pca <- forcedMigration::pca_noroad
 if(metric == 3){
-  pca <- forcedMigration::pca_roads
+  pca <- forcedMigration::pca_road
 }
 
 # Shift PCA's to positive range. 
