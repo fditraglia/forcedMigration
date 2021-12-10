@@ -44,7 +44,7 @@ for(i in 1:1120){
     total_dist<-1000000
     
     # Check that the municipalities are adjacent. 
-    if(are.connected(munigraph,i,j)){
+    if(igraph::are.connected(munigraph,i,j)){
       
       # Calculate crow-flies-distance. 
       d1 <- calcdist(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i],AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j])
