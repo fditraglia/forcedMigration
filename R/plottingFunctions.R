@@ -19,7 +19,7 @@ munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 cross_section_merged <- forcedMigration::full_geographic_covariates
   
-pca <- forcedMigration::pca
+pca <- forcedMigration::pca_noroads
 if(metric == 3){
   pca <- forcedMigration::pca_roads
 }
