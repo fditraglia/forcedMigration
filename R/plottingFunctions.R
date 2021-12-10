@@ -17,11 +17,11 @@ munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 # Figure out which PCA version to use (roads or no roads)
 
-cross_section_merged <- read.csv("data/full_geographic_covariates.csv")
+cross_section_merged <- forcedMigration::full_geographic_covariates
   
-pca <- read.csv("data/pca")
+pca <- forcedMigration::pca
 if(metric == 3){
-  pca <- read.csv("data/pca_roads")
+  pca <- forcedMigration::pca_roads
 }
 
 # Shift PCA's to positive range. 
@@ -257,7 +257,7 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 #'
 spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
-muni_pol <- st_read("Data/col muni polygons/col_admbnda_adm2_mgn_20200416.shp")
+muni_pol <- forcedMigration::municipalities_shapefile
 muni_pol <- select(muni_pol,"ADM2_PCODE")
 merged_map <- merge(merged_deltas,muni_pol)
 ggplot() +
