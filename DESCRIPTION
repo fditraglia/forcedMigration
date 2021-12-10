@@ -1,11 +1,11 @@
 Package: forcedMigration
 Type: Package
-Title: 
+Title: Forced Migration Package
 Version: 0.1.0
 Encoding: UTF-8
-Author:
-Maintainer: 
-Description: 
+Author: Francis diTraglia
+Maintainer: Parker Snipes <Parker.Snipes@chi.frb.org>
+Description: A package containing data and graphing functions for Francis diTraglia and Camilo Garcia-Jimeno's Forced Migration paper. 
 License: What license is it under? 
 LazyData: TRUE
 Imports:
