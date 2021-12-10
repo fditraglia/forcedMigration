@@ -4,9 +4,9 @@ Title: Contains data and code for Camilo Garcia-Jimeno and Francis DiTraglia's F
 Version: 0.1.0
 Encoding: UTF-8
 Author: Francis DiTraglia and Parker Snipes
-Maintainer: Parker Snipes (Parker.Snipes@chi.frb.org)
-Description: Provides functions to graph different spatial metrics and 
-License: What license is it under? use_gpl3_license()
+Maintainer: Parker Snipes. 
+Description: 
+License: What license is it under? GPL3 License. 
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5),
