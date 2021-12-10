@@ -15,79 +15,69 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
 
 
-  munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
+#munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 # Figure out which PCA version to use (roads or no roads)
 
-cross_section_merged <- forcedMigration::cross_section_merged
+#cross_section_merged <- forcedMigration::cross_section_merged
   
-pca <- forcedMigration::pca_noroad
+# Figure out which PCA version to use (roads or no roads)
+for_pca <- pca
 if(metric == 3){
-  pca <- forcedMigration::pca_road
+  for_pca <- roads_pca
 }
 
 # Shift PCA's to positive range. 
-pca$PC1 <- pca$PC1-min(pca$PC1)
-pca$PC2 <- pca$PC2-min(pca$PC2)
-pca$PC1 <- pca$PC1 / (max(pca$PC1))
-pca$PC2 <- pca$PC2 / (max(pca$PC2))
+for_pca$PC1 <- for_pca$PC1-min(for_pca$PC1)
+for_pca$PC2 <- for_pca$PC2-min(for_pca$PC2)
+for_pca$PC1 <- for_pca$PC1 / (max(for_pca$PC1))
+for_pca$PC2 <- for_pca$PC2 / (max(for_pca$PC2))
 
-# Generate distances for each adjacent pair of municipalities. 
 for(i in 1:1120){
   for(j in 1:1120){
-    
-    # Initially, set total_dist (distance between municipalities i and j) to 
-    # an effectively infinite number. 
+    # Initially, set total_dist (distance between municipalities i and j) to an effectively infinite number. 
     total_dist<-1000000
     
     # Check that the municipalities are adjacent. 
     if(are.connected(munigraph,i,j)){
       
-      # If we have no geographic covariates for at least one municipality in the pair 
-      # (and therefore did not calculate a PCA distance for this pair), set 
-      # total_dist to 1. (This is the "pure graph hops" case - we may want to revisit this later as an edge case). 
+      # Calculate crow-flies-distance. 
+      d1 <- calcdist(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i],AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j])
+      
+      # If we have no geographic covariates for at least one municipality in the pair (and therefore did not calculate a PCA distance for this pair), set total_dist to 1. (This is the "pure graph hops" case). 
       total_dist <- 1
       
-      # If using the crow-flies distance metric (or hiking, for cases where we 
-      # lack elevation covariate), then set total_dist to d1. 
-      if(metric == 1 | metric == 4 & i < nrow(AttributeTableFinal) & j < nrow(AttributeTableFinal)){
-        
-        # Calculate crow-flies-distance. 
-        d1 <- calcdist(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]
-                       ,AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j])
-        
+      # If using the crow-flies distance metric (or hiking, for cases where we lack elevation covariate), then set total_dist to d1. 
+      if(metric == 1 | metric == 4){
         total_dist <- d1
       }
       
-      # For distinct municipalities for which we have all covariates, calculate 
-      # the distance. (For municipalities lacking geographic covariates, we 
-      # default to crow distance). 
+      # For distinct municipalities for which we have all covariates, calculate the distance. (For municipalities lacking geographic covariates, we default to crow distance). 
       
       if(metric>1 & i!= j & i<nrow(cross_section_merged) & j<nrow(cross_section_merged)){
         # Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  
-        pcode_i <- cross_section_merged$ADM2_PCODE[i]
-        pcode_j <- cross_section_merged$ADM2_PCODE[j]
-        row <- pca[pca$muni_i == pcode_i & pca$muni_j == pcode_j,]$index
-        PCA_1 <- pca$PC1[row]
-        PCA_2 <- pca$PC2[row]
+        pcode_i <- AttributeTableFinal$ADM2_PCODE[i]
+        pcode_j <- AttributeTableFinal$ADM2_PCODE[j]
+        row <- for_pca[for_pca$muni_i == pcode_i & for_pca$muni_j == pcode_j,]$index
+        PCA_1 <- for_pca$PC1[row]
+        PCA_2 <- for_pca$PC2[row]
         
         
         # Calculate total distance using our distance formula and save for summary statistics. 
         total_dist <- exp((a*PCA_1+b*PCA_2))
+        summary_db[row] <- total_dist
         
-        # If we are using the hiking metric (and both municipalities are among 
-        # the 1,076 for which we have geographic covariates), calculate and 
-        # update distance. Where we don't have covariates, the default is d1.  
+        # If we are using the hiking metric (and both municipalities are among the 1,076 for which we have geographic covariates), calculate and update distance. Where we don't have covariates, the default is d1.  
         if(metric==4 & i<nrow(cross_section_merged) & j<nrow(cross_section_merged) ){
-          elev_difference <- max((cross_section_merged$alt_mean[i]-
-                                    cross_section_merged$alt_mean[j]),0)
+          elev_difference <- max((cross_section_merged$alt_mean[i]-cross_section_merged$alt_mean[j]),0)
           total_dist <- d1 + 0.6 * elev_difference
+          summary_db[row] <- total_dist
         }
       }
       
       # Update and set edge weight. 
+      #print(total_dist)
       edge <- get.edge.ids(munigraph,c(i,j))
-      print("have edge")
       munigraph <- set_edge_attr(munigraph,"weight",edge,total_dist)
     }
   }
