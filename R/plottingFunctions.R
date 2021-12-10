@@ -13,7 +13,7 @@
 #'  }
 generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
-munigraph <- read.graph("munigraph.txt")
+munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
 
 # Figure out which PCA version to use (roads or no roads)
 
