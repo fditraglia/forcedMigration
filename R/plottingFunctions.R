@@ -1,8 +1,10 @@
+  use_readme_rmd()
 #' ### Dependencies:
 
-   library("sf")
-   library("igraph")
-   library("geosphere")
+   use_package("sf")
+   use_package("igraph")
+   use_package("geosphere")
+   
 
 
  
@@ -268,7 +270,7 @@ ggplot() +
 #'
 #'
 #'
-
+check()
 
 
 
