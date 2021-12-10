@@ -1,4 +1,3 @@
-  use_readme_rmd()
 #' ### Dependencies:
 
    use_package("sf")
