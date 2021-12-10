@@ -1,8 +1,4 @@
 #' ### Dependencies:
-
-   use_package("sf")
-   use_package("igraph")
-   use_package("geosphere")
    
 
 
