@@ -127,7 +127,7 @@ delta_1 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_1),to = 
 delta_2 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_2),to = igraph::V(munigraph),algorithm = "dijkstra")
 deltas <- data.frame(matrix(c(delta_1,delta_2),ncol = 2))
 colnames(deltas) <- c("delta_1","delta_2");
-deltas <- mutate(deltas, delta_min = as.numeric(purrr::map2(delta_1,delta_2,min)))
+deltas <- dplyr::mutate(deltas, delta_min = as.numeric(purrr::map2(delta_1,delta_2,min)))
 
 
 
@@ -139,12 +139,12 @@ distances <- as.numeric(deltas[,3])
 merge_deltas <- data.frame(delta = distances,ADM2_PCODE = vertex_ids)
 
 # Calculate ring as 10 * decile in distance distribution plus 1.  
-merge_deltas <- mutate(merge_deltas, ring_num = as.integer(10*ecdf(merge_deltas$delta)(delta))+1)
+merge_deltas <- dplyr::mutate(merge_deltas, ring_num = as.integer(10*ecdf(merge_deltas$delta)(delta))+1)
 
 
 # For the single largest delta in the dataset, decile is 10 and so ring is 11. 
 # Set ring_num to 10 for this case. 
-merge_deltas <- mutate(merge_deltas, ring_num = ifelse(ring_num == 11,10,ring_num))
+merge_deltas <- dplyr::mutate(merge_deltas, ring_num = ifelse(ring_num == 11,10,ring_num))
 return(merge_deltas)
 }
 #' Helper function to create distances given epicenter and metric parameters. 
@@ -193,7 +193,7 @@ vdf <- as.data.frame(t(victimsUR_matrix))
 sdf <- as.data.frame(stderr_matrix)
 
 # Generate share of total ring deaths that occur in a given year by dividing each ring-year death figure by total ring deaths. 
-sharedf <- mutate(vdf,V1 = V1/sum(V1),V2 = V2/sum(V2),V3 = V3/sum(V3),V4 = V4/sum(V4), V5 = V5/sum(V5), V6 = V6/sum(V6), V7 = V7/sum(V7), V8 = V8/sum(V8), V9 = V9/sum(V9), V10 = V10/sum(V10))
+sharedf <- dplyr::mutate(vdf,V1 = V1/sum(V1),V2 = V2/sum(V2),V3 = V3/sum(V3),V4 = V4/sum(V4), V5 = V5/sum(V5), V6 = V6/sum(V6), V7 = V7/sum(V7), V8 = V8/sum(V8), V9 = V9/sum(V9), V10 = V10/sum(V10))
 sharedf <- as.data.frame(t(sharedf))
 
 cnames = paste(1996:2008)
