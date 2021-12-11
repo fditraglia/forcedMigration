@@ -4,6 +4,7 @@
   library("sf")
   library("geosphere")
   library("dplyr")
+  library("tidyr")
 
  
 #' Helper function for use within the larger Dijkstra algorithm. 
@@ -163,15 +164,15 @@ return(merge_deltas)
 get_df <- function(merge_deltas){
 FinalWithDeltas <- merge(forcedMigration::cross_section_merged,merge_deltas,by = "ADM2_PCODE")
 violence_data <- forcedMigration::violence_data[forcedMigration::violence_data$year < 2009,]
-violence_set <- merge(violence_data,FinalWithDeltas,by="ADM2_PCODE")      
+violence_set <- merge(violence_data,FinalWithDeltas)      
 
 #print(summary(FinalWithDeltas$delta))
 
 # Take out municipalities with 0 violence. 
 
-violence_subset <- filter(violence_set,year == 2008)
-has_violence_list <- filter(violence_subset,cum_victims_UR >0)$ADM2_PCODE
-violence_set <- filter(violence_set, ADM2_PCODE %in% has_violence_list)
+violence_subset <- violence_set[violence_set$year == 2008,]
+has_violence_list <- violence_subset[violence_subset$cum_victims_UR>0,]$ADM2_PCODE
+violence_set <- violence_set[violence_set$ADM2_PCODE %in% has_violence_list,]
 
 
 # For each ring and year, stores total number of deaths in that ring in that year. 
@@ -184,7 +185,7 @@ stderr_matrix <- matrix(0,nrow = 10,ncol = 13)
 for(ring in 1:10){
   for(year in 1996:2008){
     victimsUR_matrix[ring,year-1995] <- sum(violence_set[violence_set$year == year & violence_set$ring == ring,]$victims__UR)
-    stderr_matrix[ring,year-1995] <- std.error(violence_set[violence_set$year == year & violence_set$ring == ring,]$victims__UR)
+    stderr_matrix[ring,year-1995] <- sd(violence_set[violence_set$year == year & violence_set$ring == ring,]$victims__UR)
   }
 }
 
@@ -206,9 +207,9 @@ rownames(sdf) <- 1:10
 sharedf <- cbind("ring" = as.numeric(rownames(sharedf)),sharedf)
 
 # Make dataframes long to allow for plotting. 
-sharedf <- pivot_longer(sharedf,cnames,names_to = "year",values_to = "share")
+sharedf <- tidyr::pivot_longer(sharedf,cnames,names_to = "year",values_to = "share")
 sdf <- cbind("ring" = as.numeric(rownames(sdf)),sdf)
-sdf <- pivot_longer(sdf,cnames,names_to = "year",values_to = "sd")
+sdf <- tidyr::pivot_longer(sdf,cnames,names_to = "year",values_to = "sd")
 sharedf <- merge(sharedf,sdf,by = c("ring","year"))
 
 return(sharedf)
