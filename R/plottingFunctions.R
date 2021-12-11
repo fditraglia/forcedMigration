@@ -83,7 +83,7 @@ for(i in 1:1120){
       # If using the crow-flies distance metric (or hiking, for cases where we lack elevation covariate), then set total_dist to d1. 
       if(metric == 1 | metric == 4){
         total_dist <- d1
-      }
+      }    
       
       # For distinct municipalities for which we have all covariates, calculate the distance. (For municipalities lacking geographic covariates, we default to crow distance). 
       
