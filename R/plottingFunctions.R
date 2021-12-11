@@ -98,13 +98,13 @@ for(i in 1:1120){
         
         # Calculate total distance using our distance formula and save for summary statistics. 
         total_dist <- exp((a*PCA_1+b*PCA_2))
-        summary_db[row] <- total_dist
+        #summary_db[row] <- total_dist
         
         # If we are using the hiking metric (and both municipalities are among the 1,076 for which we have geographic covariates), calculate and update distance. Where we don't have covariates, the default is d1.  
         if(metric==4 & i<nrow(cross_section_merged) & j<nrow(cross_section_merged) ){
           elev_difference <- max((cross_section_merged$alt_mean[i]-cross_section_merged$alt_mean[j]),0)
           total_dist <- d1 + 0.6 * elev_difference
-          summary_db[row] <- total_dist
+          #summary_db[row] <- total_dist
         }
       }
       
