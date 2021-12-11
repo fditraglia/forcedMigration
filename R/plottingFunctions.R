@@ -89,8 +89,8 @@ for(i in 1:1120){
       
       if(metric>1 & i!= j & i<nrow(cross_section_merged) & j<nrow(cross_section_merged)){
         # Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  
-        pcode_i <- AttributeTableFinal$ADM2_PCODE[i]
-        pcode_j <- AttributeTableFinal$ADM2_PCODE[j]
+        pcode_i <- forcedMigration::AttributeTableFinal$ADM2_PCODE[i]
+        pcode_j <- forcedMigration::AttributeTableFinal$ADM2_PCODE[j]
         row <- for_pca[for_pca$muni_i == pcode_i & for_pca$muni_j == pcode_j,]$index
         PCA_1 <- for_pca$PC1[row]
         PCA_2 <- for_pca$PC2[row]
@@ -118,7 +118,7 @@ for(i in 1:1120){
 
 vertex_ids = vector(length = 1120)
 for(i in 1:1120){
-  vertex_ids[i]<- AttributeTableFinal$ADM2_PCODE[i]
+  vertex_ids[i]<- forcedMigration::AttributeTableFinal$ADM2_PCODE[i]
 }
 
 # Calculate Dijkstra distances 
