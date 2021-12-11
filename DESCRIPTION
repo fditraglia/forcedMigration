@@ -15,6 +15,7 @@ LinkingTo:
     Rcpp,
     RcppArmadillo,
     dplyr,
+    tidyr,
     igraph,
     geosphere,
     sf
