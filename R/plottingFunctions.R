@@ -52,7 +52,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 
 # Figure out which PCA version to use (roads or no roads)
 
-#cross_section_merged <- forcedMigration::cross_section_merged
+cross_section_merged <- forcedMigration::cross_section_merged
   
 # Figure out which PCA version to use (roads or no roads)
 for_pca <- forcedMigration::pca
