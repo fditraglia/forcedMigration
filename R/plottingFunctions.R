@@ -3,6 +3,7 @@
   library("igraph")
   library("sf")
   library("geosphere")
+  library("dplyr")
 
  
 #' Helper function for use within the larger Dijkstra algorithm. 
