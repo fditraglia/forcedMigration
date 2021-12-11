@@ -286,7 +286,6 @@ ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+g
 spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
 muni_pol <- forcedMigration::muni_pol
-muni_pol <- subset(muni_pol,select = c("ADM2_PCODE"))
 merged_map <- merge(merged_deltas,muni_pol)
 ggplot2::ggplot() +
   ggplot2::geom_sf(data = sf::st_as_sf(merged_map), ggplot2::aes(fill=ring_num),color = 'grey34',lwd=.05) +
