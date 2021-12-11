@@ -129,6 +129,7 @@ colnames(deltas) <- c("delta_1","delta_2");
 deltas <- mutate(deltas, delta_min = as.numeric(purrr::map2(delta_1,delta_2,min)))
 
 
+
 # Merge our distances (from specified epicenter) into dataframe containing map polygons. 
 distances <- as.numeric(deltas[,3])
 
@@ -289,9 +290,9 @@ ggplot() +
   scale_fill_stepsn(colors = c("red","gold","darkgreen","blue","violet"),values = NULL,space = "Lab",na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
 }
 #'
+#' 
 #'
-#'
-#'
+#' 
 #'
 
 
