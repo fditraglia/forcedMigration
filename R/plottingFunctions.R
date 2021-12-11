@@ -75,7 +75,7 @@ for(i in 1:1120){
     if(igraph::are.connected(forcedMigration::munigraph,i,j)){
       
       # Calculate crow-flies-distance. 
-      d1 <- calcdist(forcedMigration::AttributeTableFinal$latnum[i],forcedMigration::AttributeTableFinal$lonnum[i],forcedMigration::AttributeTableFinal$latnum[j],forcedMigration::AttributeTableFinal$lonnum[j])
+      d1 <- forcedMigration::calcdist(forcedMigration::AttributeTableFinal$latnum[i],forcedMigration::AttributeTableFinal$lonnum[i],forcedMigration::AttributeTableFinal$latnum[j],forcedMigration::AttributeTableFinal$lonnum[j])
       
       # If we have no geographic covariates for at least one municipality in the pair (and therefore did not calculate a PCA distance for this pair), set total_dist to 1. (This is the "pure graph hops" case). 
       total_dist <- 1
@@ -110,8 +110,8 @@ for(i in 1:1120){
       
       # Update and set edge weight. 
       #print(total_dist)
-      edge <- get.edge.ids(munigraph,c(i,j))
-      munigraph <- set_edge_attr(munigraph,"weight",edge,total_dist)
+      edge <- igraph::get.edge.ids(munigraph,c(i,j))
+      munigraph <- igraph::set_edge_attr(munigraph,"weight",edge,total_dist)
     }
   }
 }
@@ -225,8 +225,8 @@ return(sharedf)
 #' 
 #'
 heatmap <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
-sharedf <- get_df(merged_deltas)
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot(data=sharedf,mapping=aes(x=year,y=ring,fill=share))+
   geom_tile()+theme_minimal()+scale_fill_gradient(name="Violence Share",low="darkblue",high="red")+
   scale_x_discrete(breaks = seq(1,10,3),label = paste(seq(1,10,3)))
@@ -244,8 +244,8 @@ ggplot(data=sharedf,mapping=aes(x=year,y=ring,fill=share))+
 #' @return NULL (plots corresponding graph). 
 #'
 starwars <-  function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
-sharedf <- get_df(merged_deltas)
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colour = factor(ring)))+facet_wrap(~ ring)
 }
 #'
@@ -261,8 +261,8 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 #' 
 #' 
 starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
-sharedf <- get_df(merged_deltas)
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colour = factor(ring)))+geom_errorbar(aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+facet_wrap(~ ring)
 }
 
@@ -280,7 +280,7 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 #'
 #'
 spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- generate_distances(metric,a,b,epicenter_1,epicenter_2)
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
 muni_pol <- forcedMigration::municipalities_shapefile.shp
 muni_pol <- select(muni_pol,"ADM2_PCODE")
 merged_map <- merge(merged_deltas,muni_pol)
