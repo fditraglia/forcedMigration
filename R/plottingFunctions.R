@@ -162,7 +162,7 @@ return(merge_deltas)
 #' 
 get_df <- function(merge_deltas){
 FinalWithDeltas <- merge(forcedMigration::cross_section_merged,merge_deltas,by = "ADM2_PCODE")
-violence_data <- forcedMigration::violence_data[violence_data$year < 2009,]
+violence_data <- forcedMigration::violence_data[forcedMigration::violence_data$year < 2009,]
 violence_set <- merge(violence_data,FinalWithDeltas,by="ADM2_PCODE")      
 
 #print(summary(FinalWithDeltas$delta))
