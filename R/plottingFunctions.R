@@ -5,6 +5,7 @@
   library("geosphere")
   library("dplyr")
   library("tidyr")
+  library("ggplot2")
 
  
 #' Helper function for use within the larger Dijkstra algorithm. 
