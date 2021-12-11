@@ -87,7 +87,7 @@ for(i in 1:1120){
       
       # For distinct municipalities for which we have all covariates, calculate the distance. (For municipalities lacking geographic covariates, we default to crow distance). 
       
-      if(metric>1 & i!= j & i<nrow(cross_section_merged) & j<nrow(cross_section_merged)){
+      if(metric>1 & i!= j & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged)){
         # Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  
         pcode_i <- forcedMigration::AttributeTableFinal$ADM2_PCODE[i]
         pcode_j <- forcedMigration::AttributeTableFinal$ADM2_PCODE[j]
@@ -101,8 +101,8 @@ for(i in 1:1120){
         #summary_db[row] <- total_dist
         
         # If we are using the hiking metric (and both municipalities are among the 1,076 for which we have geographic covariates), calculate and update distance. Where we don't have covariates, the default is d1.  
-        if(metric==4 & i<nrow(cross_section_merged) & j<nrow(cross_section_merged) ){
-          elev_difference <- max((cross_section_merged$alt_mean[i]-cross_section_merged$alt_mean[j]),0)
+        if(metric==4 & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged) ){
+          elev_difference <- max((forcedMigration::cross_section_merged$alt_mean[i]-forcedMigration::cross_section_merged$alt_mean[j]),0)
           total_dist <- d1 + 0.6 * elev_difference
           #summary_db[row] <- total_dist
         }
