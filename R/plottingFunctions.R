@@ -48,7 +48,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
 
 
-#munigraph <- igraph::graph_from_data_frame(forcedMigration::munigraph)
+munigraph <- forcedMigration::munigraph
 
 # Figure out which PCA version to use (roads or no roads)
 
@@ -72,7 +72,7 @@ for(i in 1:1120){
     total_dist<-1000000
     
     # Check that the municipalities are adjacent. 
-    if(igraph::are.connected(forcedMigration::munigraph,i,j)){
+    if(igraph::are.connected(munigraph,i,j)){
       
       # Calculate crow-flies-distance. 
       d1 <- forcedMigration::calcdist(forcedMigration::AttributeTableFinal$latnum[i],forcedMigration::AttributeTableFinal$lonnum[i],forcedMigration::AttributeTableFinal$latnum[j],forcedMigration::AttributeTableFinal$lonnum[j])
