@@ -17,7 +17,7 @@
 #' @return: Geodesic distance (accounting for curvature) between the two points. 
 #' 
   calcdist <- function(lat1,lon1,lat2,lon2){
-    return (distGeo(c(lat1,lon1),c(lat2,lon2))/1000)
+    return (geosphere::distGeo(c(lat1,lon1),c(lat2,lon2))/1000)
   }
 #' 
 #' Helper function for merging together columns. 
@@ -75,7 +75,7 @@ for(i in 1:1120){
     if(igraph::are.connected(forcedMigration::munigraph,i,j)){
       
       # Calculate crow-flies-distance. 
-      d1 <- calcdist(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i],AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j])
+      d1 <- calcdist(forcedMigration::AttributeTableFinal$latnum[i],forcedMigration::AttributeTableFinal$lonnum[i],forcedMigration::AttributeTableFinal$latnum[j],forcedMigration::AttributeTableFinal$lonnum[j])
       
       # If we have no geographic covariates for at least one municipality in the pair (and therefore did not calculate a PCA distance for this pair), set total_dist to 1. (This is the "pure graph hops" case). 
       total_dist <- 1
