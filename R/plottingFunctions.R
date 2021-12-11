@@ -5,6 +5,7 @@
   library("geosphere")
   library("dplyr")
   library("tidyr")
+  library("ggplot2")
 
  
 #' Helper function for use within the larger Dijkstra algorithm. 
@@ -230,9 +231,9 @@ return(sharedf)
 heatmap <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
 sharedf <- forcedMigration::get_df(merged_deltas)
-ggplot(data=sharedf,mapping=aes(x=year,y=ring,fill=share))+
-  geom_tile()+theme_minimal()+scale_fill_gradient(name="Violence Share",low="darkblue",high="red")+
-  scale_x_discrete(breaks = seq(1,10,3),label = paste(seq(1,10,3)))
+ggplot2::ggplot(data=sharedf,mapping=ggplot2::aes(x=year,y=ring,fill=share))+
+  ggplot2::geom_tile()+ggplot2::theme_minimal()+ggplot2::scale_fill_gradient(name="Violence Share",low="darkblue",high="red")+
+  ggplot2::scale_x_discrete(breaks = seq(1,10,3),label = paste(seq(1,10,3)))
 }
 #'
 #' Star Wars plot (without bars) to visualize violence over time within rings.  
@@ -249,7 +250,7 @@ ggplot(data=sharedf,mapping=aes(x=year,y=ring,fill=share))+
 starwars <-  function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
 sharedf <- forcedMigration::get_df(merged_deltas)
-ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colour = factor(ring)))+facet_wrap(~ ring)
+ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(ggplot2::aes(colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
 }
 #'
 #' Star Wars plot (with bars) to visualize violence over time within rings. 
@@ -266,7 +267,7 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
 sharedf <- forcedMigration::get_df(merged_deltas)
-ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colour = factor(ring)))+geom_errorbar(aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+facet_wrap(~ ring)
+ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(aes(colour = factor(ring)))+ggplot2::geom_errorbar(aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
 }
 
 #'
@@ -284,12 +285,12 @@ ggplot(sharedf,aes(x = year,y = share,group = factor(ring)))+geom_point(aes(colo
 #'
 spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
-muni_pol <- forcedMigration::municipalities_shapefile.shp
-muni_pol <- select(muni_pol,"ADM2_PCODE")
+muni_pol <- forcedMigration::muni_pol
+muni_pol <- subset(muni_pol,select = c("ADM2_PCODE"))
 merged_map <- merge(merged_deltas,muni_pol)
-ggplot() +
-  geom_sf(data = st_as_sf(merged_map), aes(fill=ring_num),color = 'grey34',lwd=.05) +
-  scale_fill_stepsn(colors = c("red","gold","darkgreen","blue","violet"),values = NULL,space = "Lab",na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = sf::st_as_sf(merged_map), ggplot2::aes(fill=ring_num),color = 'grey34',lwd=.05) +
+  ggplot2::scale_fill_stepsn(colors = c("red","gold","darkgreen","blue","violet"),values = NULL,space = "Lab",na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
 }
 #'
 #' 

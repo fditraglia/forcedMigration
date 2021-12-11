@@ -15,9 +15,10 @@ LinkingTo:
     Rcpp,
     RcppArmadillo,
     dplyr,
-    tidyr,
     igraph,
     geosphere,
+    ggplot2,
+    tidyr,
     sf
 Recommends:
     haven,
