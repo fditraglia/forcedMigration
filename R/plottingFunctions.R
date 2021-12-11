@@ -5,7 +5,33 @@
   library("geosphere")
 
  
+#' Helper function for use within the larger Dijkstra algorithm. 
+#' Takes in two lat, lon pairs and returns distance (curvature accounted) in kilometers using geoSphere's distGeo function. 
+#' 
+#' 
+#' @param Lat1: Latitude of first point.
+#' @param Lon1: Longitude of first point.
+#' @param Lat2: Latitude of second point.
+#' @param Lon2: Longitude of second point. 
+#' 
+#' @return: Geodesic distance (accounting for curvature) between the two points. 
+#' 
+  calcdist <- function(lat1,lon1,lat2,lon2){
+    return (distGeo(c(lat1,lon1),c(lat2,lon2))/1000)
+  }
+#' 
+#' Helper function for merging together columns. 
+#' 
+#' @param muni: municipality in question. 
+#' 
+#' @return: Municipality with CO pasted in front. 
+#' # Adds "CO" at the beginning of municipality number to facilitate merge. 
+  addCO <- function(muni){
+    ifelse(nchar(paste(muni)) == 4,paste("CO0",muni,sep = ""),paste("CO",muni,sep = ""))
+  }
+#' 
 #' Helper function to run Dijkstra given parameters and create corresponding distance dataframe. 
+#' 
 #' @param metric Distance metric being used. Metric 0 corresponds to hops in the graph, metric 1 to crow-flies distance, metric 2 to PCA without roads, and metric 3 to PCA with roads. 
 #' @param a Parameter for first principal component.
 #' @param b Parameter for second principal component. 
