@@ -268,7 +268,7 @@ ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+g
 starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
 merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2,epicenter_3)
 sharedf <- forcedMigration::get_df(merged_deltas)
-ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(aes(colour = factor(ring)))+ggplot2::geom_errorbar(aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
+ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(ggplot2::aes(colour = factor(ring)))+ggplot2::geom_errorbar(ggplot2::aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
 }
 
 #'
