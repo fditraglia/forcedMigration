@@ -229,8 +229,8 @@ return(sharedf)
 #' @return NULL (plots corresponding graph). 
 #' 
 #'
-heatmap <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+heatmap <- function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2,epicenter_3)
 sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot2::ggplot(data=sharedf,mapping=ggplot2::aes(x=year,y=ring,fill=share))+
   ggplot2::geom_tile()+ggplot2::theme_minimal()+ggplot2::scale_fill_gradient(name="Violence Share",low="darkblue",high="red")+
@@ -248,8 +248,8 @@ ggplot2::ggplot(data=sharedf,mapping=ggplot2::aes(x=year,y=ring,fill=share))+
 #' 
 #' @return NULL (plots corresponding graph). 
 #'
-starwars <-  function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+starwars <-  function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2,epicenter_3)
 sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(ggplot2::aes(colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
 }
@@ -265,8 +265,8 @@ ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+g
 #' @return NULL (plots corresponding graph). 
 #' 
 #' 
-starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2,epicenter_3)
 sharedf <- forcedMigration::get_df(merged_deltas)
 ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+ggplot2::geom_point(aes(colour = factor(ring)))+ggplot2::geom_errorbar(aes(ymin = share-sd, ymax = share+sd,colour = factor(ring)))+ggplot2::facet_wrap(~ ring)
 }
@@ -284,8 +284,8 @@ ggplot2::ggplot(sharedf,ggplot2::aes(x = year,y = share,group = factor(ring)))+g
 #' @return NULL (plots corresponding graph). 
 #'
 #'
-spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
-merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
+spatial_map <- function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
+merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2,epicenter_3)
 muni_pol <- forcedMigration::muni_pol
 merged_map <- merge(merged_deltas,muni_pol)
 ggplot2::ggplot() +
