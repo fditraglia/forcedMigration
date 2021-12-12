@@ -47,7 +47,7 @@
 #'\itemize{
 #'    \item \code{total_dist} Distance between given pair of adjacent municipalities under metric. 
 #'  }
-generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
+generate_distances <- function(metric,a,b,epicenter_1,epicenter_2,epicenter_3){
   
 
 
@@ -127,9 +127,10 @@ for(i in 1:1120){
 # Calculate Dijkstra distances 
 delta_1 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_1),to = igraph::V(munigraph),algorithm = "dijkstra")
 delta_2 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_2),to = igraph::V(munigraph),algorithm = "dijkstra")
-deltas <- data.frame(matrix(c(delta_1,delta_2),ncol = 2))
-colnames(deltas) <- c("delta_1","delta_2");
-deltas <- dplyr::mutate(deltas, delta_min = as.numeric(purrr::map2(delta_1,delta_2,min)))
+delta_3 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_3),to = igraph::V(munigraph),algorithm = "dijkstra")
+deltas <- data.frame(matrix(c(delta_1,delta_2,delta_3),ncol = 3))
+colnames(deltas) <- c("delta_1","delta_2","delta_3");
+deltas <- dplyr::mutate(deltas, delta_min = as.numeric(purrr::pmap(list(delta_1,delta_2,delta_3),min)))
 
 
 
