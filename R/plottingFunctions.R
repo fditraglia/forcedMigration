@@ -125,8 +125,8 @@ for(i in 1:1120){
 }
 
 # Calculate Dijkstra distances 
-delta_1 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_1),to = V(munigraph),algorithm = "dijkstra")
-delta_2 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_2),to = V(munigraph),algorithm = "dijkstra")
+delta_1 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_1),to = igraph::V(munigraph),algorithm = "dijkstra")
+delta_2 = igraph::distances(munigraph,v = which(vertex_ids == epicenter_2),to = igraph::V(munigraph),algorithm = "dijkstra")
 deltas <- data.frame(matrix(c(delta_1,delta_2),ncol = 2))
 colnames(deltas) <- c("delta_1","delta_2");
 deltas <- mutate(deltas, delta_min = as.numeric(purrr::map2(delta_1,delta_2,min)))
