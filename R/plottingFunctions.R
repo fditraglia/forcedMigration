@@ -45,7 +45,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
   
   
-  munigraph <- forcedMigration::munigraph
+  #munigraph <- forcedMigration::munigraph
   
   # Figure out which PCA version to use (roads or no roads)
   
