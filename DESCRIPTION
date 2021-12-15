@@ -10,7 +10,12 @@ License: What license is it under?
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5),
-    igraph
+    igraph,
+    sf,
+    geosphere,
+    dplyr,
+    tidyr,
+    ggplot2
 LinkingTo:
     Rcpp,
     RcppArmadillo,
