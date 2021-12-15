@@ -1,5 +1,6 @@
 library(dplyr) # not used elsewhere in the package: only for data prep
 library(readr) # likewise
+library(spdep) # likewise
 
 
 # Load raw data in STATA format
