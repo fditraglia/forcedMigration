@@ -8,7 +8,8 @@ cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
 
-
+muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
+muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
 
 # Note: the adjacency matrix predated Parker - the underlying Adjacency_Matrix.xlsx doesn't match 
 # the adjacency matrix generated using the shapefile. 
@@ -381,6 +382,10 @@ cross_section_merged <- dplyr::select(cross_section_merged,c("ADM2_PCODE","admn2
 
 # Read in shapefile. 
 muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp")
+
+# Remove island municipalities. 
+muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
+muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
 
 # Using spdep, transform spatial polgygons into adjacency matrix. 
 polygon <- left_join(muni_pol,AttributeTableFinal,by=c("ADM2_PCODE"))
