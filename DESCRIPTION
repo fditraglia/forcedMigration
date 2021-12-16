@@ -1,0 +1,34 @@
+Package: forcedMigration
+Type: Package
+Title: Forced Migration Package
+Version: 0.1.0
+Encoding: UTF-8
+Author: Francis diTraglia
+Maintainer: Parker Snipes <Parker.Snipes@chi.frb.org>
+Description: A package containing data and graphing functions for Francis diTraglia and Camilo Garcia-Jimeno's Forced Migration paper. 
+License: What license is it under? 
+LazyData: TRUE
+Imports:
+    Rcpp (>= 0.12.5),
+    igraph,
+    sf,
+    geosphere,
+    dplyr,
+    tidyr,
+    ggplot2
+LinkingTo:
+    Rcpp,
+    RcppArmadillo,
+    dplyr,
+    igraph,
+    geosphere,
+    ggplot2,
+    tidyr,
+    sf
+Recommends:
+    haven,
+    readxl,
+    readr
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)
