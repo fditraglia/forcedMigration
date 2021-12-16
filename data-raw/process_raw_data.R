@@ -355,7 +355,7 @@ addCO <- function(muni){
 }
 
 # Merge forest and elevation into existing geographic covariate dataframe. 
-full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,popn1993,ruggedness,slope,elevation,V_cum)
+full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,ruggedness,slope,elevation,V_cum)
 full_geography <- dplyr::mutate(full_geography,ADM2_PCODE = purrr::map_chr(municipality,addCO))
 full_geography <- merge(full_geography,elevation,by = "ADM2_PCODE")
 full_geography <- merge(full_geography,forest_merge,by="ADM2_PCODE")
