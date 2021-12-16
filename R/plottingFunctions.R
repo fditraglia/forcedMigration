@@ -52,9 +52,9 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   cross_section_merged <- forcedMigration::cross_section_merged
   
   # Figure out which PCA version to use (roads or no roads)
-  for_pca <- forcedMigration::pca_noroad
+  for_pca <- forcedMigration::pca
   if(metric == 3){
-    for_pca <- forcedMigration::pca_road
+    for_pca <- forcedMigration::roads_pca
   }
   
   # Shift PCA's to positive range. 
@@ -289,4 +289,12 @@ spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #'
 #' 
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #'
