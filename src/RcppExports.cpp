@@ -2,7 +2,11 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 
-<include Rcpp.h>
+#include <RcppArmadillo.h>
+
+ #include <Rcpp.h>
+
+ using namespace Rcpp;
 
 // get_S
 List get_S(arma::mat X_star, arma::vec y_star, arma::mat Q, arma::vec gamma);
