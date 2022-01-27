@@ -17,6 +17,7 @@ Imports:
     tidyr,
     ggplot2
 LinkingTo:
+    Rcpp,
     dplyr,
     igraph,
     geosphere,
