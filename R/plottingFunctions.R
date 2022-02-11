@@ -290,22 +290,22 @@ geography_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::geographic_covariates)
     case_when(
         covariate == "road" ~     { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=has_road),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=has_road),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "ruggedness" ~   { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=ruggedness_index),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=ruggedness_index),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "slope" ~   { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=slope_mean),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=slope_mean),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "altitude" ~  { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=alt_mean),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=alt_mean),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "elevation_difference" ~  { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=elevation_difference),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=elevation_difference),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "forest" ~    { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=is_forested),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=is_forested),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         TRUE ~ print("Please input one of the following covariates: road, ruggedness, slope, altitude, elevation_difference, forest.")
     )
@@ -315,16 +315,16 @@ abandoned_land_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::abandoned_land)
     case_when(
         covariate == "displaced" ~     { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=displaced),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=displaced),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "hect_abandoned_paramilitary" ~   { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=hect_abandoned_paramilitary),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=hect_abandoned_paramilitary),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "hect_abandoned_other_armed" ~   { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=hect_abandoned_other_armed),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=hect_abandoned_other_armed),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         covariate == "total_hect_abandoned" ~  { ggplot() +
-        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=total_hect_abandoned),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=total_hect_abandoned),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
         TRUE ~ print("Please input one of the following covariates: displaced, hect_abandoned_paramilitary, hect_abandoned_other_armed, total_hect_abandoned.")
     )
@@ -340,28 +340,28 @@ violence_map <- function(year,covariate){
    
    case_when(
        covariate == "V_cum" ~     { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=V_cum),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=V_cum),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "V_flow" ~   { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=V_flow),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=V_flow),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "D_AS" ~   { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_AS),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_AS),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "D_CODHES" ~  { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_CODHES),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_CODHES),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "D_RUV" ~  { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_RUV),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_RUV),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "D_CEDE" ~    { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_CEDE),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_CEDE),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "D_JYP" ~    { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_JYP),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=D_JYP),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        covariate == "lag_V_flow" ~    { ggplot() +
-       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=lag_V_flow),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) }
+       geom_sf(data = st_as_sf(map_with_attributes), aes(fill=lag_V_flow),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
        TRUE ~ print("Please input one of the following covariates: V_cum, V_flow, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP, lag_V_flow.")
    )
