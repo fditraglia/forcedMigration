@@ -384,7 +384,7 @@ violence_map <- function(year,covariate){
    }
 }
    
-}
+
 
 
 #'
