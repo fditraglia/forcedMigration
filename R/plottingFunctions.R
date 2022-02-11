@@ -288,14 +288,59 @@ distance_map <- function(metric,a,b,epicenter_1,epicenter_2){
 
 geography_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::geographic_covariates)
+    if(covariate == "road"){
     ggplot2::ggplot() +
-    ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=covariate),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+    ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=has_road),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
 }
+    else if(covariate == "ruggedness"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = ruggedness_index),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "slope"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = slope_mean),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "altitude"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = alt_mean),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "elevation_difference"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = elevation_difference),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "forest"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = is_forested),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else{
+        print("Please enter covariate in the following list: road, ruggedness, slope, altitude, elevation_difference, forest.")
+    }
+}
+
+
 
 abandoned_land_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::abandoned_land)
-    ggplot2::ggplot() +
-    ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=covariate),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+    if(covariate == "displaced"){
+        ggplot2::ggplot() +
+        ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=displaced),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+}
+    else if(covariate == "hect_paramilitary"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = hect_abandoned_paramilitary),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "hect_other_armed"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = hect_abandoned_other_armed),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "total_hect"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = total_hect_abandoned),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    
+    else{
+        print("Please enter covariate in the following list: displaced, hect_paramilitary, hect_other_armed, total_hect.")
+    }
 }
 
 violence_map <- function(year,covariate){
@@ -306,8 +351,39 @@ violence_map <- function(year,covariate){
    error = function(cond) {print("Please enter year between 1996 and 2008 and one of the following covariates: V_cum, V_flow, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP, lag_V_flow.")}
    })
    
+   if(covariate == "V_cum"){
    ggplot2::ggplot() +
-   ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=covariate),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+   ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=V_cum),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+}
+   else if(covariate == "V_flow"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = V_flow),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_AS"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_AS),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_CODHES"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_CODHES),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_RUV"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_RUV),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_CEDE"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_CEDE),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_JYP"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_JYP),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else{
+       print("Please enter covariate in the following list: V_flow, V_cum, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP.")
+   }
+}
+   
 }
 
 
