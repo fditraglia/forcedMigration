@@ -350,7 +350,7 @@ violence_map <- function(year,covariate){
    
    if(covariate == "V_cum"){
    ggplot2::ggplot() +
-   ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=V_cum),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+   ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=V_cum),color = 'grey34',lwd=.05) +ggplot2::scale_fill_gradient(values = c("blue","red"))
 }
    else if(covariate == "V_flow"){
        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = V_flow),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
