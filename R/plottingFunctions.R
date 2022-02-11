@@ -290,7 +290,6 @@ geography_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::geographic_covariates)
     ggplot2::ggplot() +
     +     ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=covariate),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
-    )
 }
 
 abandoned_land_map <- function(covariate){
@@ -309,7 +308,6 @@ violence_map <- function(year,covariate){
    
    ggplot2::ggplot() +
    +     ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=covariate),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
-   )
 }
 
 
