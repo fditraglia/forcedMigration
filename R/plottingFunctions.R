@@ -288,7 +288,7 @@ distance_map <- function(metric,a,b,epicenter_1,epicenter_2){
 
 geography_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::geographic_covariates)
-    case_when(
+    dplyr::case_when(
         covariate == "road" ~     { ggplot() +
         geom_sf(data = st_as_sf(map_with_attributes), aes(fill=has_road),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
@@ -313,7 +313,7 @@ geography_map <- function(covariate){
 
 abandoned_land_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::abandoned_land)
-    case_when(
+    dplyr::case_when(
         covariate == "displaced" ~     { ggplot() +
         geom_sf(data = st_as_sf(map_with_attributes), aes(fill=displaced),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
         
@@ -338,7 +338,7 @@ violence_map <- function(year,covariate){
    error = function(cond) {print("Please enter year between 1996 and 2008 and one of the following covariates: V_cum, V_flow, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP, lag_V_flow.")}
    })
    
-   case_when(
+   dplyr::case_when(
        covariate == "V_cum" ~     { ggplot() +
        geom_sf(data = st_as_sf(map_with_attributes), aes(fill=V_cum),color = 'grey34',lwd=.05) +scale_fill_manual(values = c("blue","red")) },
        
