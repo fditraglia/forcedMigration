@@ -321,10 +321,10 @@ geography_map <- function(covariate){
 
 abandoned_land_map <- function(covariate){
     map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::abandoned_land)
-    if(covariate == "displaced"){
-        ggplot2::ggplot() +
-        ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=displaced),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
-}
+    else if(covariate == "displaced"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = displaced),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
     else if(covariate == "hect_paramilitary"){
         ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = hect_abandoned_paramilitary),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
     }
@@ -384,7 +384,7 @@ violence_map <- function(year,covariate){
    }
 }
    
-}
+
 
 
 #'
