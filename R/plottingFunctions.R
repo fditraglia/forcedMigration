@@ -345,7 +345,7 @@ abandoned_land_map <- function(covariate){
 
 violence_map <- function(year,covariate){
 
-   panel <-  subset(forcedMigration::panel[forcedMigration::panel$year == year,],select = c("municipality",covariate))
+   panel <-  forcedMigration::panel[forcedMigration::panel$year == year,]
    map_with_attributes <- merge(forcedMigration::muni_pol,panel)
    
    if(covariate == "V_cum"){
