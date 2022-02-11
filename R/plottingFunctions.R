@@ -309,7 +309,7 @@ geography_map <- function(covariate){
     }
     
     else if(covariate == "forest"){
-        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = is_forested),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = is_forested),color = 'grey34',lwd=.05)+ggplot2::scale_fill_manual(values = c("blue","red"))
     }
     
     else{
