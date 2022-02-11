@@ -573,9 +573,19 @@ pca_road <- mutate(pca_road,index = as.integer(rownames(pca_road)))
 pca_road <- merge(pca_road,for_merge_df,by="index")
 pca_road <- arrange(pca_road,index)
 
+#-------------------------------------------------------------------------------
+# Create abandoned land dataset. 
 
+# Note: There was an intermediate hand-cleaning step that was 
+# omitted between merging raw digitized with AttributeTableFinal.csv and input 
+# here to remove duplicates; the abandoned_land_handcleaned.csv file is the 
+# result of that cleaned merge. 
+#-------------------------------------------------------------------------------
 
+mrg <- read.csv("abandoned_land_handcleaned.csv")
 
+abandoned_land <- subset(mrg,select = c(displaced,hect_abandoned_paramilitary,
+hect_abandoned_other_armed,total_hect_abandoned,ADM2_ES,ADM2_PCODE,adm2Nm,lat,lon))
 
 #usethis::use_data(covariates, overwrite = TRUE)
 #usethis::use_data(cross_section, overwrite = TRUE)
@@ -591,6 +601,7 @@ usethis::use_data(munigraph,overwrite = TRUE)
 usethis::use_data(violence_data,overwrite = TRUE)
 usethis::use_data(pca_noroad,overwrite = TRUE)
 usethis::use_data(pca_road,overwrite = TRUE)
+usethis::use_data(abandoned_land,overwrite = TRUE)
 
 # clean up
 rm(list = ls())
