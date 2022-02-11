@@ -371,10 +371,13 @@ roads = read.csv("data-raw/real_roads.csv")
 road_code_list <- roads$ADM2_PCODE
 AttributeTableFinal <- dplyr::mutate(AttributeTableFinal, has_road = (ADM2_PCODE %in% road_code_list))
 
+colnames(AttributeTableFinal)[1] <- "ADM2_ES"
+full_municipalities <- subset(AttributeTableFinal,select = c(ADM2_ES,ADM2_PCODE,
+admn2Nm,lat,lon)
 # 
 cross_section_merged <- merge(AttributeTableFinal,full_geography,by = "ADM2_PCODE")
 cross_section_merged <- dplyr::select(cross_section_merged,c("ADM2_PCODE","admn2Nm","latnum","lonnum","has_road","municipality","ruggedness","slope","elevation","elevation_difference","is_forested"))
-
+geographic_covariates <- cross_section_merged
 
 
 ## Create spatial map object and graph object.(The graph and adjacency matrix produced is identical to those produced by 
@@ -596,7 +599,7 @@ usethis::use_data(panel, overwrite = TRUE)
 usethis::use_data(land_distributions, overwrite = TRUE)
 usethis::use_data(adjacent_municipalities, overwrite = TRUE)
 #usethis::use_data(municipalities_and_regions, overwrite = TRUE)
-usethis::use_data(cross_section_merged,overwrite = TRUE)
+usethis::use_data(geographic_covariates,overwrite = TRUE)
 usethis::use_data(munigraph,overwrite = TRUE)
 usethis::use_data(violence_data,overwrite = TRUE)
 usethis::use_data(pca_noroad,overwrite = TRUE)
