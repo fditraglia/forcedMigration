@@ -345,11 +345,8 @@ abandoned_land_map <- function(covariate){
 
 violence_map <- function(year,covariate){
     
-   tryCatch({
-    map_with_attributes <-  subset(forcedMigration::panel[forcedMigration::panel$year == year,],select = c("municipality",covariate))
-   },{
-   error = function(cond) {print("Please enter year between 1996 and 2008 and one of the following covariates: V_cum, V_flow, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP, lag_V_flow.")}
-   })
+
+   map_with_attributes <-  subset(forcedMigration::panel[forcedMigration::panel$year == year,],select = c("municipality",covariate))
    
    if(covariate == "V_cum"){
    ggplot2::ggplot() +
