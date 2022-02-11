@@ -354,6 +354,10 @@ addCO <- function(muni){
   ifelse(nchar(paste(muni)) == 4,paste("CO0",muni,sep = ""),paste("CO",muni,sep = ""))
 }
 
+# Helper function to convert ADM2_PCODE to municipality code.
+removeCO <- function(muni){ return(paste(as.numeric(substring(muni,3,7))))
+}
+
 # Merge forest and elevation into existing geographic covariate dataframe. 
 full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,ruggedness,slope,elevation,V_cum)
 full_geography <- dplyr::mutate(full_geography,ADM2_PCODE = purrr::map_chr(municipality,addCO))
@@ -389,6 +393,7 @@ muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.sh
 # Remove island municipalities. 
 muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
 muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
+muni_pol <- mutate(muni_pol,municipality = map_chr(ADM2_PCODE,removeCO))
 
 # Using spdep, transform spatial polgygons into adjacency matrix. 
 polygon <- left_join(muni_pol,AttributeTableFinal,by=c("ADM2_PCODE"))
