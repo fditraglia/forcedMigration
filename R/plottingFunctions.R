@@ -49,7 +49,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
   # Figure out which PCA version to use (roads or no roads)
   
-  cross_section_merged <- forcedMigration::cross_section_merged
+  geographic_covariates <- forcedMigration::geographic_covariates
   
   # Figure out which PCA version to use (roads or no roads)
   for_pca <- forcedMigration::pca
@@ -84,7 +84,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
         
         # For distinct municipalities for which we have all covariates, calculate the distance. (For municipalities lacking geographic covariates, we default to crow distance). 
         
-        if(metric>1 & i!= j & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged)){
+        if(metric>1 & i!= j & i<nrow(forcedMigration::geographic_covariates) & j<nrow(forcedMigration::geographic_covariates)){
           # Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  
           pcode_i <- forcedMigration::full_municipalities$ADM2_PCODE[i]
           pcode_j <- forcedMigration::full_municipalities$ADM2_PCODE[j]
@@ -98,8 +98,8 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
           #summary_db[row] <- total_dist
           
           # If we are using the hiking metric (and both municipalities are among the 1,076 for which we have geographic covariates), calculate and update distance. Where we don't have covariates, the default is d1.  
-          if(metric==4 & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged) ){
-            elev_difference <- max((forcedMigration::cross_section_merged$alt_mean[i]-forcedMigration::cross_section_merged$alt_mean[j]),0)
+          if(metric==4 & i<nrow(forcedMigration::geographic_covariates) & j<nrow(forcedMigration::geographic_covariates) ){
+            elev_difference <- max((forcedMigration::geographic_covariates$alt_mean[i]-forcedMigration::geographic_covariates$alt_mean[j]),0)
             total_dist <- d1 + 0.6 * elev_difference
             #summary_db[row] <- total_dist
           }
@@ -157,7 +157,8 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #' 
 get_df <- function(merge_deltas){
-  FinalWithDeltas <- merge(forcedMigration::cross_section_merged,merge_deltas,by = "ADM2_PCODE")
+  FinalWithDeltas <- merge(forcedMigration::
+     covariates,merge_deltas,by = "ADM2_PCODE")
   violence_data <- forcedMigration::violence_data[forcedMigration::violence_data$year < 2009,]
   violence_set <- merge(violence_data,FinalWithDeltas)      
   
