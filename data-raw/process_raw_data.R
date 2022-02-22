@@ -377,8 +377,8 @@ AttributeTableFinal <- dplyr::mutate(AttributeTableFinal, has_road = (ADM2_PCODE
 
 colnames(AttributeTableFinal)[1] <- "ADM2_ES"
 full_municipalities <- subset(AttributeTableFinal,select = c(ADM2_ES,ADM2_PCODE,
-admn2Nm,lat,lon)
-# 
+admn2Nm,lat,lon))
+                                             
 cross_section_merged <- merge(AttributeTableFinal,full_geography,by = "ADM2_PCODE")
 cross_section_merged <- dplyr::select(cross_section_merged,c("ADM2_PCODE","admn2Nm","latnum","lonnum","has_road","municipality","ruggedness","slope","elevation","elevation_difference","is_forested"))
 geographic_covariates <- cross_section_merged
