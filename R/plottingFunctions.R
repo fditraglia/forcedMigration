@@ -148,7 +148,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #' @return Dataframe containing municipality, ring, share of total violence for ring in given year, and standard deviation of violence across municipalities in a given ring-year. 
 #' \itemize{
-#' \item \code{FinalWithDeltas} Dataframe containing geographic covariates and final distances. 
+#' \item \code{FinalWithDeltas} Dataframe containing geographic and final distances. 
 #'    \item \code{vdf} Dataframe containing year-ring violence. 
 #'    \item \code{sdf} Dataframe containing standard errors of year-ring violence. 
 #'    \item \code{sharedf} Dataframe containing final output. 
@@ -157,8 +157,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #' 
 get_df <- function(merge_deltas){
-  FinalWithDeltas <- merge(forcedMigration::
-     covariates,merge_deltas,by = "ADM2_PCODE")
+  FinalWithDeltas <- merge(forcedMigration::geographic_covariates,merge_deltas,by = "ADM2_PCODE")
   violence_data <- forcedMigration::violence_data[forcedMigration::violence_data$year < 2009,]
   violence_set <- merge(violence_data,FinalWithDeltas)      
   
