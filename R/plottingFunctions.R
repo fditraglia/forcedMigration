@@ -386,7 +386,7 @@ violence_map <- function(year,covariate){
  neighbors <- df[df$delta == 1,]$ADM2_PCODE
  municipalities <- as.numeric(unlist(lapply(neighbors,substring,first=3)))
  flows <- forcedMigration::violence_data[forcedMigration::violence_data$municipality %in% municipalities,]    
- flows <- subset(flows,select = c(municipality,year,V_flow))
+ flows <- subset(flows,select = c(municipality,year,victims__UR)
  return(flows)
  }
    
