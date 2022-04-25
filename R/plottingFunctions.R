@@ -387,7 +387,7 @@ violence_map <- function(year,covariate){
  municipalities <- as.numeric(unlist(lapply(neighbors,substring,first=3)))
  flows <- forcedMigration::panel[forcedMigration::panel$municipality %in% municipalities,]    
  flows <- subset(flows,select = c(municipality,year,V_flow)
- return(flow)
+ return(flows)
  }
    
 
