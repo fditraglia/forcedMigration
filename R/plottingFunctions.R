@@ -386,7 +386,7 @@ violence_map <- function(year,covariate){
  neighbors <- df[df$delta == 1,]$ADM2_PCODE
  municipalities <- as.numeric(unlist(lapply(neighbors,substring,first=3)))
  flow <- forcedMigration::panel[forcedMigration::panel$municipality %in% municipalities,]$V_flow                            
- return(mean(flow))
+ return(flow)
  }
    
 
