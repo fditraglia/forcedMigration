@@ -354,6 +354,10 @@ addCO <- function(muni){
   ifelse(nchar(paste(muni)) == 4,paste("CO0",muni,sep = ""),paste("CO",muni,sep = ""))
 }
 
+# Helper function to convert ADM2_PCODE to municipality code.
+removeCO <- function(muni){ return(paste(as.numeric(substring(muni,3,7))))
+}
+
 # Merge forest and elevation into existing geographic covariate dataframe. 
 full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,ruggedness,slope,elevation,V_cum)
 full_geography <- dplyr::mutate(full_geography,ADM2_PCODE = purrr::map_chr(municipality,addCO))
@@ -371,10 +375,13 @@ roads = read.csv("data-raw/real_roads.csv")
 road_code_list <- roads$ADM2_PCODE
 AttributeTableFinal <- dplyr::mutate(AttributeTableFinal, has_road = (ADM2_PCODE %in% road_code_list))
 
-# 
+colnames(AttributeTableFinal)[1] <- "ADM2_ES"
+full_municipalities <- subset(AttributeTableFinal,select = c(ADM2_ES,ADM2_PCODE,
+admn2Nm,lat,lon))
+                                             
 cross_section_merged <- merge(AttributeTableFinal,full_geography,by = "ADM2_PCODE")
 cross_section_merged <- dplyr::select(cross_section_merged,c("ADM2_PCODE","admn2Nm","latnum","lonnum","has_road","municipality","ruggedness","slope","elevation","elevation_difference","is_forested"))
-
+geographic_covariates <- cross_section_merged
 
 
 ## Create spatial map object and graph object.(The graph and adjacency matrix produced is identical to those produced by 
@@ -386,6 +393,7 @@ muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.sh
 # Remove island municipalities. 
 muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
 muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
+muni_pol <- mutate(muni_pol,municipality = map_chr(ADM2_PCODE,removeCO))
 
 # Using spdep, transform spatial polgygons into adjacency matrix. 
 polygon <- left_join(muni_pol,AttributeTableFinal,by=c("ADM2_PCODE"))
@@ -573,9 +581,19 @@ pca_road <- mutate(pca_road,index = as.integer(rownames(pca_road)))
 pca_road <- merge(pca_road,for_merge_df,by="index")
 pca_road <- arrange(pca_road,index)
 
+#-------------------------------------------------------------------------------
+# Create abandoned land dataset. 
 
+# Note: There was an intermediate hand-cleaning step that was 
+# omitted between merging raw digitized with AttributeTableFinal.csv and input 
+# here to remove duplicates; the abandoned_land_handcleaned.csv file is the 
+# result of that cleaned merge. 
+#-------------------------------------------------------------------------------
 
+mrg <- read.csv("abandoned_land_handcleaned.csv")
 
+abandoned_land <- subset(mrg,select = c(displaced,hect_abandoned_paramilitary,
+hect_abandoned_other_armed,total_hect_abandoned,ADM2_ES,ADM2_PCODE,adm2Nm,lat,lon))
 
 #usethis::use_data(covariates, overwrite = TRUE)
 #usethis::use_data(cross_section, overwrite = TRUE)
@@ -586,11 +604,12 @@ usethis::use_data(panel, overwrite = TRUE)
 usethis::use_data(land_distributions, overwrite = TRUE)
 usethis::use_data(adjacent_municipalities, overwrite = TRUE)
 #usethis::use_data(municipalities_and_regions, overwrite = TRUE)
-usethis::use_data(cross_section_merged,overwrite = TRUE)
+usethis::use_data(geographic_covariates,overwrite = TRUE)
 usethis::use_data(munigraph,overwrite = TRUE)
 usethis::use_data(violence_data,overwrite = TRUE)
 usethis::use_data(pca_noroad,overwrite = TRUE)
 usethis::use_data(pca_road,overwrite = TRUE)
+usethis::use_data(abandoned_land,overwrite = TRUE)
 
 # clean up
 rm(list = ls())

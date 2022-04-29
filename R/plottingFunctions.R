@@ -49,7 +49,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
   # Figure out which PCA version to use (roads or no roads)
   
-  cross_section_merged <- forcedMigration::cross_section_merged
+  geographic_covariates <- forcedMigration::geographic_covariates
   
   # Figure out which PCA version to use (roads or no roads)
   for_pca <- forcedMigration::pca
@@ -72,7 +72,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
       if(igraph::are.connected(munigraph,i,j)){
         
         # Calculate crow-flies-distance. 
-        d1 <- forcedMigration::calcdist(forcedMigration::AttributeTableFinal$latnum[i],forcedMigration::AttributeTableFinal$lonnum[i],forcedMigration::AttributeTableFinal$latnum[j],forcedMigration::AttributeTableFinal$lonnum[j])
+        d1 <- forcedMigration::calcdist(forcedMigration::full_municipalities$latnum[i],forcedMigration::full_municipalities$lonnum[i],forcedMigration::full_municipalities$latnum[j],forcedMigration::full_municipalities$lonnum[j])
         
         # If we have no geographic covariates for at least one municipality in the pair (and therefore did not calculate a PCA distance for this pair), set total_dist to 1. (This is the "pure graph hops" case). 
         total_dist <- 1
@@ -84,10 +84,10 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
         
         # For distinct municipalities for which we have all covariates, calculate the distance. (For municipalities lacking geographic covariates, we default to crow distance). 
         
-        if(metric>1 & i!= j & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged)){
+        if(metric>1 & i!= j & i<nrow(forcedMigration::geographic_covariates) & j<nrow(forcedMigration::geographic_covariates)){
           # Retrieve principal components 1 and 2 for municipalities i and j from PCA dataframe.  
-          pcode_i <- forcedMigration::AttributeTableFinal$ADM2_PCODE[i]
-          pcode_j <- forcedMigration::AttributeTableFinal$ADM2_PCODE[j]
+          pcode_i <- forcedMigration::full_municipalities$ADM2_PCODE[i]
+          pcode_j <- forcedMigration::full_municipalities$ADM2_PCODE[j]
           row <- for_pca[for_pca$muni_i == pcode_i & for_pca$muni_j == pcode_j,]$index
           PCA_1 <- for_pca$PC1[row]
           PCA_2 <- for_pca$PC2[row]
@@ -98,8 +98,8 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
           #summary_db[row] <- total_dist
           
           # If we are using the hiking metric (and both municipalities are among the 1,076 for which we have geographic covariates), calculate and update distance. Where we don't have covariates, the default is d1.  
-          if(metric==4 & i<nrow(forcedMigration::cross_section_merged) & j<nrow(forcedMigration::cross_section_merged) ){
-            elev_difference <- max((forcedMigration::cross_section_merged$alt_mean[i]-forcedMigration::cross_section_merged$alt_mean[j]),0)
+          if(metric==4 & i<nrow(forcedMigration::geographic_covariates) & j<nrow(forcedMigration::geographic_covariates) ){
+            elev_difference <- max((forcedMigration::geographic_covariates$alt_mean[i]-forcedMigration::geographic_covariates$alt_mean[j]),0)
             total_dist <- d1 + 0.6 * elev_difference
             #summary_db[row] <- total_dist
           }
@@ -115,7 +115,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
   vertex_ids = vector(length = 1120)
   for(i in 1:1120){
-    vertex_ids[i]<- forcedMigration::AttributeTableFinal$ADM2_PCODE[i]
+    vertex_ids[i]<- forcedMigration::full_municipalities$ADM2_PCODE[i]
   }
   
   # Calculate Dijkstra distances 
@@ -148,7 +148,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #' @return Dataframe containing municipality, ring, share of total violence for ring in given year, and standard deviation of violence across municipalities in a given ring-year. 
 #' \itemize{
-#' \item \code{FinalWithDeltas} Dataframe containing geographic covariates and final distances. 
+#' \item \code{FinalWithDeltas} Dataframe containing geographic and final distances. 
 #'    \item \code{vdf} Dataframe containing year-ring violence. 
 #'    \item \code{sdf} Dataframe containing standard errors of year-ring violence. 
 #'    \item \code{sharedf} Dataframe containing final output. 
@@ -157,7 +157,7 @@ generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
 #' 
 #' 
 get_df <- function(merge_deltas){
-  FinalWithDeltas <- merge(forcedMigration::cross_section_merged,merge_deltas,by = "ADM2_PCODE")
+  FinalWithDeltas <- merge(forcedMigration::geographic_covariates,merge_deltas,by = "ADM2_PCODE")
   violence_data <- forcedMigration::violence_data[forcedMigration::violence_data$year < 2009,]
   violence_set <- merge(violence_data,FinalWithDeltas)      
   
@@ -277,7 +277,7 @@ starwars_bars <- function(metric,a,b,epicenter_1,epicenter_2){
 #' @return NULL (plots corresponding graph). 
 #'
 #'
-spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
+distance_map <- function(metric,a,b,epicenter_1,epicenter_2){
   merged_deltas <- forcedMigration::generate_distances(metric,a,b,epicenter_1,epicenter_2)
   muni_pol <- forcedMigration::muni_pol
   merged_map <- merge(merged_deltas,muni_pol)
@@ -285,6 +285,105 @@ spatial_map <- function(metric,a,b,epicenter_1,epicenter_2){
     ggplot2::geom_sf(data = sf::st_as_sf(merged_map), ggplot2::aes(fill=ring_num),color = 'grey34',lwd=.05) +
     ggplot2::scale_colour_manual(colors = c("red","orange","gold","lightgreen","darkgreen","lightblue","blue","darkblue","purple","violet"),values = NULL,space = "Lab",na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
 }
+
+geography_map <- function(covariate){
+    map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::geographic_covariates)
+    if(covariate == "road"){
+    ggplot2::ggplot() +
+    ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=has_road),color = 'grey34',lwd=.05) +ggplot2::scale_fill_manual(values = c("blue","red"))
+}
+    else if(covariate == "ruggedness"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = ruggedness_index),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "slope"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = slope_mean),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "altitude"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = alt_mean),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "elevation_difference"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = elevation_difference),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "forest"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = is_forested),color = 'grey34',lwd=.05)+ggplot2::scale_fill_manual(values = c("blue","red"))
+    }
+    
+    else{
+        print("Please enter covariate in the following list: road, ruggedness, slope, altitude, elevation_difference, forest.")
+    }
+}
+
+
+
+abandoned_land_map <- function(covariate){
+    map_with_attributes <- merge(forcedMigration::muni_pol,forcedMigration::abandoned_land)
+    if(covariate == "displaced"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = displaced),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "hect_paramilitary"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = hect_abandoned_paramilitary),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "hect_other_armed"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = hect_abandoned_other_armed),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    else if(covariate == "total_hect"){
+        ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = total_hect_abandoned),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+    }
+    
+    
+    else{
+        print("Please enter covariate in the following list: displaced, hect_paramilitary, hect_other_armed, total_hect.")
+    }
+}
+
+violence_map <- function(year,covariate){
+
+   panel <-  forcedMigration::panel[forcedMigration::panel$year == year,]
+   map_with_attributes <- merge(forcedMigration::muni_pol,panel,by = "municipality")
+   
+   if(covariate == "V_cum"){
+   ggplot2::ggplot() +
+   ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes), ggplot2::aes(fill=V_cum),color = 'grey34',lwd=.05) +ggplot2::scale_fill_gradient(values = c("blue","red"))
+}
+   else if(covariate == "V_flow"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = V_flow),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_AS"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_AS),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_CODHES"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_CODHES),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_RUV"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_RUV),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_CEDE"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_CEDE),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else if(covariate == "D_JYP"){
+       ggplot2::ggplot()+ggplot2::geom_sf(data = sf::st_as_sf(map_with_attributes),ggplot2::aes(fill = D_JYP),color = 'grey34',lwd=.05)+ggplot2::scale_fill_gradient(high = "red",low = "blue")
+   }
+   
+   else{
+       print("Please enter covariate in the following list: V_flow, V_cum, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP.")
+   }
+}
+   
+
+
+
 #'
 #' 
 #'
