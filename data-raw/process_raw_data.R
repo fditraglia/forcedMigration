@@ -1,52 +1,80 @@
-library(dplyr) # not used elsewhere in the package: only for data prep
-library(readr) # likewise
-library(spdep) # likewise
+library(dplyr)
 
-
-# Load raw data in STATA format
+#------------------------------- Load raw data
 cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
 panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
+municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
+adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
+# Note: the adjacency matrix predated Parker. Adjacency_Matrix.xlsx doesn't
+# perfectly match the adjacency matrix generated using the shapefile.
+# (HOW DO THEY DIFFER AND WHY? Is it just the islands?)
 
-#muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
-#muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
+#------------------------------- Merge department/province names into cross-section
+municipalities_and_regions_raw %>%
+  rename(department = number_dept, municipality = Muni_code) %>%
+  mutate(municipality = as.numeric(municipality)) %>%
+  left_join(cross_section_raw, .)
 
-# Note: the adjacency matrix predated Parker - the underlying Adjacency_Matrix.xlsx doesn't match
-# the adjacency matrix generated using the shapefile.
+rm(municipalities_and_regions_raw)
 
+#------------------------------- Remove two islands: 88001 and 88564
+CO_islands <- c('88001', '88564')
 
-# The adjacency matrix for Colombian municipalities is stored as an excel file
-adjacency_matrix <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
+survey_raw %>%
+  filter(municipality_origin %in% CO_islands) #None in the survey
 
-# Check that the codes in column 1 match the names in columns 2, 3, ...
-municipality_codes <- adjacency_matrix$codes
-adjacency_matrix <- adjacency_matrix[,-1]
-row_indices <- as.integer(substr(colnames(adjacency_matrix), start = 13, stop = 100L))
-sum(abs(municipality_codes - row_indices))
+cross_section <- cross_section_raw %>%
+  filter(!(municipality %in% CO_islands))
 
-# Convert adjacency matrix into a list of neighbors for each municipality
-get_neighbors <- function(row_index) {
-  adj_row <- adjacency_matrix[row_index,]
-  adj_row <- if_else(adj_row == 1, TRUE, FALSE)
-  municipality_codes[adj_row]
-}
-adjacent_municipalities <- lapply(1:nrow(adjacency_matrix), get_neighbors)
-names(adjacent_municipalities) <- municipality_codes
-rm(municipality_codes, adjacency_matrix, get_neighbors, row_indices)
+panel <- panel_raw %>%
+  filter(!(municipality %in% CO_islands))
 
+adjacency_matrix <- adjacency_matrix_raw %>%
+  filter(!(codes %in% CO_islands)) # Note that we don't have to remove
+                                   # columns 'border_with_88001' etc. since
+                                   # these two municipalities are not in the
+                                   # adjacency matrix: 1117 versus 1119 obs.
 
+rm(panel_raw, cross_section_raw, adjacency_matrix_raw, CO_islands)
 
+#--------------------------------- Construct list of neighboring municipalities
+munis <- adjacency_matrix %>%
+  pull(codes)
 
-# Load csv file with municipality and region codes, merge with cross_section_raw
-#-------------------------------------------------------------------------------
-# NOTE: the adjacency matrix above has only 1117 municipalities, whereas this
-# csv file has 1119. Why? We think this is because of two islands. Check this.
-#-------------------------------------------------------------------------------
-municipalities_and_regions <- read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
-names(municipalities_and_regions) <- c('department', 'region', 'municipality')
-municipalities_and_regions$municipality <- as.numeric(municipalities_and_regions$municipality)
-cross_section_raw <- left_join(cross_section_raw, municipalities_and_regions)
-rm(municipalities_and_regions)
+adjacency_matrix <- adjacency_matrix %>%
+  select(-codes) %>%
+  as.matrix()
+
+rownames(adjacency_matrix) <- colnames(adjacency_matrix) <- munis
+neighbors <- apply(adjacency_matrix, 1, function(row) munis[row == 1])
+
+rm(adjacency_matrix)
+
+#-------------------------------- Clean land distribution characteristics
+
+#------------------------------------------------------------------------------
+# The column landless_families in from Cross_section.dta was constructed by
+# Camilo's original RA. There are some discrepancies in this column. Our
+# procedure for constructing a measure of the number of landless families in a
+# municipality from the underlying census data is as follows. We assume, absent
+#evidence to the contrary, that there is at most one landowner per family.
+#------------------------------------------------------------------------------
+# 1. Calculate n_landowners by summing counts in each column "landown_*"
+# 2. Set n_families = pmax(num_families, n_landowners)
+# 3. Set n_landless = n_families - n_landowners
+#------------------------------------------------------------------------------
+
+cross_section <- cross_section %>%
+  rowwise(municipality) %>%
+  mutate(n_landowners = sum(c_across(starts_with('landown_')))) %>%
+  ungroup() %>%
+  rename(n_families_census = num_families) %>%
+  mutate(n_families = pmax(n_families_census, n_landowners),
+         n_landless = n_families - n_landowners,
+         omega_n = n_landless / n_families) %>%
+  select(-landless_families)
+
 
 #---------------------------------------------------------------------------------------
 # We observe a discretized land distribution: we know the total amount of land and the
@@ -66,33 +94,6 @@ rm(municipalities_and_regions)
 # [500, 1000)
 # >=2000
 #---------------------------------------------------------------------------------------
-
-
-#------------------------------------------------------------------------------
-# The column landless_families in from Cross_section.dta was constructed by
-# Camilo's original RA. We can't figure out what he did, but the results don't
-# make any sense. The following is our procedure for constructing a measure of
-# the number of landless families in a municipality from the underlying census
-# data. We assume, absent evidence to the contrary, that there is at most one
-# landowner per family.
-#------------------------------------------------------------------------------
-# 1. Calculate n_landowners by summing counts in each column "landown_*"
-# 2. Set n_families = pmax(num_families, n_landowners)
-# 3. Set n_landless = n_families - n_landowners
-#------------------------------------------------------------------------------
-
-cross_section <- cross_section_raw %>%
-  rowwise(municipality) %>%
-  mutate(n_landowners = sum(c_across(starts_with('landown_')))) %>%
-  ungroup() %>%
-  rename(n_families_census = num_families) %>%
-  mutate(n_families = pmax(n_families_census, n_landowners),
-         n_landless = n_families - n_landowners,
-         omega_n = n_landless / n_families) %>%
-  select(-landless_families)
-
-rm(cross_section_raw)
-
 landowner_bins <- cross_section %>% # Number of families in each landholding "bin"
   select(n_landless, starts_with('landown_')) %>%
   relocate(n_landless) %>% # Make this the first column
@@ -130,7 +131,6 @@ landtotal_bins <- cross_section %>% # Total land in each landholding "bin"
          `[1000,2000)` = tot_land_12,
          `>=2000` = tot_land_13)
 
-
 # Construct a list of land distributions: one for each municipality
 make_land_dist <- function(i) {
   total_land <- landtotal_bins[i,]
@@ -145,8 +145,8 @@ names(land_distributions) <- cross_section$municipality
 rm(make_land_dist, landowner_bins, landtotal_bins)
 
 
-# Select the panel variables we'll use and give them simpler names
-panel <- panel_raw %>%
+#-------------------------------------- Select and rename panel variables
+panel <- panel %>%
   select(municipality,
          year,
          V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
@@ -160,7 +160,6 @@ panel <- panel_raw %>%
          D_JYP = desplazados_JYP,
          popn1993 = Total_Poblacion1993)
 
-rm(panel_raw)
 
 # There are some variables in the panel dataset that are really cross-section
 # variables: e.g. 1993 population, cumulative violence in the final year of the
@@ -173,6 +172,10 @@ merge_me <- panel %>%
 cross_section <- inner_join(cross_section, merge_me, by = 'municipality')
 rm(merge_me)
 
+
+#---------------------------------
+# UPDATE FROM HERE DOWN!
+#---------------------------------
 
 #--------------------------------------------------------
 # Keep only municipalities with at least 100 landowners
