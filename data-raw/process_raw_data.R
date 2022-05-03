@@ -1,14 +1,23 @@
 library(dplyr)
 
 #------------------------------- Load raw data
+# The cross section dataset contains information for only those municipalities
+# with land distribution data
 cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
-panel_raw <- haven::read_dta("data-raw/Panel_D_V.dta")
+
+# The panel dataset contains information for municipalities that we cannot
+# use in our models because we lack land distribution data for them
+panel_raw <- haven::read_dta("data-raw/panel-raw.dta")
+
 survey_raw <- haven::read_dta("data-raw/Survey.dta")
+
 municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
+
 adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
 # Note: the adjacency matrix predated Parker. Adjacency_Matrix.xlsx doesn't
 # perfectly match the adjacency matrix generated using the shapefile.
 # (HOW DO THEY DIFFER AND WHY? Is it just the islands?)
+
 
 #------------------------------- Merge department/province names into cross-section
 municipalities_and_regions_raw %>%
@@ -38,6 +47,11 @@ adjacency_matrix <- adjacency_matrix_raw %>%
 
 rm(panel_raw, cross_section_raw, adjacency_matrix_raw, CO_islands)
 
+#--------------
+# We need to decide how to handle the fact that
+# the adjacency matrix has more municipalities
+# than panel_raw
+#--------------
 #--------------------------------- Construct list of neighboring municipalities
 munis <- adjacency_matrix %>%
   pull(codes)
