@@ -50,8 +50,10 @@ adjacency_matrix <- adjacency_matrix_raw %>%
 
 rm(panel_raw, adjacency_matrix_raw, CO_islands)
 
+
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
+  filter(year %in% 1996:2008) %>% # Only use panel data from 1996-2008
   select(municipality,
          year,
          V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
@@ -214,34 +216,64 @@ land_distributions <- lapply(seq_len(nrow(cross_section)), make_land_dist)
 names(land_distributions) <- cross_section$municipality
 rm(make_land_dist, landowner_bins, landtotal_bins)
 
+# Function that computes summary statistics of the land distribution for use in
+# our LINEAR IV models. The non-linear IV models rely on the entire land distribution
+# stored in land_distributions
+get_land_statistics <- function(x) {
+  z <- x[-1,] # summary stats for *landholders* so remove landless
+  z$frac_families <- z$frac_families / sum(z$frac_families)
+  c('omega' = x$frac_families[1],
+    'H1' = sum(asinh(z$mean_land) * z$frac_families),
+    'H2' = sum(asinh(z$mean_land)^2 * z$frac_families),
+    n_families = sum(x$n_families))
+}
+
+land_statistics <- lapply(land_distributions, get_land_statistics)
+land_statistics <- as.data.frame(do.call(rbind, land_statistics))
+land_statistics$municipality <- as.numeric(rownames(land_statistics))
+rownames(land_statistics) <- NULL
+rm(get_land_statistics)
+
+cross_section %<>% # Assignment pipe!
+  left_join(y = land_statistics, by = 'municipality') %>%
+  mutate(omegaC = 1 - omega) # It's convenient to have (1 - omega) as a separate variable
+
+rm(land_statistics)
 
 # There are some variables in the panel dataset that are really cross-section
 # variables: e.g. 1993 population, cumulative violence in the final year of the
-# panel. Merge these into the cross-section dataset
+# panel, i.e. total violence. Merge these into the cross-section dataset
 
 merge_me <- panel %>%
   filter(year == max(year)) %>%
   select(municipality, popn1993, V_cum)
 
 cross_section %<>%
-  inner_join(merge_me, by = 'municipality')
+  inner_join(merge_me) %>%
+  rename(V_total = V_cum) # Better to call it V_total: total violence from 1996:2008
 
 rm(merge_me)
 
-#---------------------------------
-# UPDATE FROM HERE DOWN!
-#---------------------------------
+#------------------------ Flag municipalities w/ land data and >=100 landholders
 
-#--------------------------------------------------------
-# Keep only municipalities with at least 100 landowners
-#--------------------------------------------------------
-keep_municipalities <- cross_section %>%
-  filter(n_landowners >= 100) %>%
+# The municipalities in cross_section are those for which we have land dist data
+identical(sum(!is.na(cross_section$H1)), nrow(cross_section))
+
+cross_section %<>%
+  mutate(at_least_100_landowners = n_landowners >= 100)
+
+munis_100_plus <- cross_section %>%
+  filter(at_least_100_landowners) %>%
   pull(municipality)
-cross_section <- cross_section %>%
-  filter(municipality %in% keep_municipalities)
-panel <- panel %>%
-  filter(municipality %in% keep_municipalities)
+
+panel %<>%
+  mutate(has_land_data = municipality %in% cross_section$municipality,
+         at_least_100_landowners = municipality %in% munis_100_plus)
+
+rm(munis_100_plus)
+
+
+#-------------------------------------Clean Displacement Data
 
 #-------------------------------------------------------------------------------
 # Some displacement measures are zero for all municipalities during a given year.
@@ -253,6 +285,8 @@ panel <- panel %>%
 #-------------------------------------------------------------------------------
 # Replace these zeros with NA.
 #-------------------------------------------------------------------------------
+# Technically not necessary to include 2010:2012 since we've already subsetted
+# to remove those years.
 panel[panel$year %in% c(1996, 2012),]$D_AS <- NA
 panel[panel$year %in% c(1996, 2010:2012),]$D_CEDE <- NA
 
@@ -294,41 +328,53 @@ panel[panel$municipality %in% CEDE_replace,]$D_CEDE <- NA
 
 rm(disagreement, AS_replace, CODHES_replace, RUV_replace, CEDE_replace)
 
-#-------------------------------------------------------------------------------
-# Create lagged violence flow
-#-------------------------------------------------------------------------------
+#--------------------------------------- Create lagged violence flow
 panel <- panel %>%
   group_by(municipality) %>%
   mutate(lag_V_flow = lag(V_flow, order_by = year)) %>%
   ungroup()
 
+#--------------------------- Re-scale displacement measures
 
-# Arrange displacement measures into 3d array: municipality-year-measure
-raw_displacement <- panel %>%
-  select(starts_with('D_'))
-g <- function(i) {
-  temp <- data.frame(municipality = panel$municipality, year = panel$year,
-                     D = raw_displacement[,i])
-  temp <- reshape(temp, direction = 'wide', timevar = 'year',
-                  idvar = 'municipality')
-  colnames(temp)[-1] <- as.character(1996:2012)
-  rownames(temp) <- temp$municipality
-  temp <- as.matrix(temp)
-  temp <- temp[,-1]
-  return(temp)
-}
-displacement <- sapply(1:ncol(raw_displacement), g, simplify = 'array')
-dimnames(displacement)[[3]] <- unlist(lapply(strsplit(names(raw_displacement), '_'), function(x) x[2]))
+# What share of total RUV and JYP displacement was reported in 1996?
+# Average these two shares
+share_1996 <- panel %>%
+  select(year, D_RUV, D_JYP) %>%
+  group_by(year) %>%
+  summarize(RUV_sum = sum(D_RUV, na.rm = TRUE),
+            JYP_sum = sum(D_JYP, na.rm = TRUE)) %>%
+  mutate(RUV_share = RUV_sum / sum(RUV_sum),
+         JYP_share = JYP_sum / sum(JYP_sum)) %>%
+  filter(year == 1996) %>%
+  select(RUV_share, JYP_share) %>%
+  rowMeans()
+
+panel %<>%
+  mutate(across(c(D_RUV, D_JYP), # Normalize total displacement to 6 million
+         list(norm = ~ 6e6 * . / sum(., na.rm = TRUE)))) %>%
+  mutate(across(c(D_AS, D_CEDE),
+                list(norm = ~ (1 - share_1996) * 6e6 * . / sum(., na.rm = TRUE)))) %>%
+  rowwise() %>%
+  mutate(D_med = median(c_across(ends_with('_norm')), na.rm = FALSE),
+         D_avg = mean(c_across(ends_with('_norm')), na.rm = FALSE),
+         D_med_any = median(c_across(ends_with('_norm')), na.rm = TRUE),
+         D_avg_any = mean(c_across(ends_with('_norm')), na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(D_avg_no_AS = (D_RUV + D_CEDE + D_JYP) / 3,
+         D_avg_no_RUV = (D_AS + D_CEDE + D_JYP) / 3,
+         D_avg_no_CEDE = (D_AS + D_RUV + D_JYP) / 3,
+         D_avg_no_JYP = (D_AS + D_RUV + D_CEDE) / 3) %>%
+  mutate(across(c(starts_with('D_med'), starts_with('D_avg')), ~ 6e6 * . / sum(., na.rm = TRUE)))
+
+rm(share_1996)
 
 
-Vcum <- reshape(as.data.frame(panel[,c('municipality', 'year', 'V_cum')]),
-                direction = 'wide', idvar = 'municipality',
-                timevar = 'year')
-colnames(Vcum)[-1] <- as.character(1996:2012)
-rownames(Vcum) <- Vcum$municipality
-Vcum <- Vcum[,-1]
-Vcum_pop <- Vcum / cross_section$popn1993
+#---------------------------------
+# UPDATE FROM HERE DOWN!
+#---------------------------------
 
+# THE FOLLOWING NEEDS TO BE UPDATED! DO NOT SELECT VARIABLES BY POSITION!!!
+# NEVER NEVER NEVER NEVER!
 # Covariates (cross-section data)
 bureaucracy <- with(cross_section, local_bureaucracy_95 + state_bureaucracy_95)
 names(cross_section[c(11:22, 25:31)])
@@ -390,6 +436,9 @@ covariates[,transform_me] <- apply(covariates[,transform_me], 2, mytransform)
 # clean up
 rm(mytransform, transform_me)
 
+#---------------------------------------------------
+#------------------ PARKER STUFF BELOW!!!!
+#---------------------------------------------------
 
 ## Read in violence data.
 violence_data <- read.csv("data-raw/COL_muni_flows.csv")
