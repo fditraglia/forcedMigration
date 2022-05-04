@@ -1,15 +1,18 @@
 library(dplyr)
+library(magrittr)
+library(tidyr)
+library(parallel)
 
 #------------------------------- Load raw data
 # The cross section dataset contains information for only those municipalities
 # with land distribution data
-cross_section_raw <- haven::read_dta("data-raw/Cross_Section.dta")
+cross_section_raw <- haven::read_dta("data-raw/cross-section-raw.dta")
 
 # The panel dataset contains information for municipalities that we cannot
 # use in our models because we lack land distribution data for them
 panel_raw <- haven::read_dta("data-raw/panel-raw.dta")
 
-survey_raw <- haven::read_dta("data-raw/Survey.dta")
+survey_raw <- haven::read_dta("data-raw/survey-raw.dta")
 
 municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
 
@@ -20,12 +23,12 @@ adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
 
 
 #------------------------------- Merge department/province names into cross-section
-municipalities_and_regions_raw %>%
+cross_section <- municipalities_and_regions_raw %>%
   rename(department = number_dept, municipality = Muni_code) %>%
   mutate(municipality = as.numeric(municipality)) %>%
   left_join(cross_section_raw, .)
 
-rm(municipalities_and_regions_raw)
+rm(municipalities_and_regions_raw, cross_section_raw)
 
 #------------------------------- Remove two islands: 88001 and 88564
 CO_islands <- c('88001', '88564')
@@ -33,7 +36,7 @@ CO_islands <- c('88001', '88564')
 survey_raw %>%
   filter(municipality_origin %in% CO_islands) #None in the survey
 
-cross_section <- cross_section_raw %>%
+cross_section %<>% # Assignment pipe!
   filter(!(municipality %in% CO_islands))
 
 panel <- panel_raw %>%
@@ -45,18 +48,29 @@ adjacency_matrix <- adjacency_matrix_raw %>%
                                    # these two municipalities are not in the
                                    # adjacency matrix: 1117 versus 1119 obs.
 
-rm(panel_raw, cross_section_raw, adjacency_matrix_raw, CO_islands)
+rm(panel_raw, adjacency_matrix_raw, CO_islands)
 
-#--------------
-# We need to decide how to handle the fact that
-# the adjacency matrix has more municipalities
-# than panel_raw
-#--------------
+#-------------------------------------- Select and rename panel variables
+panel %<>% # Assignment pipe!
+  select(municipality,
+         year,
+         V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
+         V_flow = vcivilparas_UR, # Flow of paramilitary violence
+         placeboV_cum = ac_vcivilnotparas_UR, # Cumulative non-paramilitary violence
+         placeboV_flow = vcivilnotparas_UR, # Flow of non-paramilitary violence
+         D_AS = desplazados_paras_AS, # Five measures of displacement
+         D_CODHES = desplazados_CODHES,
+         D_RUV = desplazados_total_RUV,
+         D_CEDE = desplazados_CEDE,
+         D_JYP = desplazados_JYP,
+         popn1993 = Total_Poblacion1993)
+
+
 #--------------------------------- Construct list of neighboring municipalities
 munis <- adjacency_matrix %>%
   pull(codes)
 
-adjacency_matrix <- adjacency_matrix %>%
+adjacency_matrix %<>% # Assignment pipe!
   select(-codes) %>%
   as.matrix()
 
@@ -64,6 +78,48 @@ rownames(adjacency_matrix) <- colnames(adjacency_matrix) <- munis
 neighbors <- apply(adjacency_matrix, 1, function(row) munis[row == 1])
 
 rm(adjacency_matrix)
+
+#--------------------------- Compare municipalities in adjacency matrix vs panel
+
+panel_munis <- panel %>%
+  pull(municipality) %>%
+  unique()
+
+# All municipalities in panel are also in adjacency matrix
+identical(sum(panel_munis %in% munis), length(panel_munis))
+
+#---------------------- Construct average violence in neighboring municipalities
+
+get_V_flow_neighbors <- function(muni_code) {
+  V_flow_neighbors <- panel %>%
+    filter(municipality %in% neighbors[[paste(muni_code)]]) %>%
+    select(municipality, year, V_flow) %>%
+    pivot_wider(names_from = municipality, values_from = V_flow) %>%
+    select(-year) %>%
+    apply(1, mean)
+
+  out <- panel %>%
+    filter(municipality == muni_code) %>%
+    select(municipality, year)
+
+  # A very small number of municipalities have neighbors, but not neighbors for
+  # which we observe violence data, in which case V_flow_neighbors equals numeric(0)
+  if(length(V_flow_neighbors) > 0){
+    out$V_flow_neighbors <- V_flow_neighbors
+  } else {
+    out$V_flow_neighbors <- NA_real_
+  }
+  return(out)
+}
+
+V_flow_neighbors <- mclapply(panel_munis, get_V_flow_neighbors, mc.cores = 8)
+V_flow_neighbors <- do.call(rbind, V_flow_neighbors)
+
+
+panel %<>% # Assignment pipe!
+  left_join(V_flow_neighbors)
+
+rm(V_flow_neighbors, get_V_flow_neighbors, munis, panel_munis)
 
 #-------------------------------- Clean land distribution characteristics
 
@@ -79,7 +135,7 @@ rm(adjacency_matrix)
 # 3. Set n_landless = n_families - n_landowners
 #------------------------------------------------------------------------------
 
-cross_section <- cross_section %>%
+cross_section %<>% # Assignment pipe!
   rowwise(municipality) %>%
   mutate(n_landowners = sum(c_across(starts_with('landown_')))) %>%
   ungroup() %>%
@@ -159,22 +215,6 @@ names(land_distributions) <- cross_section$municipality
 rm(make_land_dist, landowner_bins, landtotal_bins)
 
 
-#-------------------------------------- Select and rename panel variables
-panel <- panel %>%
-  select(municipality,
-         year,
-         V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
-         V_flow = vcivilparas_UR, # Flow of paramilitary violence
-         placeboV_cum = ac_vcivilnotparas_UR, # Cumulative non-paramilitary violence
-         placeboV_flow = vcivilnotparas_UR, # Flow of non-paramilitary violence
-         D_AS = desplazados_paras_AS, # Five measures of displacement
-         D_CODHES = desplazados_CODHES,
-         D_RUV = desplazados_total_RUV,
-         D_CEDE = desplazados_CEDE,
-         D_JYP = desplazados_JYP,
-         popn1993 = Total_Poblacion1993)
-
-
 # There are some variables in the panel dataset that are really cross-section
 # variables: e.g. 1993 population, cumulative violence in the final year of the
 # panel. Merge these into the cross-section dataset
@@ -183,9 +223,10 @@ merge_me <- panel %>%
   filter(year == max(year)) %>%
   select(municipality, popn1993, V_cum)
 
-cross_section <- inner_join(cross_section, merge_me, by = 'municipality')
-rm(merge_me)
+cross_section %<>%
+  inner_join(merge_me, by = 'municipality')
 
+rm(merge_me)
 
 #---------------------------------
 # UPDATE FROM HERE DOWN!
