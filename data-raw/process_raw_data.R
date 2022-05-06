@@ -21,14 +21,15 @@ adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
 # perfectly match the adjacency matrix generated using the shapefile.
 # (HOW DO THEY DIFFER AND WHY? Is it just the islands?)
 
-
-#------------------------------- Merge department/province names into cross-section
-cross_section <- municipalities_and_regions_raw %>%
+#------------------- Merge department/province names
+municipalities_and_regions <- municipalities_and_regions_raw %>%
   rename(department = number_dept, municipality = Muni_code) %>%
-  mutate(municipality = as.numeric(municipality)) %>%
-  left_join(cross_section_raw, .)
+  mutate(municipality = as.numeric(municipality))
 
-rm(municipalities_and_regions_raw, cross_section_raw)
+cross_section <- left_join(cross_section_raw, municipalities_and_regions)
+panel <- left_join(panel_raw, municipalities_and_regions)
+
+rm(municipalities_and_regions_raw, cross_section_raw, panel_raw)
 
 #------------------------------- Remove two islands: 88001 and 88564
 CO_islands <- c('88001', '88564')
@@ -39,7 +40,7 @@ survey_raw %>%
 cross_section %<>% # Assignment pipe!
   filter(!(municipality %in% CO_islands))
 
-panel <- panel_raw %>%
+panel <- panel %>%
   filter(!(municipality %in% CO_islands))
 
 adjacency_matrix <- adjacency_matrix_raw %>%
@@ -48,8 +49,7 @@ adjacency_matrix <- adjacency_matrix_raw %>%
                                    # these two municipalities are not in the
                                    # adjacency matrix: 1117 versus 1119 obs.
 
-rm(panel_raw, adjacency_matrix_raw, CO_islands)
-
+rm(adjacency_matrix_raw, CO_islands)
 
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
@@ -407,39 +407,40 @@ cross_section %<>%
 
 
 
-
-
-
 #---------------------------------------------------
-#------------------ PARKER STUFF BELOW!!!!
+#------------------ UPDATE BELOW!!!!
 #---------------------------------------------------
 
-## Read in violence data.
-violence_data <- read.csv("data-raw/COL_muni_flows.csv")
+# Read and clean forest & elevation data --------------------------------------
 
+forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
+  mutate(share_forested = extent_2000_ha / area_ha,
+         is_forested = share_forested > 0.5) %>%
+  select(ADM2_PCODE, is_forested)
 
+elevation <- readr::read_csv("data-raw/elevationsFinal.csv")
 
-## Create full merged cross_section data.
-
-# Read in and clean forest data.
-forests = read.csv("data-raw/Forest_Master_50.csv")
-forests = dplyr::mutate(forests, share_forested = extent_2000_ha / area_ha)
-forests = dplyr::mutate(forests, is_forested = (share_forested>0.5))
-forest_merge = dplyr::select(forests,c("ADM2_PCODE","is_forested"))
-
-# Read in elevation data.
-elevation = read.csv("data-raw/elevationsFinal.csv")
-
-# Define helper function to create merge column.
+# Helper functions ------------------------------------------------------------
 addCO <- function(muni){
-  ifelse(nchar(paste(muni)) == 4,paste("CO0",muni,sep = ""),paste("CO",muni,sep = ""))
+# Paste CO on the front of municipality code, padding with 0 if needed
+  ifelse(nchar(paste(muni)) == 4,
+         paste("CO0", muni, sep = ""),
+         paste("CO", muni, sep = ""))
 }
 
-# Helper function to convert ADM2_PCODE to municipality code.
-removeCO <- function(muni){ return(paste(as.numeric(substring(muni,3,7))))
+removeCO <- function(muni){
+# Remove CO prefix to convert AMD2_PCODE to municipality code
+  paste(as.numeric(substring(muni, 3, 7)))
 }
 
-# Merge forest and elevation into existing geographic covariate dataframe.
+# Create dataframe of geographic information ----------------------------------
+full_geography <- cross_section %>%
+  select(municipality, lat_mean, lon_mean,
+         ruggedness, slope, elevation, V_total) %>%
+  mutate(ADM2_PCODE = purrr::map_chr(municipality, addCO)) %>%
+  left_join(elevation) %>%
+  left_join(forests)
+
 full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,ruggedness,slope,elevation,V_cum)
 full_geography <- dplyr::mutate(full_geography,ADM2_PCODE = purrr::map_chr(municipality,addCO))
 full_geography <- merge(full_geography,elevation,by = "ADM2_PCODE")
@@ -694,18 +695,5 @@ usethis::use_data(pca_road, overwrite = TRUE)
 
 # clean up
 rm(list = ls())
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
