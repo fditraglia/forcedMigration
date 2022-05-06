@@ -235,7 +235,7 @@ rownames(land_statistics) <- NULL
 rm(get_land_statistics)
 
 cross_section %<>% # Assignment pipe!
-  left_join(y = land_statistics, by = 'municipality') %>%
+  left_join(y = land_statistics) %>%
   mutate(omegaC = 1 - omega) # It's convenient to have (1 - omega) as a separate variable
 
 rm(land_statistics)
@@ -369,72 +369,46 @@ panel %<>%
 rm(share_1996)
 
 
-#---------------------------------
-# UPDATE FROM HERE DOWN!
-#---------------------------------
+# Covariates ------------------------------------------------------------------
 
-# THE FOLLOWING NEEDS TO BE UPDATED! DO NOT SELECT VARIABLES BY POSITION!!!
-# NEVER NEVER NEVER NEVER!
-# Covariates (cross-section data)
-bureaucracy <- with(cross_section, local_bureaucracy_95 + state_bureaucracy_95)
-names(cross_section[c(11:22, 25:31)])
-offices <- rowSums(cross_section[,c(11:22, 25:31)])
-elec_comp <- with(cross_section, 0.5 * ratio_votes_dif_alc +
-                    0.5 * ratio_votes_dif_asa )
-covariates <- cross_section[, c('municipality',
-                                    'land_return',
-                                    'rainfall',
-                                    'ruggedness',
-                                    'coffee', # dummy variable
-                                    'predicted_signal_strength_1',
-                                    'elevation',
-                                    'dist_cap',
-                                    'drug_routes',
-                                    'mine_titles_90',
-                                    'oil_prod_98',
-                                    'guerrilla',
-                                    'grazing',
-                                    'grasses')]
+cross_section %<>%
 
-names(covariates)[which(names(covariates) %in% c('predicted_signal_strength_1',
-                               'mine_titles_90',
-                               'oil_prod_98'))] <- c('radio', 'mines', 'oil')
+  rename(mines = mine_titles_90, oil = oil_prod_98) %>%
 
-covariates$offices <- offices
-covariates$bureaucracy <- bureaucracy
-covariates$elec_comp <- elec_comp
-rm(offices, bureaucracy, elec_comp)
+  mutate(mines = if_else(mines > 0, 1, 0),
+         drug_routes = if_else(drug_routes > 1, 1, 0),
+         oil = if_else(oil > 0, 1, 0),
+         bureaucracy = local_bureaucracy_95 + state_bureaucracy_95,
+         elec_comp = 0.5 * (ratio_votes_dif_alc + ratio_votes_dif_asa),
+         offices = rowSums(across(c(notaries_95,
+                                    banks_95,
+                                    savings_95,
+                                    health_centers_95,
+                                    health_posts_95,
+                                    schools_95,
+                                    libraries_95,
+                                    fire_95,
+                                    jails_95,
+                                    culture_95,
+                                    instruments_95,
+                                    tax_95,
+                                    police_95,
+                                    police_posts_95,
+                                    courts_95,
+                                    telecom_95,
+                                    post_95,
+                                    agrarian_95,
+                                    hospitals_95)))) %>%
 
-# Drop municipalities with fewer than 100 people
-covariates <- subset(covariates, municipality %in% keep_municipalities)
+  select(-starts_with('tot_land'), -starts_with('landown_'), -gini,
+         -convexity_L, -starts_with('owners_'), -ends_with('_95'),
+         -starts_with('ratio_votes'), -n_families_census,
+         -contains('_signal'), -contains('educ_'), -dum_2001_land)
 
 
-# Trasform some variables to dummies:
-drug_routes <- 1 * (covariates$drug_routes > 1) # at least 1km of drug routes?
-mines <- 1 * (covariates$mines > 0) # any mines?
-oil <- 1 * (covariates$oil > 0) # any oil production?
 
-# Overwrite original, untransformed variables
-covariates$drug_routes <- drug_routes
-covariates$mines <- mines
-covariates$oil <- oil
-rm(drug_routes, mines, oil)
 
-# Transform the non-dummy variables to Uniform(-0.5, 0.5)
-transform_me <- setdiff(names(covariates), c('municipality',
-                                             'coffee', # already a dummy
-                                             'drug_routes',
-                                             'mines',
-                                             'oil'))
-mytransform <- function(x) {
-  stopifnot(all(!is.na(x)))
-  (rank(x, ties.method = 'random') / length(x)) - 0.5
-}
-set.seed(1234) # for random tie-breaking in ranks within mytransform
-covariates[,transform_me] <- apply(covariates[,transform_me], 2, mytransform)
 
-# clean up
-rm(mytransform, transform_me)
 
 #---------------------------------------------------
 #------------------ PARKER STUFF BELOW!!!!
