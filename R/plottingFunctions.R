@@ -378,6 +378,15 @@ violence_map <- function(year,covariate){
        print("Please enter covariate in the following list: V_flow, V_cum, D_AS, D_CODHES, D_RUV, D_CEDE, D_JYP.")
    }
 }
+     
+ get_neighbor_violence <- function(municipality){
+ df <- forcedMigration::generate_distances(0,1,1,municipality,municipality)
+ neighbors <- df[df$delta == 1,]$ADM2_PCODE
+ municipalities <- as.numeric(unlist(lapply(neighbors,substring,first=3)))
+ flows <- forcedMigration::violence_data[forcedMigration::violence_data$municipality %in% municipalities,]    
+ flows <- subset(flows,select = c(municipality,year,victims__UR))
+ return(flows)
+ }
    
 
 
