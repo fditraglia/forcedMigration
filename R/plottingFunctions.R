@@ -43,8 +43,6 @@ addCO <- function(muni){
 #'  }
 generate_distances <- function(metric,a,b,epicenter_1,epicenter_2){
   
-  
-  
   munigraph <- forcedMigration::munigraph
   
   # Figure out which PCA version to use (roads or no roads)
@@ -283,7 +281,7 @@ distance_map <- function(metric,a,b,epicenter_1,epicenter_2){
   merged_map <- merge(merged_deltas,muni_pol)
   ggplot2::ggplot() +
     ggplot2::geom_sf(data = sf::st_as_sf(merged_map), ggplot2::aes(fill=ring_num),color = 'grey34',lwd=.05) +
-    ggplot2::scale_colour_manual(colors = c("red","orange","gold","lightgreen","darkgreen","lightblue","blue","darkblue","purple","violet"),values = NULL,space = "Lab",na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
+    ggplot2::scale_colour_manual(values = c("red","orange","gold","lightgreen","darkgreen","lightblue","blue","darkblue","purple","violet"),na.value = "grey50",guide = "coloursteps",aesthetics = "fill",breaks = c(1:10),limits= c(1, 10))
 }
 
 geography_map <- function(covariate){
