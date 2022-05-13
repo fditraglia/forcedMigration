@@ -7,6 +7,19 @@ library(parallel)
 # The cross section dataset contains information for only those municipalities
 # with land distribution data
 cross_section_raw <- haven::read_dta("data-raw/cross-section-raw.dta")
+new <- haven::read_dta("data-raw/Cross_Section_final_RAW_1076.dta")
+
+names(new)[!(names(new) %in% names(cross_section_raw))]
+names(cross_section_raw)[!(names(cross_section_raw) %in% names(new))]
+
+compare_me <- new %>%
+  filter(municipality %in% cross_section_raw$municipality) %>%
+  select(-pop1993)
+
+identical(names(compare_me), names(cross_section_raw))
+
+identical(compare_me, cross_section_raw)
+
 
 # The panel dataset contains information for municipalities that we cannot
 # use in our models because we lack land distribution data for them
