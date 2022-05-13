@@ -2,6 +2,7 @@ library(dplyr)
 library(magrittr)
 library(tidyr)
 library(parallel)
+library(sf)
 
 #------------------------------- Load raw data
 # The cross section dataset contains information for only those municipalities
@@ -49,7 +50,7 @@ adjacency_matrix <- adjacency_matrix_raw %>%
                                    # these two municipalities are not in the
                                    # adjacency matrix: 1117 versus 1119 obs.
 
-rm(adjacency_matrix_raw, CO_islands)
+rm(adjacency_matrix_raw)
 
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
@@ -407,84 +408,76 @@ cross_section %<>%
 
 
 
-#---------------------------------------------------
-#------------------ UPDATE BELOW!!!!
-#---------------------------------------------------
+
+# Read in ARCGIS-generated list of municipalities intersecting road network
+roads <- readr::read_csv('data-raw/real_roads.csv') %>%
+  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
+         municipality = as.numeric(municipality))
+
+# Read in web-scraped municipality dataset with latitudes and longitudes
+lat_long <- readr::read_csv("data-raw/AttributeTableFinal.csv") %>%
+  select(-starts_with('X')) %>% # The last five columns of lat_long are empty
+  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
+         municipality = as.numeric(municipality)) %>%
+  select(-ADM2_PCODE) %>%
+  # dummy indicating whether each municipality contains a road.
+  mutate(has_road = if_else(municipality %in% roads$municipality, 1, 0))
+
+rm(roads)
+
 
 # Read and clean forest & elevation data --------------------------------------
 
 forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
   mutate(share_forested = extent_2000_ha / area_ha,
          is_forested = share_forested > 0.5) %>%
-  select(ADM2_PCODE, is_forested)
+  select(ADM2_PCODE, is_forested) %>%
+  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
+         municipality = as.numeric(municipality)) %>%
+  select(-ADM2_PCODE)
 
-elevation <- readr::read_csv("data-raw/elevationsFinal.csv")
+# There's an erroneous value in this file: ASK PARKER!
+elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
+  select(-`...1`) %>% # first column is a row number starting from zero
+  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
+         municipality = as.numeric(municipality)) %>%
+  select(-ADM2_PCODE)
 
-# Helper functions ------------------------------------------------------------
-addCO <- function(muni){
-# Paste CO on the front of municipality code, padding with 0 if needed
-  ifelse(nchar(paste(muni)) == 4,
-         paste("CO0", muni, sep = ""),
-         paste("CO", muni, sep = ""))
-}
-
-removeCO <- function(muni){
-# Remove CO prefix to convert AMD2_PCODE to municipality code
-  paste(as.numeric(substring(muni, 3, 7)))
-}
 
 # Create dataframe of geographic information ----------------------------------
-full_geography <- cross_section %>%
-  select(municipality, lat_mean, lon_mean,
-         ruggedness, slope, elevation, V_total) %>%
-  mutate(ADM2_PCODE = purrr::map_chr(municipality, addCO)) %>%
+geography <- cross_section %>%
+  select(municipality, ruggedness, slope, elevation) %>%
   left_join(elevation) %>%
-  left_join(forests)
+  left_join(forests) %>%
+  left_join(lat_long)
 
-full_geography = dplyr::select(cross_section,municipality,lat_mean,lon_mean,ruggedness,slope,elevation,V_cum)
-full_geography <- dplyr::mutate(full_geography,ADM2_PCODE = purrr::map_chr(municipality,addCO))
-full_geography <- merge(full_geography,elevation,by = "ADM2_PCODE")
-full_geography <- merge(full_geography,forest_merge,by="ADM2_PCODE")
-
-# Read in web-scraped municipality dataset with latitudes and longitudes.
-AttributeTableFinal <- read.csv("data-raw/AttributeTableFinal.csv")
-colnames(AttributeTableFinal)[1] <- "ADM2_ES"
-AttributeTableFinal <- dplyr::mutate(AttributeTableFinal,latnum = as.numeric(lat), lonnum = as.numeric(lon))
-
-# Read in ARCGIS-generated list of municipalities intersecting road network and create
-# dummy indicating whether each municipality contains a road.
-roads = read.csv("data-raw/real_roads.csv")
-road_code_list <- roads$ADM2_PCODE
-AttributeTableFinal <- dplyr::mutate(AttributeTableFinal, has_road = (ADM2_PCODE %in% road_code_list))
-
-colnames(AttributeTableFinal)[1] <- "ADM2_ES"
-full_municipalities <- subset(AttributeTableFinal,select = c(ADM2_ES,ADM2_PCODE,
-admn2Nm,lat,lon))
-
-cross_section_merged <- merge(AttributeTableFinal,full_geography,by = "ADM2_PCODE")
-cross_section_merged <- dplyr::select(cross_section_merged,c("ADM2_PCODE","admn2Nm","latnum","lonnum","has_road","municipality","ruggedness","slope","elevation","elevation_difference","is_forested"))
-geographic_covariates <- cross_section_merged
+rm(elevation, forests, lat_long)
 
 
-## Create spatial map object and graph object.(The graph and adjacency matrix produced is identical to those produced by
-## ArcGis using this shapefile, but this method is easier to document).
+## Create spatial map object and graph object.(The graph and adjacency matrix
+## produced is identical to those produced by ArcGis using this shapefile,
+## but this method is easier to document).
 
 # Read in shapefile.
-muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp")
+muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp") %>%
+  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
+         municipality = as.numeric(municipality)) %>%
+  select(-ADM2_PCODE) %>%
+  filter(!(municipality %in% CO_islands))
 
-# Remove island municipalities.
-muni_pol <- subset(muni_pol,ADM2_PCODE != "CO88001")
-muni_pol <- subset(muni_pol,ADM2_PCODE!="CO88564")
-muni_pol <- mutate(muni_pol,municipality = purrr::map_chr(ADM2_PCODE,removeCO))
+rm(CO_islands)
 
-# Using spdep, transform spatial polgygons into adjacency matrix.
-polygon <- left_join(muni_pol,AttributeTableFinal,by=c("ADM2_PCODE"))
-nb <- spdep::poly2nb(polygon)
-listw <- spdep::nb2listw(nb,zero.policy = TRUE)
+# I'm not 100% clear on what these do; the first one creates an adjacency matrix
+nb <- spdep::poly2nb(muni_pol)
+listw <- spdep::nb2listw(nb, zero.policy = TRUE)
 mat2 <- spdep::listw2mat(listw)
+munigraph <- igraph::graph_from_adjacency_matrix(mat2, mode ="undirected",
+                                                 weighted = TRUE)
+rm(muni_pol, listw, mat2)
 
-# Create graph object from generated adjacency matrix.
-munigraph <- igraph::graph_from_adjacency_matrix(mat2,mode ="undirected",weighted = TRUE)
+#---------------------------------------------------
+#------------------ UPDATE BELOW!!!!
+#---------------------------------------------------
 
 
 ## Generate principal components. This was originally done in a separate file.
@@ -499,7 +492,7 @@ for(i in 1:nrow(cross_section_merged)){
     if(igraph::are.connected(munigraph,i,j) & i != j){
 
       # Add in adjacent pairs.
-      adjacent_pairs <- append(adjacent_pairs,c(i,j))
+      adjacent_pairs <- append(adjacent_pairs, c(i,j))
 
       # Calculate d1.
       d1 <- geosphere::distGeo(c(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]),c(AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j]))/1000
