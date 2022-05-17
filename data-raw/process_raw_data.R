@@ -436,6 +436,11 @@ forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
          municipality = as.numeric(municipality)) %>%
   select(-ADM2_PCODE)
 
+# Municipality 70523 (Palmito, Sucre) appears twice in forests, once with
+# is_forested TRUE and again with is_forested FALSE. There are no forests here!
+forests %<>%
+  filter(!((municipality == 70523) & (is_forested)))
+
 # There's an erroneous value in this file: ASK PARKER!
 elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
   select(-`...1`) %>% # first column is a row number starting from zero
@@ -457,6 +462,26 @@ rm(elevation, forests, lat_long)
 ## Create spatial map object and graph object.(The graph and adjacency matrix
 ## produced is identical to those produced by ArcGis using this shapefile,
 ## but this method is easier to document).
+
+# TO DO NEXT! -----------------------------------------------------------------
+# (1) Remove all the geographic data that we don't actually need
+# (2) Import precisely the one shapefile that we *do* need (maybe read from web)
+# (3) Compute latitude and longitude of municipality centroids
+# (4) Create n * (n - 1)/2 object of distances between centroids of all
+#       adjacent municipalities
+# (5) Use R table lookup "[]" to fill in elevation etc. data for the pairs in
+#       the preceding object. There will be NAs because the shapefile has more
+#       municipalities that we do in our other datasets.
+# (6) Use column operations on object from (5) to compute the various summary
+#       stats for each pair that we'll need in our subsequent PCA
+# (7) Carry out PCA where the unit of analysis is a *pair* of adjacent
+#       municipalities. We'll need to explicitly drop the pairs with missing
+#       data and compute two versions: with and without roads. Store the first
+#       two principal components alongside the information we've already
+#       computed: e.g. distances.
+# (8) Somewhere along the way, it seems like we need to store the adjacency
+#       matrix for *all* municipalities. Need to think carefully about this!
+# -----------------------------------------------------------------------------
 
 # Read in shapefile.
 muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp") %>%
