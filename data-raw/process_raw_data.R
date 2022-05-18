@@ -458,15 +458,7 @@ geography <- cross_section %>%
 
 rm(elevation, forests, lat_long)
 
-
-## Create spatial map object and graph object.(The graph and adjacency matrix
-## produced is identical to those produced by ArcGis using this shapefile,
-## but this method is easier to document).
-
 # TO DO NEXT! -----------------------------------------------------------------
-# (1) Remove all the geographic data that we don't actually need
-# (2) Import precisely the one shapefile that we *do* need (maybe read from web)
-# (3) Compute latitude and longitude of municipality centroids
 # (4) Create n * (n - 1)/2 object of distances between centroids of all
 #       adjacent municipalities
 # (5) Use R table lookup "[]" to fill in elevation etc. data for the pairs in
@@ -479,11 +471,44 @@ rm(elevation, forests, lat_long)
 #       data and compute two versions: with and without roads. Store the first
 #       two principal components alongside the information we've already
 #       computed: e.g. distances.
-# (8) Somewhere along the way, it seems like we need to store the adjacency
-#       matrix for *all* municipalities. Need to think carefully about this!
 # -----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# Shapefile for Colombian municipalities
+#    source:   <https://data.humdata.org/dataset/cod-ab-col>
+#    filename: "Col Administrative Dividions Shapefiles.zip"
+#-------------------------------------------------------------------------------
+
 # Read in shapefile.
+library(sf)
+library(spdep)
+library(geosphere)
+
+CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
+centroid_coords <- CO_shape %>%
+  st_centroid() %>%
+  st_coordinates
+
+neighbors <- poly2nb(CO_shape) # Note: islands get a 0 for their neighbors
+CO_shape$ADM2_PCODE[705]
+neighbors[[705]]
+
+get_neighbor_distances <- function(i) {
+  if(all(neighbors[[i]] == 0)) {
+    return(NA) # No neighbors? No distances!
+  } else {
+    own_coords <- centroid_coords[i, ]
+    neighbor_coords <- centroid_coords[neighbors[[i]], ]
+    distGeo(own_coords, neighbor_coords) / 1000 # convert meters to km
+  }
+}
+neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
+
+
+#---------------------------------------------------
+#------------------ UPDATE BELOW!!!!
+#---------------------------------------------------
+
 muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp") %>%
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
          municipality = as.numeric(municipality)) %>%
@@ -500,9 +525,6 @@ munigraph <- igraph::graph_from_adjacency_matrix(mat2, mode ="undirected",
                                                  weighted = TRUE)
 rm(muni_pol, listw, mat2)
 
-#---------------------------------------------------
-#------------------ UPDATE BELOW!!!!
-#---------------------------------------------------
 
 
 ## Generate principal components. This was originally done in a separate file.
