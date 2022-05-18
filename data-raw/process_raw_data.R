@@ -476,7 +476,7 @@ rm(elevation, forests, lat_long)
 #-------------------------------------------------------------------------------
 # Shapefile for Colombian municipalities
 #    source:   <https://data.humdata.org/dataset/cod-ab-col>
-#    filename: "Col Administrative Dividions Shapefiles.zip"
+#    filename: "Col Administrative Divisions Shapefiles.zip"
 #-------------------------------------------------------------------------------
 
 # Read in shapefile.
@@ -486,12 +486,14 @@ library(geosphere)
 
 CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
 centroid_coords <- CO_shape %>%
-  st_centroid() %>%
-  st_coordinates
+  st_centroid() %>% # compute lat and lon of centroids
+  st_coordinates() # extract lat and lon of centroids as *matrix*
 
-neighbors <- poly2nb(CO_shape) # Note: islands get a 0 for their neighbors
-CO_shape$ADM2_PCODE[705]
-neighbors[[705]]
+neighbors <- poly2nb(CO_shape) # construct list of neighbors
+
+# Note: islands get a 0 for their neighbors
+# CO_shape$ADM2_PCODE[705]
+# neighbors[[705]]
 
 get_neighbor_distances <- function(i) {
   if(all(neighbors[[i]] == 0)) {
@@ -503,6 +505,9 @@ get_neighbor_distances <- function(i) {
   }
 }
 neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
+
+# Question: how to get the object of dimension [n * (n - 1) / 2]? I.e. how to
+# get rid of the "repeats?"
 
 
 #---------------------------------------------------
