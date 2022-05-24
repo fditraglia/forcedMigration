@@ -509,6 +509,24 @@ neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
 # Question: how to get the object of dimension [n * (n - 1) / 2]? I.e. how to
 # get rid of the "repeats?"
 
+get_pairwise_distances <- function(i) {
+# Only return neighbors whose index is greater than i
+  i_neighbors <- neighbors[[i]]
+  i_neighbor_distances <- neighbor_distances[[i]]
+  keep <- i < i_neighbors
+  if(any(keep)) {
+    data.frame(i, j = i_neighbors[keep], dist = i_neighbor_distances[keep])
+  } else {
+    # Return NULL if no neighbors (entry in neighbors is zero) or all repeats
+    NULL
+  }
+}
+
+pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
+pairwise_distances <- do.call(rbind, pairwise_distances)
+
+
+
 
 #---------------------------------------------------
 #------------------ UPDATE BELOW!!!!
