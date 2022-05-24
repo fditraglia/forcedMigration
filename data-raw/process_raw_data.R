@@ -511,16 +511,23 @@ get_pairwise_distances <- function(i) {
   }
 }
 
+rm(get_neighbor_distances, get_pairwise_distances)
+
 pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
 pairwise_distances <- do.call(rbind, pairwise_distances)
 pairwise_distances <- tibble(pairwise_distances)
+
+# Create geography_i by renaming the columns of geography to have an '_i'
+# at the end. Do the same for geography_j. Then merge with pairwise distances!
 
 pairwise_distances %>%
   mutate(municipality_i = stringr::str_remove(CO_shape$ADM2_PCODE[i], 'CO'),
          municipality_j = stringr::str_remove(CO_shape$ADM2_PCODE[j], 'CO'),
          municipality_i = as.numeric(municipality_i),
          municipality_j = as.numeric(municipality_j)) %>%
-  select(-i, -j)
+  select(-i, -j) %>%
+  left_join
+
 
 
 
