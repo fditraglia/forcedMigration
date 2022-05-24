@@ -17,10 +17,11 @@ survey_raw <- haven::read_dta("data-raw/survey-raw.dta")
 
 municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
 
+#------------------------------------------------------------------------------
+# NOTE: we should redo everything involving the adjacency matrix to ensure that
+# it agrees with the one we construct from the shapefiles below!
+#------------------------------------------------------------------------------
 adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
-# Note: the adjacency matrix predated Parker. Adjacency_Matrix.xlsx doesn't
-# perfectly match the adjacency matrix generated using the shapefile.
-# (HOW DO THEY DIFFER AND WHY? Is it just the islands?)
 
 #------------------- Merge department/province names
 municipalities_and_regions <- municipalities_and_regions_raw %>%
@@ -91,6 +92,9 @@ panel_munis <- panel %>%
 # All municipalities in panel are also in adjacency matrix
 identical(sum(panel_munis %in% munis), length(panel_munis))
 
+#------------------------------------------------------------------------------
+# NOTE: we may need to redo this now that we've created an adjacency matrix
+# directly from the shapefiles below!
 #---------------------- Construct average violence in neighboring municipalities
 
 get_V_flow_neighbors <- function(muni_code) {
@@ -407,23 +411,12 @@ cross_section %<>%
          -contains('_signal'), -contains('educ_'), -dum_2001_land)
 
 
-
+# Spatial stuff ----------------------------------------------------------------
 
 # Read in ARCGIS-generated list of municipalities intersecting road network
 roads <- readr::read_csv('data-raw/real_roads.csv') %>%
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
          municipality = as.numeric(municipality))
-
-# Read in web-scraped municipality dataset with latitudes and longitudes
-lat_long <- readr::read_csv("data-raw/AttributeTableFinal.csv") %>%
-  select(-starts_with('X')) %>% # The last five columns of lat_long are empty
-  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
-         municipality = as.numeric(municipality)) %>%
-  select(-ADM2_PCODE) %>%
-  # dummy indicating whether each municipality contains a road.
-  mutate(has_road = if_else(municipality %in% roads$municipality, 1, 0))
-
-rm(roads)
 
 
 # Read and clean forest & elevation data --------------------------------------
@@ -441,26 +434,24 @@ forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
 forests %<>%
   filter(!((municipality == 70523) & (is_forested)))
 
-# There's an erroneous value in this file: ASK PARKER!
+# There's an erroneous value in this file. According to Parker it's innocuous
 elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
   select(-`...1`) %>% # first column is a row number starting from zero
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
          municipality = as.numeric(municipality)) %>%
   select(-ADM2_PCODE)
 
-
 # Create dataframe of geographic information ----------------------------------
 geography <- cross_section %>%
   select(municipality, ruggedness, slope, elevation) %>%
   left_join(elevation) %>%
   left_join(forests) %>%
-  left_join(lat_long)
+  mutate(has_road = if_else(municipality %in% roads$municipality, 1, 0),
+         is_forested = 1 * is_forested)
 
-rm(elevation, forests, lat_long)
+rm(elevation, forests, roads)
 
 # TO DO NEXT! -----------------------------------------------------------------
-# (4) Create n * (n - 1)/2 object of distances between centroids of all
-#       adjacent municipalities
 # (5) Use R table lookup "[]" to fill in elevation etc. data for the pairs in
 #       the preceding object. There will be NAs because the shapefile has more
 #       municipalities that we do in our other datasets.
@@ -506,11 +497,9 @@ get_neighbor_distances <- function(i) {
 }
 neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
 
-# Question: how to get the object of dimension [n * (n - 1) / 2]? I.e. how to
-# get rid of the "repeats?"
 
 get_pairwise_distances <- function(i) {
-# Only return neighbors whose index is greater than i
+# Only return neighbors whose index is greater than i: eliminate "repeat" pairs
   i_neighbors <- neighbors[[i]]
   i_neighbor_distances <- neighbor_distances[[i]]
   keep <- i < i_neighbors
@@ -524,7 +513,14 @@ get_pairwise_distances <- function(i) {
 
 pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
 pairwise_distances <- do.call(rbind, pairwise_distances)
+pairwise_distances <- tibble(pairwise_distances)
 
+pairwise_distances %>%
+  mutate(municipality_i = stringr::str_remove(CO_shape$ADM2_PCODE[i], 'CO'),
+         municipality_j = stringr::str_remove(CO_shape$ADM2_PCODE[j], 'CO'),
+         municipality_i = as.numeric(municipality_i),
+         municipality_j = as.numeric(municipality_j)) %>%
+  select(-i, -j)
 
 
 
