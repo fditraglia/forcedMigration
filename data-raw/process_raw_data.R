@@ -452,18 +452,6 @@ geography <- cross_section %>%
 
 rm(elevation, forests, roads)
 
-# TO DO NEXT! -----------------------------------------------------------------
-# (5) Use R table lookup "[]" to fill in elevation etc. data for the pairs in
-#       the preceding object. There will be NAs because the shapefile has more
-#       municipalities that we do in our other datasets.
-# (6) Use column operations on object from (5) to compute the various summary
-#       stats for each pair that we'll need in our subsequent PCA
-# (7) Carry out PCA where the unit of analysis is a *pair* of adjacent
-#       municipalities. We'll need to explicitly drop the pairs with missing
-#       data and compute two versions: with and without roads. Store the first
-#       two principal components alongside the information we've already
-#       computed: e.g. distances.
-# -----------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # Shapefile for Colombian municipalities
@@ -498,7 +486,6 @@ get_neighbor_distances <- function(i) {
 }
 neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
 
-
 get_pairwise_distances <- function(i) {
 # Only return neighbors whose index is greater than i: eliminate "repeat" pairs
   i_neighbors <- neighbors[[i]]
@@ -519,129 +506,50 @@ pairwise_distances <- do.call(rbind, pairwise_distances)
 pairwise_distances <- tibble(pairwise_distances)
 
 # Create geography_i by renaming the columns of geography to have an '_i'
-# at the end. Do the same for geography_j. Then merge with pairwise distances!
+# at the end. Do the same for geography_j. Then merge with pairwise distances.
+geography_i <- geography %>%
+  rename_with(~ stringr::str_c(., '_i'))
 
-pairwise_distances %>%
+geography_j <- geography %>%
+  rename_with(~ stringr::str_c(., '_j'))
+
+pairwise_distances %<>% # Assignment pipe!
   mutate(municipality_i = stringr::str_remove(CO_shape$ADM2_PCODE[i], 'CO'),
          municipality_j = stringr::str_remove(CO_shape$ADM2_PCODE[j], 'CO'),
          municipality_i = as.numeric(municipality_i),
          municipality_j = as.numeric(municipality_j)) %>%
   select(-i, -j) %>%
-  left_join
+  left_join(geography_i) %>%
+  left_join(geography_j)
 
+rm(geography_i, geography_j, geography)
 
+link_stats <- pairwise_distances %>%
+  mutate(forest = is_forested_i + is_forested_j,
+         elevation = (elevation_difference_i + elevation_difference_j) / 2,
+         ruggedness = (ruggedness_i + ruggedness_j) / 2,
+         elevation_diff = abs(elevation_i - elevation_j)) %>%
+  select(municipality_i, municipality_j, dist, forest, elevation,
+         ruggedness, elevation_diff)
 
+pca <- prcomp(~ forest + elevation + ruggedness + elevation_diff,
+              data = link_stats, scale = TRUE, na.action = na.omit)
+
+summary(pca)
+print(pca)
+plot(pca)
+
+# TO DO NEXT! -----------------------------------------------------------------
+# - Keep only the first PC
+# - Need to deal with the NAs
+# - Extract the loadings with pca$rotation and use these as the coefs times -1
+# - NAs will propogate automatically
+# - Just need to make sure that we get the scaling correct
+# -----------------------------------------------------------------------------
 
 #---------------------------------------------------
 #------------------ UPDATE BELOW!!!!
 #---------------------------------------------------
-
-muni_pol <- st_read("data-raw/col muni polygons/col_admbnda_adm2_mgn_20200416.shp") %>%
-  mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
-         municipality = as.numeric(municipality)) %>%
-  select(-ADM2_PCODE) %>%
-  filter(!(municipality %in% CO_islands))
-
-rm(CO_islands)
-
-# I'm not 100% clear on what these do; the first one creates an adjacency matrix
-nb <- spdep::poly2nb(muni_pol)
-listw <- spdep::nb2listw(nb, zero.policy = TRUE)
-mat2 <- spdep::listw2mat(listw)
-munigraph <- igraph::graph_from_adjacency_matrix(mat2, mode ="undirected",
-                                                 weighted = TRUE)
-rm(muni_pol, listw, mat2)
-
-
-
-## Generate principal components. This was originally done in a separate file.
-
-# To allow us to take the maximum over crow-flies distances for all pairs of municipalities, we save the crow-flies
-# distance for each adjacent pair.
-adjacent_pairs <- list()
-d1_list <- list()
-
-for(i in 1:nrow(cross_section_merged)){
-  for(j in 1:nrow(cross_section_merged)){
-    if(igraph::are.connected(munigraph,i,j) & i != j){
-
-      # Add in adjacent pairs.
-      adjacent_pairs <- append(adjacent_pairs, c(i,j))
-
-      # Calculate d1.
-      d1 <- geosphere::distGeo(c(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]),c(AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j]))/1000
-      d1_list <- append(d1_list,d1)
-    }
-  }
-}
-
-# Initialize row counter, and matrices.
-count <- 1
-pca_matrix <- matrix(0,nrow = 10000,ncol = 6)
-for_merge <- matrix(0,nrow = 10000,ncol = 5)
-for(i in 1:nrow(cross_section_merged)){
-  for(j in 1:nrow(cross_section_merged)){
-    if(igraph::are.connected(munigraph,i,j) & i != j){
-
-      # Calculate crow-flies distance.
-      d1 <- geosphere::distGeo(c(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]),c(AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j]))
-
-      # Find the maximum for each covariate.
-
-      max_elevation <- max(cross_section_merged$elevation)
-      max_ruggedness <- max(cross_section_merged$ruggedness)
-      max_slope <- max(cross_section_merged$slope)
-      max_forest <- 1
-      max_withinmuni_elevation_difference <- max(cross_section_merged$elevation_difference)
-
-      # Get the max of crow-flies distance over adjacent municipalities from our previously-generated list.
-      max_d1 <- max(unlist(d1_list))
-
-
-      # Calculate the average of each covariate across the two municipalities.
-
-      elevation_difference <- max((cross_section_merged$elevation[i]-cross_section_merged$elevation[j]),0)
-      average_ruggedness <- 0.5*cross_section_merged$ruggedness[i]+0.5*cross_section_merged$ruggedness[j]
-      average_slope <- (0.5*cross_section_merged$slope[i]+0.5*cross_section_merged$slope[j])
-      average_forest <- 0.5*as.integer(cross_section_merged$is_forested[i])+0.5*as.integer(cross_section_merged$is_forested[j])
-      average_withinmuni_elevation_difference <- 0.5*cross_section_merged$elevation_difference[i]+0.5*cross_section_merged$elevation_difference[j]
-
-      # Get the max of crow-flies distance over adjacent municipalities from our previously-generated list.
-      max_d1 <- max(unlist(d1_list))
-
-      # Standardize averages by dividing by maximum.
-
-      pca_matrix[count,1] <- elevation_difference / max_elevation
-      pca_matrix[count,2] <- average_ruggedness / max_ruggedness
-      pca_matrix[count,3] <- average_slope / max_slope
-      pca_matrix[count,4] <- average_forest / max_forest
-      pca_matrix[count,5] <- average_withinmuni_elevation_difference / max_withinmuni_elevation_difference
-      pca_matrix[count,6] <- ifelse(is.na(d1),0,d1) / max_d1
-
-      # To identify each municipality, save municipality name and administrative code in a separate dataframe to merge in.
-      for_merge[count,1] <- AttributeTableFinal$ADM2_PCODE[i]
-      for_merge[count,2] <- AttributeTableFinal$ADM2_PCODE[j]
-      for_merge[count,3] <- AttributeTableFinal$ADM2_ES[i]
-      for_merge[count,4] <- AttributeTableFinal$ADM2_ES[j]
-      for_merge[count,5] <- count
-
-      # Update row counter.
-      count <- (count+1)
-  }
- }
-}
-
-# Create our two dataframes and set column names.
-for_merge_df <- as.data.frame(for_merge)
-colnames(for_merge_df) <- c("muni_i","muni_j","muni_i_name","muni_j_name","index")
-
-df <- as.data.frame(pca_matrix)
-colnames(df) <- c("elev_difference","average_ruggedness","average_slope","average_forest","max_withinmuni_elevation_difference","d1")
-
-# Remove unused rows (all 0;s) from dataframe and rescale.
-df <- df[rowSums(df)>0,]
-scaled <- scale(df)
-
 
 # Take principal components from prcomp()
 pca <- prcomp(df,scale = TRUE)
@@ -649,78 +557,6 @@ pca_noroad <- as.data.frame(pca$x[,1:2])
 pca_noroad <- mutate(pca_noroad,index = as.integer(rownames(pca_noroad)))
 pca_noroad <- merge(pca_noroad,for_merge_df,by="index")
 pca_noroad <- arrange(pca_noroad,index)
-
-
-
-## Same PCA as above, but run with roads.
-
-# Initialize row counter, matrices, and list of adjacent pairs.
-count <- 1
-pca_matrix <- matrix(0,nrow = 10000,ncol = 7)
-for_merge <- matrix(0,nrow = 10000,ncol = 5)
-
-for(i in 1:nrow(cross_section_merged)){
-  for(j in 1:nrow(cross_section_merged)){
-    if(igraph::are.connected(munigraph,i,j) & i != j){
-
-    # Calculate crow-flies distance.
-    d1 <- geosphere::distGeo(c(AttributeTableFinal$latnum[i],AttributeTableFinal$lonnum[i]),c(AttributeTableFinal$latnum[j],AttributeTableFinal$lonnum[j]))
-
-    # Find the maximum for each covariate.
-
-    max_elevation <- max(cross_section_merged$elevation)
-    max_ruggedness <- max(cross_section_merged$ruggedness)
-    max_slope <- max(cross_section_merged$slope)
-    max_forest <- 1
-    max_withinmuni_elevation_difference <- max(cross_section_merged$elevation_difference)
-    max_road <- 1
-
-    # Calculate the average of each covariate across the two municipalities.
-
-    elevation_difference <- max((cross_section_merged$elevation[i]-cross_section_merged$elevation[j]),0)
-    average_ruggedness <- 0.5*cross_section_merged$ruggedness[i]+0.5*cross_section_merged$ruggedness[j]
-    average_slope <- (0.5*cross_section_merged$slope[i]+0.5*cross_section_merged$slope[j])
-    average_forest <- 0.5*as.integer(cross_section_merged$is_forested[i])+0.5*as.integer(cross_section_merged$is_forested[j])
-    average_withinmuni_elevation_difference <- 0.5*cross_section_merged$elevation_difference[i]+0.5*cross_section_merged$elevation_difference[j]
-    average_road <- 0.5*cross_section_merged$has_road[i]+0.5*cross_section_merged$has_road[j]
-
-
-    # Standardize averages by dividing by maximum.
-
-    pca_matrix[count,1] <- elevation_difference / max_elevation
-    pca_matrix[count,2] <- average_ruggedness / max_ruggedness
-    pca_matrix[count,3] <- average_slope / max_slope
-    pca_matrix[count,4] <- average_forest / max_forest
-    pca_matrix[count,5] <- average_withinmuni_elevation_difference / max_withinmuni_elevation_difference
-    pca_matrix[count,6] <- ifelse(is.na(d1),0,d1) / max_d1
-
-    # Take the negative of road.
-    pca_matrix[count,7] <- -1*average_road
-
-    # To identify each municipality, save municipality name and administrative code in a separate dataframe to merge in.
-    for_merge[count,1] <- AttributeTableFinal$ADM2_PCODE[i]
-    for_merge[count,2] <- AttributeTableFinal$ADM2_PCODE[j]
-    for_merge[count,3] <- AttributeTableFinal$ADM2_ES[i]
-    for_merge[count,4] <- AttributeTableFinal$ADM2_ES[j]
-    for_merge[count,5] <- count
-
-    # Update row counter.
-    count <- (count+1)
-  }
- }
-}
-
-
-# Create our two dataframes and set column names.
-for_merge_df <- as.data.frame(for_merge)
-colnames(for_merge_df) <- c("muni_i","muni_j","muni_i_name","muni_j_name","index")
-
-df <- as.data.frame(pca_matrix)
-colnames(df) <- c("elev_difference","average_ruggedness","average_slope","average_forest","max_withinmuni_elevation_difference","d1")
-
-# Remove unused rows (all 0;s) from dataframe and rescale.
-df <- df[rowSums(df)>0,]
-scaled <- scale(df)
 
 
 # Take principal components from prcomp()
