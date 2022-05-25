@@ -434,12 +434,13 @@ forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
 forests %<>%
   filter(!((municipality == 70523) & (is_forested)))
 
-# There's an erroneous value in this file. According to Parker it's innocuous
 elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
   select(-`...1`) %>% # first column is a row number starting from zero
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
          municipality = as.numeric(municipality)) %>%
-  select(-ADM2_PCODE)
+  select(-ADM2_PCODE) %>%
+  arrange(municipality)
+
 
 # Create dataframe of geographic information ----------------------------------
 geography <- cross_section %>%
