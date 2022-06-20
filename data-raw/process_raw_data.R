@@ -499,11 +499,68 @@ get_pairwise_distances <- function(i) {
   }
 }
 
-rm(get_neighbor_distances, get_pairwise_distances)
 
 pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
 pairwise_distances <- do.call(rbind, pairwise_distances)
 pairwise_distances <- tibble(pairwise_distances)
+
+rm(get_neighbor_distances, get_pairwise_distances)
+
+
+# Impute missing values --------------------------------------------------------
+
+# There are 41 missing values for the variables elevation_difference and
+# is_forested from geography. We impute these with an average of the same
+# variables for *neighboring* municipalities. If a variable is missing for all
+# neighboring municipalities, we fill in the overall mean of the variable for
+# geography.
+
+
+# Create list of neighboring municipalities with municipality *codes* rather
+# than row numbers from CO_shape
+muni_codes <- as.numeric(stringr::str_remove(CO_shape$ADM2_PCODE, 'CO'))
+neighbors_codes <- lapply(neighbors, function(x) muni_codes[x])
+names(neighbors_codes) <- muni_codes
+
+get_neighbor_geography_avg <- function(municipalities, var_name) {
+  municipality_indices <- which(muni_codes %in% municipalities)
+  neighbor_list <- neighbors_codes[municipality_indices]
+  f <- function(x) {
+    neighbor_geography <- pull(geography[geography$municipality %in% x, var_name])
+    mean(neighbor_geography, na.rm = TRUE)
+  }
+  out <- lapply(neighbor_list, f)
+  out <- do.call(rbind, out)
+  out <- data.frame(row.names(out), out[,1])
+  names(out) <- c('municipality', var_name)
+  row.names(out) <- NULL
+  return(out)
+}
+
+
+muni_missing_forest <- geography %>%
+  filter(is.na(is_forested)) %>%
+  pull(municipality)
+
+impute_forest <- get_neighbor_geography_avg(muni_missing_forest, 'is_forested')
+
+muni_missing_elev <- geography %>%
+  filter(is.na(elevation_difference)) %>%
+  pull(municipality)
+
+impute_elev <- get_neighbor_geography_avg(muni_missing_elev, 'elevation_difference')
+
+# There is a municipality with missing elevation data whose neighbors are all
+# missing elevation data as well. For this municipality, impute the overall
+# average value of elevation_difference
+impute_elev[is.na(impute_elev$elevation_difference), 'elevation_difference'] <-
+  mean(geography$elevation_difference, na.rm = TRUE)
+
+
+
+rm(muni_missing_forest, muni_missing_elev, get_neighbor_geography_avg)
+
+# Construct dataset of all unique *pairs* of neighboring municipalities --------
 
 # Create geography_i by renaming the columns of geography to have an '_i'
 # at the end. Do the same for geography_j. Then merge with pairwise distances.
@@ -528,22 +585,28 @@ link_stats <- pairwise_distances %>%
   mutate(forest = is_forested_i + is_forested_j,
          elevation = (elevation_difference_i + elevation_difference_j) / 2,
          ruggedness = (ruggedness_i + ruggedness_j) / 2,
+         slope = (slope_i + slope_j) / 2,
          elevation_diff = abs(elevation_i - elevation_j)) %>%
-  select(municipality_i, municipality_j, dist, forest, elevation,
+  select(municipality_i, municipality_j, dist, forest, elevation, slope,
          ruggedness, elevation_diff)
 
-pca <- prcomp(~ forest + elevation + ruggedness + elevation_diff,
+pca <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff,
               data = link_stats, scale = TRUE, na.action = na.omit)
 
 summary(pca)
 print(pca)
-plot(pca)
+
+pca_with_dist <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff + dist,
+                        data = link_stats, scale = TRUE, na.action = na.omit)
+summary(pca_with_dist)
+print(pca_with_dist)
+
 
 # TO DO NEXT! -----------------------------------------------------------------
 # - Keep only the first PC
 # - Need to deal with the NAs
 # - Extract the loadings with pca$rotation and use these as the coefs times -1
-# - NAs will propogate automatically
+# - NAs will propagate automatically
 # - Just need to make sure that we get the scaling correct
 # -----------------------------------------------------------------------------
 
