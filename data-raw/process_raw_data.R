@@ -532,8 +532,9 @@ get_neighbor_geography_avg <- function(municipalities, var_name) {
   out <- lapply(neighbor_list, f)
   out <- do.call(rbind, out)
   out <- data.frame(row.names(out), out[,1])
-  names(out) <- c('municipality', var_name)
+  names(out) <- c('municipality', paste0('impute_', var_name))
   row.names(out) <- NULL
+  out$municipality <- as.numeric(out$municipality)
   return(out)
 }
 
@@ -552,19 +553,25 @@ impute_elev <- get_neighbor_geography_avg(muni_missing_elev, 'elevation_differen
 # There is a municipality with missing elevation data whose neighbors are all
 # missing elevation data as well. For this municipality, impute the overall
 # average value of elevation_difference
-impute_elev[is.na(impute_elev$elevation_difference), 'elevation_difference'] <-
+impute_elev[is.na(impute_elev$impute_elevation_difference), 'impute_elevation_difference'] <-
   mean(geography$elevation_difference, na.rm = TRUE)
 
-geography[is.na(geography$is_forested), 'is_forested']
+#geography[is.na(geography$is_forested), 'is_forested']
 
-# TODO Note!
-#  - Merge in the imputed values
-#  - It seems like we can use full_join along with replace and coalese
-#  - https://stackoverflow.com/questions/45683837/using-dplyr-to-fill-in-missing-values-through-a-join
+# Merge in the imputed values
+geography <- geography %>%
+  left_join(impute_forest) %>%
+  mutate(is_forested = if_else(!is.na(is_forested),
+         is_forested, impute_is_forested)) %>%
+  select(-impute_is_forested) %>%
+  left_join(impute_elev) %>%
+  mutate(elevation_difference = if_else(!is.na(elevation_difference),
+         elevation_difference, impute_elevation_difference)) %>%
+  select(-impute_elevation_difference)
 
 
-
-rm(muni_missing_forest, muni_missing_elev, get_neighbor_geography_avg)
+rm(muni_missing_forest, muni_missing_elev, get_neighbor_geography_avg,
+   impute_elev, impute_forest, muni_codes, neighbors_codes)
 
 
 # Construct dataset of all unique *pairs* of neighboring municipalities --------
@@ -603,18 +610,10 @@ pca <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff,
 summary(pca)
 print(pca)
 
-pca_with_dist <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff + dist,
-                        data = link_stats, scale = TRUE, na.action = na.omit)
-summary(pca_with_dist)
-print(pca_with_dist)
 
 
 # TO DO NEXT! -----------------------------------------------------------------
-# - Keep only the first PC
-# - Need to deal with the NAs
-# - Extract the loadings with pca$rotation and use these as the coefs times -1
-# - NAs will propagate automatically
-# - Just need to make sure that we get the scaling correct
+# - Extract and store the first PC
 # -----------------------------------------------------------------------------
 
 #---------------------------------------------------
