@@ -1,4 +1,5 @@
 library(dplyr)
+library(purrr)
 library(magrittr)
 library(tidyr)
 library(parallel)
@@ -522,8 +523,15 @@ muni_codes <- as.numeric(stringr::str_remove(CO_shape$ADM2_PCODE, 'CO'))
 neighbors_codes <- lapply(neighbors, function(x) muni_codes[x])
 names(neighbors_codes) <- muni_codes
 
-get_neighbor_geography_avg <- function(municipalities, var_name) {
-  municipality_indices <- which(muni_codes %in% municipalities)
+# geography only has data for 1049 municipalities while CO_shape has data for
+# 1122. Add the missing municipalities to geography
+geography %<>%
+  full_join(tibble(municipality = muni_codes))
+
+
+impute_missing_var <- function(var_name) {
+  muni_missing_var <- geography[is.na(geography[, var_name]), 'municipality', drop = TRUE]
+  municipality_indices <- which(muni_codes %in% muni_missing_var)
   neighbor_list <- neighbors_codes[municipality_indices]
   f <- function(x) {
     neighbor_geography <- pull(geography[geography$municipality %in% x, var_name])
@@ -535,43 +543,34 @@ get_neighbor_geography_avg <- function(municipalities, var_name) {
   names(out) <- c('municipality', paste0('impute_', var_name))
   row.names(out) <- NULL
   out$municipality <- as.numeric(out$municipality)
-  return(out)
+  # If no neighbors, then there's an NaN in the second column. Replace with the
+  # overall average
+  out[is.na(out[, 2]), 2] <- mean(geography[, var_name, drop = TRUE], na.rm = TRUE)
+  return(tibble(out))
 }
 
-muni_missing_forest <- geography %>%
-  filter(is.na(is_forested)) %>%
-  pull(municipality)
+# Impute missing values for all variables *except* municipality (first column)
+# and store the result in a list
+imputed_geography <- lapply(names(geography)[-1], impute_missing_var)
 
-impute_forest <- get_neighbor_geography_avg(muni_missing_forest, 'is_forested')
+imputed_geography %<>%
+  reduce(full_join, by = 'municipality')
 
-muni_missing_elev <- geography %>%
-  filter(is.na(elevation_difference)) %>%
-  pull(municipality)
 
-impute_elev <- get_neighbor_geography_avg(muni_missing_elev, 'elevation_difference')
+# TODO : last step of the imputation, following the logic of the comment, but
+# for all the imputed variables, not just impute_forest
+geography %>%
+  full_join(imputed_geography)
 
-# There is a municipality with missing elevation data whose neighbors are all
-# missing elevation data as well. For this municipality, impute the overall
-# average value of elevation_difference
-impute_elev[is.na(impute_elev$impute_elevation_difference), 'impute_elevation_difference'] <-
-  mean(geography$elevation_difference, na.rm = TRUE)
-
-#geography[is.na(geography$is_forested), 'is_forested']
-
-# Merge in the imputed values
-geography <- geography %>%
-  left_join(impute_forest) %>%
-  mutate(is_forested = if_else(!is.na(is_forested),
-         is_forested, impute_is_forested)) %>%
-  select(-impute_is_forested) %>%
-  left_join(impute_elev) %>%
-  mutate(elevation_difference = if_else(!is.na(elevation_difference),
-         elevation_difference, impute_elevation_difference)) %>%
-  select(-impute_elevation_difference)
-
+# Implement the following logic *repeatedly* for all variables that start with
+# 'impute_', is that mutate_at()?
+#geography <- geography %>%
+#  left_join(impute_forest) %>%
+#  mutate(is_forested = if_else(!is.na(is_forested),
+#         is_forested, impute_is_forested))
 
 rm(muni_missing_forest, muni_missing_elev, get_neighbor_geography_avg,
-   impute_elev, impute_forest, muni_codes, neighbors_codes)
+   imputed_geography, muni_codes, neighbors_codes)
 
 
 # Construct dataset of all unique *pairs* of neighboring municipalities --------
@@ -613,6 +612,8 @@ print(pca)
 
 
 # TO DO NEXT! -----------------------------------------------------------------
+# - Go back and impute the missing geographic data for the 73 or so municipalities
+#     from the shapefile that aren't in our cross-section dataset.
 # - Extract and store the first PC
 # -----------------------------------------------------------------------------
 
