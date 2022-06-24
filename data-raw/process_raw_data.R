@@ -560,17 +560,19 @@ imputed_geography %<>%
 # TODO : last step of the imputation, following the logic of the comment, but
 # for all the imputed variables, not just impute_forest
 geography %>%
-  full_join(imputed_geography)
+  full_join(imputed_geography) %>%
+  mutate(ruggedness = if_else(!is.na(ruggedness), ruggedness, impute_ruggedness)) %>%
+  mutate(slope = if_else(!is.na(slope), slope, impute_slope)) %>%
+  mutate(elevation = if_else(!is.na(elevation), elevation, impute_elevation)) %>%
+  mutate(elevation_difference = if_else(!is.na(elevation_difference),
+                                       elevation_difference,
+                                       impute_elevation_difference)) %>%
+  mutate(is_forested =  if_else(!is.na(is_forested), is_forested, impute_is_forested)) %>%
+  mutate(has_road = if_else(!is.na(has_road), has_road, impute_has_road)) %>%
+  select(-starts_with('impute_'))
 
-# Implement the following logic *repeatedly* for all variables that start with
-# 'impute_', is that mutate_at()?
-#geography <- geography %>%
-#  left_join(impute_forest) %>%
-#  mutate(is_forested = if_else(!is.na(is_forested),
-#         is_forested, impute_is_forested))
 
-rm(muni_missing_forest, muni_missing_elev, get_neighbor_geography_avg,
-   imputed_geography, muni_codes, neighbors_codes)
+rm(impute_missing_var, imputed_geography, muni_codes, neighbors_codes)
 
 
 # Construct dataset of all unique *pairs* of neighboring municipalities --------
@@ -611,9 +613,7 @@ print(pca)
 
 
 
-# TO DO NEXT! -----------------------------------------------------------------
-# - Go back and impute the missing geographic data for the 73 or so municipalities
-#     from the shapefile that aren't in our cross-section dataset.
+# TODO ------------------------------------------------------------------------
 # - Extract and store the first PC
 # -----------------------------------------------------------------------------
 
