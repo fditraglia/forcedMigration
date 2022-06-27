@@ -1,4 +1,5 @@
 library(dplyr)
+library(igraph)
 library(purrr)
 library(magrittr)
 library(tidyr)
@@ -32,7 +33,8 @@ municipalities_and_regions <- municipalities_and_regions_raw %>%
 cross_section <- left_join(cross_section_raw, municipalities_and_regions)
 panel <- left_join(panel_raw, municipalities_and_regions)
 
-rm(municipalities_and_regions_raw, cross_section_raw, panel_raw)
+rm(municipalities_and_regions_raw, cross_section_raw, panel_raw,
+   municipalities_and_regions)
 
 #------------------------------- Remove two islands: 88001 and 88564
 CO_islands <- c('88001', '88564')
@@ -505,7 +507,7 @@ pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
 pairwise_distances <- do.call(rbind, pairwise_distances)
 pairwise_distances <- tibble(pairwise_distances)
 
-rm(get_neighbor_distances, get_pairwise_distances)
+rm(get_neighbor_distances, get_pairwise_distances, centroid_coords)
 
 
 # Impute missing values --------------------------------------------------------
@@ -613,6 +615,8 @@ pca <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff,
 print(pca)
 link_stats$PC1_geography <- -1 * pca$x[,1]
 
+rm(pca, pairwise_distances)
+
 # "Effective distance" is defined as:
 #    dist * exp(PC1)
 # This means that the mean of PC1, zero gives a distance of dist
@@ -624,14 +628,12 @@ link_stats %<>%
 # First construct a graph from our dataframe of link_statistics
 munigraph <- graph_from_data_frame(link_stats, directed = FALSE)
 
-# Don't have to worry about the islands since they're *not* contained in our
-# shapefiles:
+# Don't have to worry about the islands since they're automatically dropped
+# when we construct pairwise_distances, the precursor of link_stats. This is
+# because they *don't have any neighbors*
 CO_islands %in% V(munigraph) # V() returns all the vertices
 
-distances(munigraph, v = '5002', to = '11001')
-distances(munigraph, v = '5002', to = '17013')
-distances(munigraph, v = '17013', to = '5148')
-
+# The "Epicenter" of paramilitary violence: Valencia, Cordoba
 epicenter <- '23855'
 # Unweighted graph, no weights -> return "number of hops" between nodes
 hops <- distances(munigraph, v = epicenter) # to argument defaults to V(graph)
@@ -644,6 +646,14 @@ crow_flies <- distances(munigraph, v = epicenter,
 friction <- distances(munigraph, v = epicenter,
                       weights = edge_attr(munigraph, 'dist_friction'))
 
+dist_to_epicenter <- data.frame('municipality' = as.numeric(colnames(hops)),
+                                'd_hops' = drop(hops),
+                                'd_crow' = drop(crow_flies),
+                                'd_geography' = drop(friction))
+dist_to_epicenter <- as_tibble(dist_to_epicenter)
+
+rm(hops, crow_flies, friction, link_stats, neighbors, neighbor_distances,
+   CO_islands, epicenter)
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
