@@ -559,7 +559,7 @@ imputed_geography %<>%
 
 # TODO : last step of the imputation, following the logic of the comment, but
 # for all the imputed variables, not just impute_forest
-geography %>%
+geography %<>%
   full_join(imputed_geography) %>%
   mutate(ruggedness = if_else(!is.na(ruggedness), ruggedness, impute_ruggedness)) %>%
   mutate(slope = if_else(!is.na(slope), slope, impute_slope)) %>%
@@ -608,33 +608,42 @@ link_stats <- pairwise_distances %>%
 pca <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff,
               data = link_stats, scale = TRUE, na.action = na.omit)
 
-summary(pca)
+# Extract first PC and "rotate" so that higher values indicate less
+# favorable terrain (higher "friction"). Note that this is mean zero
 print(pca)
+link_stats$PC1_geography <- -1 * pca$x[,1]
 
+# "Effective distance" is defined as:
+#    dist * exp(PC1)
+# This means that the mean of PC1, zero gives a distance of dist
+link_stats %<>%
+  mutate(dist_friction = dist * exp(PC1_geography))
 
+# Dijkstra's algorithm ---------------------------------------------------------
 
-# TODO ------------------------------------------------------------------------
-# - Extract and store the first PC
-# -----------------------------------------------------------------------------
+# First construct a graph from our dataframe of link_statistics
+munigraph <- graph_from_data_frame(link_stats, directed = FALSE)
 
-#---------------------------------------------------
-#------------------ UPDATE BELOW!!!!
-#---------------------------------------------------
+# Don't have to worry about the islands since they're *not* contained in our
+# shapefiles:
+CO_islands %in% V(munigraph) # V() returns all the vertices
 
-# Take principal components from prcomp()
-pca <- prcomp(df,scale = TRUE)
-pca_noroad <- as.data.frame(pca$x[,1:2])
-pca_noroad <- mutate(pca_noroad,index = as.integer(rownames(pca_noroad)))
-pca_noroad <- merge(pca_noroad,for_merge_df,by="index")
-pca_noroad <- arrange(pca_noroad,index)
+distances(munigraph, v = '5002', to = '11001')
+distances(munigraph, v = '5002', to = '17013')
+distances(munigraph, v = '17013', to = '5148')
 
+epicenter <- '23855'
+# Unweighted graph, no weights -> return "number of hops" between nodes
+hops <- distances(munigraph, v = epicenter) # to argument defaults to V(graph)
 
-# Take principal components from prcomp()
-pca <- prcomp(df,scale = TRUE)
-pca_road <- as.data.frame(pca$x[,1:2])
-pca_road <- mutate(pca_road, index = as.integer(rownames(pca_road)))
-pca_road <- merge(pca_road, for_merge_df, by="index")
-pca_road <- arrange(pca_road,index)
+# Distance "as the crow files," i.e. the sum of the geodesic distance from
+# centroid to centroid along the shortest path
+crow_flies <- distances(munigraph, v = epicenter,
+                        weights = edge_attr(munigraph, 'dist'))
+
+friction <- distances(munigraph, v = epicenter,
+                      weights = edge_attr(munigraph, 'dist_friction'))
+
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
@@ -645,10 +654,6 @@ pca_road <- arrange(pca_road,index)
 # result of that cleaned merge.
 #-------------------------------------------------------------------------------
 
-#mrg <- read.csv("data-raw/abandoned_land_handcleaned.csv")
-
-#abandoned_land <- subset(mrg,select = c(displaced,hect_abandoned_paramilitary,
-#hect_abandoned_other_armed,total_hect_abandoned,ADM2_ES,ADM2_PCODE,adm2Nm,lat,lon))
 
 #usethis::use_data(covariates, overwrite = TRUE)
 #usethis::use_data(cross_section, overwrite = TRUE)
