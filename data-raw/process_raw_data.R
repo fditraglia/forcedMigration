@@ -667,21 +667,21 @@ rm(hops, crow_flies, friction, link_stats, neighbors, neighbor_distances,
 
 #usethis::use_data(covariates, overwrite = TRUE)
 #usethis::use_data(cross_section, overwrite = TRUE)
-usethis::use_data(panel, overwrite = TRUE)
+#usethis::use_data(panel, overwrite = TRUE)
 #usethis::use_data(displacement, overwrite = TRUE)
 #usethis::use_data(Vcum, overwrite = TRUE)
 #usethis::use_data(Vcum_pop, overwrite = TRUE)
-usethis::use_data(land_distributions, overwrite = TRUE)
-usethis::use_data(adjacent_municipalities, overwrite = TRUE)
+#usethis::use_data(land_distributions, overwrite = TRUE)
+#usethis::use_data(adjacent_municipalities, overwrite = TRUE)
 #usethis::use_data(municipalities_and_regions, overwrite = TRUE)
-usethis::use_data(geographic_covariates, overwrite = TRUE)
-usethis::use_data(munigraph, overwrite = TRUE)
-usethis::use_data(violence_data, overwrite = TRUE)
-usethis::use_data(pca_noroad, overwrite = TRUE)
-usethis::use_data(pca_road, overwrite = TRUE)
+#usethis::use_data(geographic_covariates, overwrite = TRUE)
+#usethis::use_data(munigraph, overwrite = TRUE)
+#usethis::use_data(violence_data, overwrite = TRUE)
+#usethis::use_data(pca_noroad, overwrite = TRUE)
+#usethis::use_data(pca_road, overwrite = TRUE)
 #usethis::use_data(abandoned_land,overwrite = TRUE)
 
 # clean up
-rm(list = ls())
+#rm(list = ls())
 
 
