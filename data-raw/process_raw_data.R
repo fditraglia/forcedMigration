@@ -559,7 +559,7 @@ imputed_geography %<>%
   reduce(full_join, by = 'municipality')
 
 
-# TODO : last step of the imputation, following the logic of the comment, but
+# Last step of the imputation, following the logic of the comment, but
 # for all the imputed variables, not just impute_forest
 geography %<>%
   full_join(imputed_geography) %>%
@@ -610,18 +610,30 @@ link_stats <- pairwise_distances %>%
 pca <- prcomp(~ forest + elevation + ruggedness + slope + elevation_diff,
               data = link_stats, scale = TRUE, na.action = na.omit)
 
+
 # Extract first PC and "rotate" so that higher values indicate less
 # favorable terrain (higher "friction"). Note that this is mean zero
 print(pca)
+
 link_stats$PC1_geography <- -1 * pca$x[,1]
 
 rm(pca, pairwise_distances)
 
 # "Effective distance" is defined as:
-#    dist * exp(PC1)
-# This means that the mean of PC1, zero gives a distance of dist
+#    dist * friction
+# The friction is constructed from PC1 as follows:
+#     z = (PC1 - min(PC1)) / (max(PC1) - min(PC1))
+#     friction = 1 + (max_friction - 1) * z
+#
+# This gives a friction of 1 at the minimum of PC1 and a fraction of max_friction
+# at the maximum of PC1
+max_friction <- 4
 link_stats %<>%
-  mutate(dist_friction = dist * exp(PC1_geography))
+  mutate(z = (PC1_geography - min(PC1_geography)) / diff(range(PC1_geography)),
+         friction = 1 + (max_friction - 1) * z,
+         dist_friction = dist * friction) %>%
+  select(-z, -friction)
+rm(max_friction)
 
 # Dijkstra's algorithm ---------------------------------------------------------
 
