@@ -626,14 +626,13 @@ rm(pca, pairwise_distances)
 #     friction = 1 + (max_friction - 1) * z
 #
 # This gives a friction of 1 at the minimum of PC1 and a fraction of max_friction
-# at the maximum of PC1
-max_friction <- 4
+# at the maximum of PC1. We use four values of max_friction: 1, 2, 2.5, and 3.
+# Notice that max_friction = 1 means that PC1 plays no role: this is distance
+# "as the crow flies" from one municipality centroid to the next.
+
 link_stats %<>%
-  mutate(z = (PC1_geography - min(PC1_geography)) / diff(range(PC1_geography)),
-         friction = 1 + (max_friction - 1) * z,
-         dist_friction = dist * friction) %>%
-  select(-z, -friction)
-rm(max_friction)
+  mutate(z = (PC1_geography - min(PC1_geography)) / diff(range(PC1_geography)))
+
 
 # Dijkstra's algorithm ---------------------------------------------------------
 
@@ -650,22 +649,32 @@ epicenter <- '23855'
 # Unweighted graph, no weights -> return "number of hops" between nodes
 hops <- distances(munigraph, v = epicenter) # to argument defaults to V(graph)
 
-# Distance "as the crow files," i.e. the sum of the geodesic distance from
-# centroid to centroid along the shortest path
-crow_flies <- distances(munigraph, v = epicenter,
-                        weights = edge_attr(munigraph, 'dist'))
 
-friction <- distances(munigraph, v = epicenter,
-                      weights = edge_attr(munigraph, 'dist_friction'))
+get_dist_friction <- function(max_friction) {
+  dist <- edge_attr(munigraph, 'dist')
+  z <- edge_attr(munigraph, 'z')
+  friction <- 1 + (max_friction - 1) * z
+  my_weights <- dist * friction
+  distances(munigraph, v = epicenter, weights = my_weights)
+}
 
-dist_to_epicenter <- data.frame('municipality' = as.numeric(colnames(hops)),
-                                'd_hops' = drop(hops),
-                                'd_crow' = drop(crow_flies),
-                                'd_geography' = drop(friction))
+max_friction <- c(1, 2, 2.5, 3)
+d_geography <- lapply(max_friction, get_dist_friction)
+d_geography <- do.call(rbind, d_geography)
+d_geography <- as.data.frame(t(d_geography))
+names(d_geography) <- paste0('d_geography', max_friction)
+d_geography$municipality <- as.numeric(rownames(d_geography))
+
+dist_to_epicenter <- d_geography
+dist_to_epicenter$d_hops <- drop(hops)
 dist_to_epicenter <- as_tibble(dist_to_epicenter)
+dist_to_epicenter <- dist_to_epicenter %>%
+  relocate(municipality) %>%
+  rename(d_crow = d_geography1)
 
-rm(hops, crow_flies, friction, link_stats, neighbors, neighbor_distances,
-   CO_islands, epicenter)
+
+rm(hops, link_stats, neighbors, neighbor_distances, CO_islands, epicenter,
+   d_geography, get_dist_friction, max_friction)
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
