@@ -5,6 +5,8 @@ library(magrittr)
 library(tidyr)
 library(parallel)
 library(sf)
+library(spdep)
+library(geosphere)
 
 #------------------------------- Load raw data
 # The cross section dataset contains information for only those municipalities
@@ -19,11 +21,27 @@ survey_raw <- haven::read_dta("data-raw/survey-raw.dta")
 
 municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_codes_and_regions.csv")
 
+#-------------------------------------------------------------------------------
+# Shapefile for Colombian municipalities
+#    source:   <https://data.humdata.org/dataset/cod-ab-col>
+#    filename: "Col Administrative Divisions Shapefiles.zip"
+#-------------------------------------------------------------------------------
+
+# Read in shapefile.
+CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
+
+# construct list of neighbors
+neighbors <- poly2nb(CO_shape)
+
+# Note: islands get a 0 for their neighbors
+# CO_shape$ADM2_PCODE[705]
+# neighbors[[705]]
+
 #------------------------------------------------------------------------------
 # NOTE: we should redo everything involving the adjacency matrix to ensure that
 # it agrees with the one we construct from the shapefiles below!
 #------------------------------------------------------------------------------
-adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
+#adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
 
 #------------------- Merge department/province names
 municipalities_and_regions <- municipalities_and_regions_raw %>%
@@ -48,13 +66,13 @@ cross_section %<>% # Assignment pipe!
 panel <- panel %>%
   filter(!(municipality %in% CO_islands))
 
-adjacency_matrix <- adjacency_matrix_raw %>%
-  filter(!(codes %in% CO_islands)) # Note that we don't have to remove
+#adjacency_matrix <- adjacency_matrix_raw %>%
+#  filter(!(codes %in% CO_islands)) # Note that we don't have to remove
                                    # columns 'border_with_88001' etc. since
                                    # these two municipalities are not in the
                                    # adjacency matrix: 1117 versus 1119 obs.
 
-rm(adjacency_matrix_raw)
+#rm(adjacency_matrix_raw)
 
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
@@ -74,30 +92,28 @@ panel %<>% # Assignment pipe!
 
 
 #--------------------------------- Construct list of neighboring municipalities
-munis <- adjacency_matrix %>%
-  pull(codes)
+#munis <- adjacency_matrix %>%
+#  pull(codes)
 
-adjacency_matrix %<>% # Assignment pipe!
-  select(-codes) %>%
-  as.matrix()
+#adjacency_matrix %<>% # Assignment pipe!
+#  select(-codes) %>%
+#  as.matrix()
 
-rownames(adjacency_matrix) <- colnames(adjacency_matrix) <- munis
-neighbors <- apply(adjacency_matrix, 1, function(row) munis[row == 1])
+#rownames(adjacency_matrix) <- colnames(adjacency_matrix) <- munis
+#neighbors <- apply(adjacency_matrix, 1, function(row) munis[row == 1])
 
-rm(adjacency_matrix)
+#rm(adjacency_matrix)
 
-#--------------------------- Compare municipalities in adjacency matrix vs panel
-
+#--------------------------- Compare municipalities in neighbors list vs panel
 panel_munis <- panel %>%
   pull(municipality) %>%
   unique()
 
+munis <- as.numeric(stringr::str_remove(CO_shape$ADM2_PCODE, 'CO'))
+
 # All municipalities in panel are also in adjacency matrix
 identical(sum(panel_munis %in% munis), length(panel_munis))
 
-#------------------------------------------------------------------------------
-# NOTE: we may need to redo this now that we've created an adjacency matrix
-# directly from the shapefiles below!
 #---------------------- Construct average violence in neighboring municipalities
 
 get_V_flow_neighbors <- function(muni_code) {
@@ -437,6 +453,7 @@ forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
 forests %<>%
   filter(!((municipality == 70523) & (is_forested)))
 
+# Elevation *difference*
 elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
   select(-`...1`) %>% # first column is a row number starting from zero
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
@@ -455,28 +472,9 @@ geography <- cross_section %>%
 
 rm(elevation, forests, roads)
 
-
-#-------------------------------------------------------------------------------
-# Shapefile for Colombian municipalities
-#    source:   <https://data.humdata.org/dataset/cod-ab-col>
-#    filename: "Col Administrative Divisions Shapefiles.zip"
-#-------------------------------------------------------------------------------
-
-# Read in shapefile.
-library(sf)
-library(spdep)
-library(geosphere)
-
-CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
 centroid_coords <- CO_shape %>%
   st_centroid() %>% # compute lat and lon of centroids
   st_coordinates() # extract lat and lon of centroids as *matrix*
-
-neighbors <- poly2nb(CO_shape) # construct list of neighbors
-
-# Note: islands get a 0 for their neighbors
-# CO_shape$ADM2_PCODE[705]
-# neighbors[[705]]
 
 get_neighbor_distances <- function(i) {
   if(all(neighbors[[i]] == 0)) {
@@ -576,6 +574,8 @@ geography %<>%
 
 rm(impute_missing_var, imputed_geography, muni_codes, neighbors_codes)
 
+cross_section <- cross_section %>%
+  full_join(geography)
 
 # Construct dataset of all unique *pairs* of neighboring municipalities --------
 
@@ -672,9 +672,18 @@ dist_to_epicenter <- dist_to_epicenter %>%
   relocate(municipality) %>%
   rename(d_crow = d_geography1)
 
+# Calculate percentiles of distance measures (except hops)
+dist_to_epicenter <- dist_to_epicenter %>%
+  mutate(across(c('d_crow', starts_with('d_geography')), ~ (rank(.x) / length(.x)),
+                .names = 'p_{.col}'))
 
-rm(hops, link_stats, neighbors, neighbor_distances, CO_islands, epicenter,
-   d_geography, get_dist_friction, max_friction)
+rm(get_dist_friction, epicenter, max_friction, CO_islands, d_geography, hops,
+   link_stats, neighbor_distances, munigraph)
+
+cross_section <- cross_section %>%
+  full_join(dist_to_epicenter)
+
+rm(dist_to_epicenter)
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
@@ -686,23 +695,13 @@ rm(hops, link_stats, neighbors, neighbor_distances, CO_islands, epicenter,
 #-------------------------------------------------------------------------------
 
 
-#usethis::use_data(covariates, overwrite = TRUE)
-#usethis::use_data(cross_section, overwrite = TRUE)
-#usethis::use_data(panel, overwrite = TRUE)
-#usethis::use_data(displacement, overwrite = TRUE)
-#usethis::use_data(Vcum, overwrite = TRUE)
-#usethis::use_data(Vcum_pop, overwrite = TRUE)
-#usethis::use_data(land_distributions, overwrite = TRUE)
-#usethis::use_data(adjacent_municipalities, overwrite = TRUE)
-#usethis::use_data(municipalities_and_regions, overwrite = TRUE)
-#usethis::use_data(geographic_covariates, overwrite = TRUE)
-#usethis::use_data(munigraph, overwrite = TRUE)
-#usethis::use_data(violence_data, overwrite = TRUE)
-#usethis::use_data(pca_noroad, overwrite = TRUE)
-#usethis::use_data(pca_road, overwrite = TRUE)
-#usethis::use_data(abandoned_land,overwrite = TRUE)
+usethis::use_data(CO_shape, overwrite = TRUE)
+usethis::use_data(cross_section, overwrite = TRUE)
+usethis::use_data(land_distributions, overwrite = TRUE)
+usethis::use_data(neighbors, overwrite = TRUE)
+usethis::use_data(panel, overwrite = TRUE)
 
 # clean up
-#rm(list = ls())
+rm(list = ls())
 
 
