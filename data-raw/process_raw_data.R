@@ -663,9 +663,8 @@ rm(dist_to_epicenter)
 CO_shape <- ms_simplify(CO_shape) # defaults to retaining 5% of points
 
 CO_shape <- CO_shape %>%
-  filter(!(ADM2_PCODE %in% paste0('CO', CO_islands)))
-
-# The islands are already excluded from the panel dataset
+  mutate(municipality = as.numeric(stringr::str_remove(ADM2_PCODE, 'CO'))) %>%
+  filter(!(municipality %in% CO_islands))
 
 cross_section <- cross_section %>%
   filter(!(municipality %in% CO_islands))
