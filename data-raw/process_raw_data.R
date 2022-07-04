@@ -7,6 +7,7 @@ library(parallel)
 library(sf)
 library(spdep)
 library(geosphere)
+library(rmapshaper)
 
 #------------------------------- Load raw data
 # The cross section dataset contains information for only those municipalities
@@ -37,12 +38,6 @@ neighbors <- poly2nb(CO_shape)
 # CO_shape$ADM2_PCODE[705]
 # neighbors[[705]]
 
-#------------------------------------------------------------------------------
-# NOTE: we should redo everything involving the adjacency matrix to ensure that
-# it agrees with the one we construct from the shapefiles below!
-#------------------------------------------------------------------------------
-#adjacency_matrix_raw <- readxl::read_excel("data-raw/Adjacency_Matrix.xlsx")
-
 #------------------- Merge department/province names
 municipalities_and_regions <- municipalities_and_regions_raw %>%
   rename(department = number_dept, municipality = Muni_code) %>%
@@ -66,14 +61,6 @@ cross_section %<>% # Assignment pipe!
 panel <- panel %>%
   filter(!(municipality %in% CO_islands))
 
-#adjacency_matrix <- adjacency_matrix_raw %>%
-#  filter(!(codes %in% CO_islands)) # Note that we don't have to remove
-                                   # columns 'border_with_88001' etc. since
-                                   # these two municipalities are not in the
-                                   # adjacency matrix: 1117 versus 1119 obs.
-
-#rm(adjacency_matrix_raw)
-
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
   filter(year %in% 1996:2008) %>% # Only use panel data from 1996-2008
@@ -89,20 +76,6 @@ panel %<>% # Assignment pipe!
          D_CEDE = desplazados_CEDE,
          D_JYP = desplazados_JYP,
          popn1993 = Total_Poblacion1993)
-
-
-#--------------------------------- Construct list of neighboring municipalities
-#munis <- adjacency_matrix %>%
-#  pull(codes)
-
-#adjacency_matrix %<>% # Assignment pipe!
-#  select(-codes) %>%
-#  as.matrix()
-
-#rownames(adjacency_matrix) <- colnames(adjacency_matrix) <- munis
-#neighbors <- apply(adjacency_matrix, 1, function(row) munis[row == 1])
-
-#rm(adjacency_matrix)
 
 #--------------------------- Compare municipalities in neighbors list vs panel
 panel_munis <- panel %>%
@@ -677,13 +650,27 @@ dist_to_epicenter <- dist_to_epicenter %>%
   mutate(across(c('d_crow', starts_with('d_geography')), ~ (rank(.x) / length(.x)),
                 .names = 'p_{.col}'))
 
-rm(get_dist_friction, epicenter, max_friction, CO_islands, d_geography, hops,
+rm(get_dist_friction, epicenter, max_friction, d_geography, hops,
    link_stats, neighbor_distances, munigraph)
 
 cross_section <- cross_section %>%
   full_join(dist_to_epicenter)
 
 rm(dist_to_epicenter)
+
+# Simplify CO_shape polygons and remove islands --------------------------------
+
+CO_shape <- ms_simplify(CO_shape) # defaults to retaining 5% of points
+
+CO_shape <- CO_shape %>%
+  filter(!(ADM2_PCODE %in% paste0('CO', CO_islands)))
+
+# The islands are already excluded from the panel dataset
+
+cross_section <- cross_section %>%
+  filter(!(municipality %in% CO_islands))
+
+rm(CO_islands)
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
