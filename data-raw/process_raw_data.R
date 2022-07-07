@@ -75,7 +75,7 @@ panel %<>% # Assignment pipe!
          D_RUV = desplazados_total_RUV,
          D_CEDE = desplazados_CEDE,
          D_JYP = desplazados_JYP,
-         popn1993 = Total_Poblacion1993)
+         pop1993 = Total_Poblacion1993)
 
 #--------------------------- Compare municipalities in neighbors list vs panel
 panel_munis <- panel %>%
