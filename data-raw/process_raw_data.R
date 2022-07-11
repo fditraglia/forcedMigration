@@ -31,12 +31,6 @@ municipalities_and_regions_raw <- readr::read_csv("data-raw/DANE_municipality_co
 # Read in shapefile.
 CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
 
-# construct list of neighbors
-neighbors <- poly2nb(CO_shape)
-
-# Note: islands get a 0 for their neighbors
-# CO_shape$ADM2_PCODE[705]
-# neighbors[[705]]
 
 #------------------- Merge department/province names
 municipalities_and_regions <- municipalities_and_regions_raw %>%
@@ -61,6 +55,16 @@ cross_section %<>% # Assignment pipe!
 panel <- panel %>%
   filter(!(municipality %in% CO_islands))
 
+CO_shape <- CO_shape %>%
+  mutate(municipality = as.numeric(stringr::str_remove(ADM2_PCODE, 'CO'))) %>%
+  filter(!(municipality %in% CO_islands))
+
+rm(CO_islands)
+
+#-------------------------------- Construct List of Neighbors
+# construct list of neighbors
+neighbors <- poly2nb(CO_shape)
+
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
   filter(year %in% 1996:2008) %>% # Only use panel data from 1996-2008
@@ -70,8 +74,7 @@ panel %<>% # Assignment pipe!
          V_flow = vcivilparas_UR, # Flow of paramilitary violence
          placeboV_cum = ac_vcivilnotparas_UR, # Cumulative non-paramilitary violence
          placeboV_flow = vcivilnotparas_UR, # Flow of non-paramilitary violence
-         D_AS = desplazados_paras_AS, # Five measures of displacement
-         D_CODHES = desplazados_CODHES,
+         D_AS = desplazados_paras_AS, # Four measures of displacement
          D_RUV = desplazados_total_RUV,
          D_CEDE = desplazados_CEDE,
          D_JYP = desplazados_JYP,
@@ -233,7 +236,8 @@ rm(get_land_statistics)
 
 cross_section %<>% # Assignment pipe!
   left_join(y = land_statistics) %>%
-  mutate(omegaC = 1 - omega) # It's convenient to have (1 - omega) as a separate variable
+  mutate(omegaC = 1 - omega) %>% # It's convenient to have (1 - omega) as a separate variable
+  select(-omega_n) # This is identical to omega: share of landless -- don't need both
 
 rm(land_statistics)
 
@@ -308,11 +312,6 @@ AS_replace <- disagreement %>%
   pull(municipality)
 panel[panel$municipality %in% AS_replace,]$D_AS <- NA
 
-CODHES_replace <- disagreement %>%
-  filter(D_CODHES == 0) %>%
-  pull(municipality)
-panel[panel$municipality %in% CODHES_replace,]$D_CODHES <- NA
-
 RUV_replace <- disagreement %>%
   filter(D_RUV == 0) %>%
   pull(municipality)
@@ -323,7 +322,7 @@ CEDE_replace <- disagreement %>%
   pull(municipality)
 panel[panel$municipality %in% CEDE_replace,]$D_CEDE <- NA
 
-rm(disagreement, AS_replace, CODHES_replace, RUV_replace, CEDE_replace)
+rm(disagreement, AS_replace, RUV_replace, CEDE_replace)
 
 #--------------------------------------- Create lagged violence flow
 panel <- panel %>%
@@ -349,6 +348,9 @@ share_1996 <- panel %>%
 panel %<>%
   mutate(across(c(D_RUV, D_JYP), # Normalize total displacement to 6 million
          list(norm = ~ 6e6 * . / sum(., na.rm = TRUE)))) %>%
+  # Because AS and CEDE did not report in 1996 we don't normalize them to 6 million.
+  # Instead we normalize them to a *slightly smaller value* constructed using
+  # share_1996
   mutate(across(c(D_AS, D_CEDE),
                 list(norm = ~ (1 - share_1996) * 6e6 * . / sum(., na.rm = TRUE)))) %>%
   rowwise() %>%
@@ -361,6 +363,8 @@ panel %<>%
          D_avg_no_RUV = (D_AS + D_CEDE + D_JYP) / 3,
          D_avg_no_CEDE = (D_AS + D_RUV + D_JYP) / 3,
          D_avg_no_JYP = (D_AS + D_RUV + D_CEDE) / 3) %>%
+  # After taking medians of the normalized displacement variables (sum to 6 million) the result
+  # will no longer sum to 6 million. Renormalize so it does
   mutate(across(c(starts_with('D_med'), starts_with('D_avg')), ~ 6e6 * . / sum(., na.rm = TRUE)))
 
 rm(share_1996)
@@ -612,11 +616,6 @@ link_stats %<>%
 # First construct a graph from our dataframe of link_statistics
 munigraph <- graph_from_data_frame(link_stats, directed = FALSE)
 
-# Don't have to worry about the islands since they're automatically dropped
-# when we construct pairwise_distances, the precursor of link_stats. This is
-# because they *don't have any neighbors*
-CO_islands %in% V(munigraph) # V() returns all the vertices
-
 # The "Epicenter" of paramilitary violence: Valencia, Cordoba
 epicenter <- '23855'
 # Unweighted graph, no weights -> return "number of hops" between nodes
@@ -661,15 +660,6 @@ rm(dist_to_epicenter)
 # Simplify CO_shape polygons and remove islands --------------------------------
 
 CO_shape <- ms_simplify(CO_shape) # defaults to retaining 5% of points
-
-CO_shape <- CO_shape %>%
-  mutate(municipality = as.numeric(stringr::str_remove(ADM2_PCODE, 'CO'))) %>%
-  filter(!(municipality %in% CO_islands))
-
-cross_section <- cross_section %>%
-  filter(!(municipality %in% CO_islands))
-
-rm(CO_islands)
 
 #-------------------------------------------------------------------------------
 # Create abandoned land dataset.
