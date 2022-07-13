@@ -62,8 +62,12 @@ CO_shape <- CO_shape %>%
 rm(CO_islands)
 
 #-------------------------------- Construct List of Neighbors
-# construct list of neighbors
+# construct list of neighbors: neighbors gives *indices* corresponding to
+# rows of CO_shape while neighbor_codes gives *municipality codes*, i.e. the
+# correponding values of the column municipality from CO_shape
 neighbors <- poly2nb(CO_shape)
+neighbor_codes <- lapply(neighbors, function(x) CO_shape$municipality[x])
+names(neighbor_codes) <- CO_shape$municipality
 
 #-------------------------------------- Select and rename panel variables
 panel %<>% # Assignment pipe!
@@ -94,7 +98,7 @@ identical(sum(panel_munis %in% munis), length(panel_munis))
 
 get_V_flow_neighbors <- function(muni_code) {
   V_flow_neighbors <- panel %>%
-    filter(municipality %in% neighbors[[paste(muni_code)]]) %>%
+    filter(municipality %in% neighbor_codes[[paste(muni_code)]]) %>%
     select(municipality, year, V_flow) %>%
     pivot_wider(names_from = municipality, values_from = V_flow) %>%
     select(-year) %>%
@@ -675,6 +679,7 @@ usethis::use_data(CO_shape, overwrite = TRUE)
 usethis::use_data(cross_section, overwrite = TRUE)
 usethis::use_data(land_distributions, overwrite = TRUE)
 usethis::use_data(neighbors, overwrite = TRUE)
+usethis::use_data(neighbor_codes, overwrite = TRUE)
 usethis::use_data(panel, overwrite = TRUE)
 
 # clean up
