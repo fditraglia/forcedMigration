@@ -207,6 +207,41 @@ landtotal_bins <- cross_section %>% # Total land in each landholding "bin"
          `[1000,2000)` = tot_land_12,
          `>=2000` = tot_land_13)
 
+#------------------------------------------------------------------------------
+
+# Temporary sanity checks!
+#temp <- cross_section |>
+#  rowwise() |>
+#    mutate(landown_total = sum(c_across(starts_with("landown_")))) |>
+#    ungroup() |>
+#  select(municipality, n_families_census, n_families, n_landless,
+#         n_landowners, landown_total) |>
+#  filter(!is.na(n_landowners))
+#
+#all.equal(temp$landown_total, temp$n_landowners)
+#all.equal(temp$n_families, temp$n_families_census)
+#sum(temp$n_families > temp$n_families_census)
+
+estimate_share_landless <- function(count_cadastral, count_census) {
+# Vectorized; assumes n > 1 and m > 0; allows NA for either
+  m <- count_cadastral
+  n <- count_census
+  log_I_denom <- pbeta(0.5, n, m + 1, lower.tail = FALSE, log = TRUE)
+  log_I_num <- pbeta(0.5, n - 1, m + 2, lower.tail = FALSE, log = TRUE)
+  share_landed <- exp(log(m + 1) - log(n - 1) + (log_I_num - log_I_denom))
+  1 - share_landed
+}
+
+share_landless <- cross_section |>
+  mutate(
+    share_landless =  estimate_share_landless(n_landowners, n_families_census)
+    ) |>
+  pull(share_landless)
+
+
+#------------------------------------------------------------------------------
+
+
 # Construct a list of land distributions: one for each municipality
 make_land_dist <- function(i) {
   total_land <- landtotal_bins[i,]
