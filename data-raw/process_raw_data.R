@@ -1,7 +1,6 @@
 library(dplyr)
 library(igraph)
 library(purrr)
-library(magrittr)
 library(tidyr)
 library(parallel)
 library(sf)
@@ -33,8 +32,8 @@ CO_shape <- st_read('data-raw/CO-shapefiles/col_admbnda_adm2_mgn_20200416.shp')
 
 
 #------------------- Merge department/province names
-municipalities_and_regions <- municipalities_and_regions_raw %>%
-  rename(department = number_dept, municipality = Muni_code) %>%
+municipalities_and_regions <- municipalities_and_regions_raw |>
+  rename(department = number_dept, municipality = Muni_code) |>
   mutate(municipality = as.numeric(municipality))
 
 cross_section <- left_join(cross_section_raw, municipalities_and_regions)
@@ -46,17 +45,17 @@ rm(municipalities_and_regions_raw, cross_section_raw, panel_raw,
 #------------------------------- Remove two islands: 88001 and 88564
 CO_islands <- c('88001', '88564')
 
-survey_raw %>%
+survey_raw |>
   filter(municipality_origin %in% CO_islands) #None in the survey
 
-cross_section %<>% # Assignment pipe!
+cross_section <- cross_section |>
   filter(!(municipality %in% CO_islands))
 
-panel <- panel %>%
+panel <- panel |>
   filter(!(municipality %in% CO_islands))
 
-CO_shape <- CO_shape %>%
-  mutate(municipality = as.numeric(stringr::str_remove(ADM2_PCODE, 'CO'))) %>%
+CO_shape <- CO_shape |>
+  mutate(municipality = as.numeric(stringr::str_remove(ADM2_PCODE, 'CO'))) |>
   filter(!(municipality %in% CO_islands))
 
 rm(CO_islands)
@@ -70,8 +69,8 @@ neighbor_codes <- lapply(neighbors, function(x) CO_shape$municipality[x])
 names(neighbor_codes) <- CO_shape$municipality
 
 #-------------------------------------- Select and rename panel variables
-panel %<>% # Assignment pipe!
-  filter(year %in% 1996:2008) %>% # Only use panel data from 1996-2008
+panel <- panel |> # Assignment pipe!
+  filter(year %in% 1996:2008) |>  # Only use panel data from 1996-2008
   select(municipality,
          year,
          V_cum = ac_vcivilparas_UR, # Cumulative paramilitary violence
@@ -85,8 +84,8 @@ panel %<>% # Assignment pipe!
          pop1993 = Total_Poblacion1993)
 
 #--------------------------- Compare municipalities in neighbors list vs panel
-panel_munis <- panel %>%
-  pull(municipality) %>%
+panel_munis <- panel |>
+  pull(municipality) |>
   unique()
 
 munis <- as.numeric(stringr::str_remove(CO_shape$ADM2_PCODE, 'CO'))
@@ -97,15 +96,15 @@ identical(sum(panel_munis %in% munis), length(panel_munis))
 #---------------------- Construct average violence in neighboring municipalities
 
 get_V_flow_neighbors <- function(muni_code) {
-  V_flow_neighbors <- panel %>%
-    filter(municipality %in% neighbor_codes[[paste(muni_code)]]) %>%
-    select(municipality, year, V_flow) %>%
-    pivot_wider(names_from = municipality, values_from = V_flow) %>%
-    select(-year) %>%
+  V_flow_neighbors <- panel |>
+    filter(municipality %in% neighbor_codes[[paste(muni_code)]]) |>
+    select(municipality, year, V_flow) |>
+    pivot_wider(names_from = municipality, values_from = V_flow) |>
+    select(-year) |>
     apply(1, mean)
 
-  out <- panel %>%
-    filter(municipality == muni_code) %>%
+  out <- panel |>
+    filter(municipality == muni_code) |>
     select(municipality, year)
 
   # A very small number of municipalities have neighbors, but not neighbors for
@@ -122,7 +121,7 @@ V_flow_neighbors <- mclapply(panel_munis, get_V_flow_neighbors, mc.cores = 8)
 V_flow_neighbors <- do.call(rbind, V_flow_neighbors)
 
 
-panel %<>% # Assignment pipe!
+panel <- panel |>
   left_join(V_flow_neighbors)
 
 rm(V_flow_neighbors, get_V_flow_neighbors, munis, panel_munis)
@@ -141,21 +140,22 @@ rm(V_flow_neighbors, get_V_flow_neighbors, munis, panel_munis)
 # 3. Set n_landless = n_families - n_landowners
 #------------------------------------------------------------------------------
 
-cross_section %<>% # Assignment pipe!
-  rowwise(municipality) %>%
-  mutate(n_landowners = sum(c_across(starts_with('landown_')))) %>%
-  ungroup() %>%
-  rename(n_families_census = num_families) %>%
+cross_section <- cross_section |>
+  rowwise(municipality) |>
+  mutate(n_landowners = sum(c_across(starts_with('landown_')))) |>
+  ungroup() |>
+  rename(n_families_census = num_families) |>
   mutate(n_families = pmax(n_families_census, n_landowners),
          n_landless = n_families - n_landowners,
-         omega_n = n_landless / n_families) %>%
+         omega_n = n_landless / n_families) |>
   select(-landless_families)
 
 
-#---------------------------------------------------------------------------------------
-# We observe a discretized land distribution: we know the total amount of land and the
-# total number of landholders within each of the following "bins" measured in hectares
-#---------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# We observe a discretized land distribution: we know the total amount of land
+# and the total number of landholders within each of the following "bins"
+# measured in hectares
+#-------------------------------------------------------------------------------
 # 0
 # (0,1)
 # [1,3)
@@ -169,10 +169,10 @@ cross_section %<>% # Assignment pipe!
 # [200, 500)
 # [500, 1000)
 # >=2000
-#---------------------------------------------------------------------------------------
-landowner_bins <- cross_section %>% # Number of families in each landholding "bin"
-  select(n_landless, starts_with('landown_')) %>%
-  relocate(n_landless) %>% # Make this the first column
+#-------------------------------------------------------------------------------
+landowner_bins <- cross_section |>  # Number of families in each landholding "bin"
+  select(n_landless, starts_with('landown_')) |>
+  relocate(n_landless) |>  # Make this the first column
   rename(`0` = n_landless,
          `(0,1)` = landown_less_1,
          `[1,3)` = landown_1_3,
@@ -188,10 +188,10 @@ landowner_bins <- cross_section %>% # Number of families in each landholding "bi
          `[1000,2000)` = landown_1000_2000 ,
          `>=2000` = landown_2000_plus)
 
-landtotal_bins <- cross_section %>% # Total land in each landholding "bin"
-  mutate(tot_land_0 = 0) %>% # landless families are those with exactly 0 land
-  select(starts_with('tot_land_')) %>%
-  relocate(tot_land_0) %>% # Make this the first column
+landtotal_bins <- cross_section |>  # Total land in each landholding "bin"
+  mutate(tot_land_0 = 0) |>  # landless families are those with exactly 0 land
+  select(starts_with('tot_land_')) |>
+  relocate(tot_land_0) |>  # Make this the first column
   rename(`0` = tot_land_0,
          `(0,1)` = tot_land_1,
          `[1,3)` = tot_land_2,
@@ -273,9 +273,9 @@ land_statistics$municipality <- as.numeric(rownames(land_statistics))
 rownames(land_statistics) <- NULL
 rm(get_land_statistics)
 
-cross_section %<>% # Assignment pipe!
-  left_join(y = land_statistics) %>%
-  mutate(omegaC = 1 - omega) %>% # It's convenient to have (1 - omega) as a separate variable
+cross_section <- cross_section |>
+  left_join(y = land_statistics) |>
+  mutate(omegaC = 1 - omega) |>  # It's convenient to have (1 - omega) as a separate variable
   select(-omega_n) # This is identical to omega: share of landless -- don't need both
 
 rm(land_statistics)
@@ -284,12 +284,12 @@ rm(land_statistics)
 # be viewed as a cross-sectional characteristic. Merge this with the other
 # cross_section data
 
-merge_me <- panel %>%
-  filter(year == max(year)) %>%
+merge_me <- panel |>
+  filter(year == max(year)) |>
   select(municipality, V_cum)
 
-cross_section %<>%
-  inner_join(merge_me) %>%
+cross_section <- cross_section |>
+  inner_join(merge_me) |>
   rename(V_total = V_cum) # Better to call it V_total: total violence from 1996:2008
 
 rm(merge_me)
@@ -299,14 +299,14 @@ rm(merge_me)
 # The municipalities in cross_section are those for which we have land dist data
 identical(sum(!is.na(cross_section$H1)), nrow(cross_section))
 
-cross_section %<>%
+cross_section <- cross_section |>
   mutate(at_least_100_landowners = n_landowners >= 100)
 
-munis_100_plus <- cross_section %>%
-  filter(at_least_100_landowners) %>%
+munis_100_plus <- cross_section |>
+  filter(at_least_100_landowners) |>
   pull(municipality)
 
-panel %<>%
+panel <- panel |>
   mutate(has_land_data = municipality %in% cross_section$municipality,
          at_least_100_landowners = municipality %in% munis_100_plus)
 
@@ -336,72 +336,72 @@ panel[panel$year %in% c(1996, 2010:2012),]$D_CEDE <- NA
 # measure reports zero total displacement over the sample period, while all other
 # measures report positive displacement. These "zeros" are really NAs.
 #-------------------------------------------------------------------------------
-disagreement <- panel %>%
-  select(municipality, year, starts_with('D_')) %>%
-  group_by(municipality) %>%
+disagreement <- panel |>
+  select(municipality, year, starts_with('D_')) |>
+  group_by(municipality) |>
   summarise(across(.cols = starts_with('D_'),
-                   .fns = sum, na.rm = TRUE)) %>%
-  rowwise() %>%
-  filter(sum(c_across(starts_with('D_')) == 0) == 1) %>%
+                   .fns = sum, na.rm = TRUE)) |>
+  rowwise() |>
+  filter(sum(c_across(starts_with('D_')) == 0) == 1) |>
   ungroup()
 
 
-AS_replace <- disagreement %>%
-  filter(D_AS == 0) %>%
+AS_replace <- disagreement |>
+  filter(D_AS == 0) |>
   pull(municipality)
 panel[panel$municipality %in% AS_replace,]$D_AS <- NA
 
-RUV_replace <- disagreement %>%
-  filter(D_RUV == 0) %>%
+RUV_replace <- disagreement |>
+  filter(D_RUV == 0) |>
   pull(municipality)
 panel[panel$municipality %in% RUV_replace,]$D_RUV <- NA
 
-CEDE_replace <- disagreement %>%
-  filter(D_CEDE == 0) %>%
+CEDE_replace <- disagreement |>
+  filter(D_CEDE == 0) |>
   pull(municipality)
 panel[panel$municipality %in% CEDE_replace,]$D_CEDE <- NA
 
 rm(disagreement, AS_replace, RUV_replace, CEDE_replace)
 
 #--------------------------------------- Create lagged violence flow
-panel <- panel %>%
-  group_by(municipality) %>%
-  mutate(lag_V_flow = lag(V_flow, order_by = year)) %>%
+panel <- panel |>
+  group_by(municipality) |>
+  mutate(lag_V_flow = lag(V_flow, order_by = year)) |>
   ungroup()
 
 #--------------------------- Re-scale displacement measures
 
 # What share of total RUV and JYP displacement was reported in 1996?
 # Average these two shares
-share_1996 <- panel %>%
-  select(year, D_RUV, D_JYP) %>%
-  group_by(year) %>%
+share_1996 <- panel |>
+  select(year, D_RUV, D_JYP) |>
+  group_by(year) |>
   summarize(RUV_sum = sum(D_RUV, na.rm = TRUE),
-            JYP_sum = sum(D_JYP, na.rm = TRUE)) %>%
+            JYP_sum = sum(D_JYP, na.rm = TRUE)) |>
   mutate(RUV_share = RUV_sum / sum(RUV_sum),
-         JYP_share = JYP_sum / sum(JYP_sum)) %>%
-  filter(year == 1996) %>%
-  select(RUV_share, JYP_share) %>%
+         JYP_share = JYP_sum / sum(JYP_sum)) |>
+  filter(year == 1996) |>
+  select(RUV_share, JYP_share) |>
   rowMeans()
 
-panel %<>%
+panel <- panel |>
   mutate(across(c(D_RUV, D_JYP), # Normalize total displacement to 6 million
-         list(norm = ~ 6e6 * . / sum(., na.rm = TRUE)))) %>%
+         list(norm = ~ 6e6 * . / sum(., na.rm = TRUE)))) |>
   # Because AS and CEDE did not report in 1996 we don't normalize them to 6 million.
   # Instead we normalize them to a *slightly smaller value* constructed using
   # share_1996
   mutate(across(c(D_AS, D_CEDE),
-                list(norm = ~ (1 - share_1996) * 6e6 * . / sum(., na.rm = TRUE)))) %>%
-  rowwise() %>%
+                list(norm = ~ (1 - share_1996) * 6e6 * . / sum(., na.rm = TRUE)))) |>
+  rowwise() |>
   mutate(D_med = median(c_across(ends_with('_norm')), na.rm = FALSE),
          D_avg = mean(c_across(ends_with('_norm')), na.rm = FALSE),
          D_med_any = median(c_across(ends_with('_norm')), na.rm = TRUE),
-         D_avg_any = mean(c_across(ends_with('_norm')), na.rm = TRUE)) %>%
-  ungroup() %>%
+         D_avg_any = mean(c_across(ends_with('_norm')), na.rm = TRUE)) |>
+  ungroup() |>
   mutate(D_avg_no_AS = (D_RUV + D_CEDE + D_JYP) / 3,
          D_avg_no_RUV = (D_AS + D_CEDE + D_JYP) / 3,
          D_avg_no_CEDE = (D_AS + D_RUV + D_JYP) / 3,
-         D_avg_no_JYP = (D_AS + D_RUV + D_CEDE) / 3) %>%
+         D_avg_no_JYP = (D_AS + D_RUV + D_CEDE) / 3) |>
   # After taking medians of the normalized displacement variables (sum to 6 million) the result
   # will no longer sum to 6 million. Renormalize so it does
   mutate(across(c(starts_with('D_med'), starts_with('D_avg')), ~ 6e6 * . / sum(., na.rm = TRUE)))
@@ -411,9 +411,9 @@ rm(share_1996)
 
 # Covariates ------------------------------------------------------------------
 
-cross_section %<>%
+cross_section <- cross_section |>
 
-  rename(mines = mine_titles_90, oil = oil_prod_98) %>%
+  rename(mines = mine_titles_90, oil = oil_prod_98) |>
 
   mutate(mines = if_else(mines > 0, 1, 0),
          drug_routes = if_else(drug_routes > 1, 1, 0),
@@ -438,7 +438,7 @@ cross_section %<>%
                                     telecom_95,
                                     post_95,
                                     agrarian_95,
-                                    hospitals_95)))) %>%
+                                    hospitals_95)))) |>
 
   select(-starts_with('tot_land'), -starts_with('landown_'), -gini,
          -convexity_L, -starts_with('owners_'), -ends_with('_95'),
@@ -449,47 +449,47 @@ cross_section %<>%
 # Spatial stuff ----------------------------------------------------------------
 
 # Read in ARCGIS-generated list of municipalities intersecting road network
-roads <- readr::read_csv('data-raw/real_roads.csv') %>%
+roads <- readr::read_csv('data-raw/real_roads.csv') |>
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
          municipality = as.numeric(municipality))
 
 
 # Read and clean forest & elevation data --------------------------------------
 
-forests <- readr::read_csv("data-raw/Forest_Master_50.csv") %>%
+forests <- readr::read_csv("data-raw/Forest_Master_50.csv") |>
   mutate(share_forested = extent_2000_ha / area_ha,
-         is_forested = share_forested > 0.5) %>%
-  select(ADM2_PCODE, is_forested) %>%
+         is_forested = share_forested > 0.5) |>
+  select(ADM2_PCODE, is_forested) |>
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
-         municipality = as.numeric(municipality)) %>%
+         municipality = as.numeric(municipality)) |>
   select(-ADM2_PCODE)
 
 # Municipality 70523 (Palmito, Sucre) appears twice in forests, once with
 # is_forested TRUE and again with is_forested FALSE. There are no forests here!
-forests %<>%
+forests <- forests |>
   filter(!((municipality == 70523) & (is_forested)))
 
 # Elevation *difference*
-elevation <- readr::read_csv("data-raw/elevationsFinal.csv") %>%
-  select(-`...1`) %>% # first column is a row number starting from zero
+elevation <- readr::read_csv("data-raw/elevationsFinal.csv") |>
+  select(-`...1`) |>  # first column is a row number starting from zero
   mutate(municipality = stringr::str_remove(ADM2_PCODE, 'CO'),
-         municipality = as.numeric(municipality)) %>%
-  select(-ADM2_PCODE) %>%
+         municipality = as.numeric(municipality)) |>
+  select(-ADM2_PCODE) |>
   arrange(municipality)
 
 
 # Create dataframe of geographic information ----------------------------------
-geography <- cross_section %>%
-  select(municipality, ruggedness, slope, elevation) %>%
-  left_join(elevation) %>%
-  left_join(forests) %>%
+geography <- cross_section |>
+  select(municipality, ruggedness, slope, elevation) |>
+  left_join(elevation) |>
+  left_join(forests) |>
   mutate(has_road = if_else(municipality %in% roads$municipality, 1, 0),
          is_forested = 1 * is_forested)
 
 rm(elevation, forests, roads)
 
-centroid_coords <- CO_shape %>%
-  st_centroid() %>% # compute lat and lon of centroids
+centroid_coords <- CO_shape |>
+  st_centroid() |>  # compute lat and lon of centroids
   st_coordinates() # extract lat and lon of centroids as *matrix*
 
 get_neighbor_distances <- function(i) {
@@ -541,7 +541,7 @@ names(neighbors_codes) <- muni_codes
 
 # geography only has data for 1049 municipalities while CO_shape has data for
 # 1122. Add the missing municipalities to geography
-geography %<>%
+geography <- geography |>
   full_join(tibble(municipality = muni_codes))
 
 
@@ -569,57 +569,57 @@ impute_missing_var <- function(var_name) {
 # and store the result in a list
 imputed_geography <- lapply(names(geography)[-1], impute_missing_var)
 
-imputed_geography %<>%
+imputed_geography <- imputed_geography |>
   reduce(full_join, by = 'municipality')
 
 
 # Last step of the imputation, following the logic of the comment, but
 # for all the imputed variables, not just impute_forest
-geography %<>%
-  full_join(imputed_geography) %>%
-  mutate(ruggedness = if_else(!is.na(ruggedness), ruggedness, impute_ruggedness)) %>%
-  mutate(slope = if_else(!is.na(slope), slope, impute_slope)) %>%
-  mutate(elevation = if_else(!is.na(elevation), elevation, impute_elevation)) %>%
+geography <- geography |>
+  full_join(imputed_geography) |>
+  mutate(ruggedness = if_else(!is.na(ruggedness), ruggedness, impute_ruggedness)) |>
+  mutate(slope = if_else(!is.na(slope), slope, impute_slope)) |>
+  mutate(elevation = if_else(!is.na(elevation), elevation, impute_elevation)) |>
   mutate(elevation_difference = if_else(!is.na(elevation_difference),
                                        elevation_difference,
-                                       impute_elevation_difference)) %>%
-  mutate(is_forested =  if_else(!is.na(is_forested), is_forested, impute_is_forested)) %>%
-  mutate(has_road = if_else(!is.na(has_road), has_road, impute_has_road)) %>%
+                                       impute_elevation_difference)) |>
+  mutate(is_forested =  if_else(!is.na(is_forested), is_forested, impute_is_forested)) |>
+  mutate(has_road = if_else(!is.na(has_road), has_road, impute_has_road)) |>
   select(-starts_with('impute_'))
 
 
 rm(impute_missing_var, imputed_geography, muni_codes, neighbors_codes)
 
-cross_section <- cross_section %>%
+cross_section <- cross_section |>
   full_join(geography)
 
 # Construct dataset of all unique *pairs* of neighboring municipalities --------
 
 # Create geography_i by renaming the columns of geography to have an '_i'
 # at the end. Do the same for geography_j. Then merge with pairwise distances.
-geography_i <- geography %>%
+geography_i <- geography |>
   rename_with(~ stringr::str_c(., '_i'))
 
-geography_j <- geography %>%
+geography_j <- geography |>
   rename_with(~ stringr::str_c(., '_j'))
 
-pairwise_distances %<>% # Assignment pipe!
+pairwise_distances <- pairwise_distances |>
   mutate(municipality_i = stringr::str_remove(CO_shape$ADM2_PCODE[i], 'CO'),
          municipality_j = stringr::str_remove(CO_shape$ADM2_PCODE[j], 'CO'),
          municipality_i = as.numeric(municipality_i),
-         municipality_j = as.numeric(municipality_j)) %>%
-  select(-i, -j) %>%
-  left_join(geography_i) %>%
+         municipality_j = as.numeric(municipality_j)) |>
+  select(-i, -j) |>
+  left_join(geography_i) |>
   left_join(geography_j)
 
 rm(geography_i, geography_j, geography)
 
-link_stats <- pairwise_distances %>%
+link_stats <- pairwise_distances |>
   mutate(forest = is_forested_i + is_forested_j,
          elevation = (elevation_difference_i + elevation_difference_j) / 2,
          ruggedness = (ruggedness_i + ruggedness_j) / 2,
          slope = (slope_i + slope_j) / 2,
-         elevation_diff = abs(elevation_i - elevation_j)) %>%
+         elevation_diff = abs(elevation_i - elevation_j)) |>
   select(municipality_i, municipality_j, dist, forest, elevation, slope,
          ruggedness, elevation_diff)
 
@@ -646,7 +646,7 @@ rm(pca, pairwise_distances)
 # Notice that max_friction = 1 means that PC1 plays no role: this is distance
 # "as the crow flies" from one municipality centroid to the next.
 
-link_stats %<>%
+link_stats <- link_stats |>
   mutate(z = (PC1_geography - min(PC1_geography)) / diff(range(PC1_geography)))
 
 
@@ -679,19 +679,19 @@ d_geography$municipality <- as.numeric(rownames(d_geography))
 dist_to_epicenter <- d_geography
 dist_to_epicenter$d_hops <- drop(hops)
 dist_to_epicenter <- as_tibble(dist_to_epicenter)
-dist_to_epicenter <- dist_to_epicenter %>%
-  relocate(municipality) %>%
+dist_to_epicenter <- dist_to_epicenter |>
+  relocate(municipality) |>
   rename(d_crow = d_geography1)
 
 # Calculate percentiles of distance measures (except hops)
-dist_to_epicenter <- dist_to_epicenter %>%
+dist_to_epicenter <- dist_to_epicenter |>
   mutate(across(c('d_crow', starts_with('d_geography')), ~ (rank(.x) / length(.x)),
                 .names = 'p_{.col}'))
 
 rm(get_dist_friction, epicenter, max_friction, d_geography, hops,
    link_stats, neighbor_distances, munigraph)
 
-cross_section <- cross_section %>%
+cross_section <- cross_section |>
   full_join(dist_to_epicenter)
 
 rm(dist_to_epicenter)
