@@ -8,8 +8,6 @@ Maintainer: Parker Snipes <Parker.Snipes@chi.frb.org>
 Description: A package containing data and graphing functions for Francis diTraglia and Camilo Garcia-Jimeno's Forced Migration paper. 
 License: What license is it under? 
 LazyData: TRUE
-Imports:
-LinkingTo:
 Recommends:
     haven,
     readxl,
@@ -22,4 +20,4 @@ Recommends:
     sf
 RoxygenNote: 7.1.1
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5)
