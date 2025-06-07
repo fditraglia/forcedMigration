@@ -2,7 +2,7 @@ library(dplyr)
 library(igraph)
 library(purrr)
 library(tidyr)
-library(parallel)
+library(furrr)
 library(sf)
 library(spdep)
 library(geosphere)
@@ -65,7 +65,7 @@ rm(CO_islands)
 # rows of CO_shape while neighbor_codes gives *municipality codes*, i.e. the
 # correponding values of the column municipality from CO_shape
 neighbors <- poly2nb(CO_shape)
-neighbor_codes <- lapply(neighbors, function(x) CO_shape$municipality[x])
+neighbor_codes <- map(neighbors, \(x) CO_shape$municipality[x])
 names(neighbor_codes) <- CO_shape$municipality
 
 #-------------------------------------- Select and rename panel variables
@@ -117,8 +117,10 @@ get_V_flow_neighbors <- function(muni_code) {
   return(out)
 }
 
-V_flow_neighbors <- mclapply(panel_munis, get_V_flow_neighbors, mc.cores = 8)
-V_flow_neighbors <- do.call(rbind, V_flow_neighbors)
+plan(multisession, workers = 8)
+
+V_flow_neighbors <- future_map(panel_munis, get_V_flow_neighbors)
+V_flow_neighbors <- list_rbind(V_flow_neighbors)
 
 
 panel <- panel |>
@@ -251,7 +253,7 @@ make_land_dist <- function(i) {
   out$frac_families <- out$n_families / sum(out$n_families)
   return(out)
 }
-land_distributions <- lapply(seq_len(nrow(cross_section)), make_land_dist)
+land_distributions <- map(seq_len(nrow(cross_section)), make_land_dist)
 names(land_distributions) <- cross_section$municipality
 rm(make_land_dist, landowner_bins, landtotal_bins)
 
@@ -267,7 +269,7 @@ get_land_statistics <- function(x) {
     n_families = sum(x$n_families))
 }
 
-land_statistics <- lapply(land_distributions, get_land_statistics)
+land_statistics <- map(land_distributions, get_land_statistics)
 land_statistics <- as.data.frame(do.call(rbind, land_statistics))
 land_statistics$municipality <- as.numeric(rownames(land_statistics))
 rownames(land_statistics) <- NULL
@@ -501,24 +503,24 @@ get_neighbor_distances <- function(i) {
     distGeo(own_coords, neighbor_coords) / 1000 # convert meters to km
   }
 }
-neighbor_distances <- lapply(1:length(neighbors), get_neighbor_distances)
+neighbor_distances <- map(1:length(neighbors), get_neighbor_distances)
 
 get_pairwise_distances <- function(i) {
-# Only return neighbors whose index is greater than i: eliminate "repeat" pairs
+# only return neighbors whose index is greater than i: eliminate "repeat" pairs
   i_neighbors <- neighbors[[i]]
   i_neighbor_distances <- neighbor_distances[[i]]
   keep <- i < i_neighbors
   if(any(keep)) {
     data.frame(i, j = i_neighbors[keep], dist = i_neighbor_distances[keep])
   } else {
-    # Return NULL if no neighbors (entry in neighbors is zero) or all repeats
-    NULL
+    # return null if no neighbors (entry in neighbors is zero) or all repeats
+    null
   }
 }
 
 
-pairwise_distances <- lapply(1:length(neighbors), get_pairwise_distances)
-pairwise_distances <- do.call(rbind, pairwise_distances)
+pairwise_distances <- map(1:length(neighbors), get_pairwise_distances) |>
+  list_rbind()
 pairwise_distances <- tibble(pairwise_distances)
 
 rm(get_neighbor_distances, get_pairwise_distances, centroid_coords)
@@ -536,7 +538,7 @@ rm(get_neighbor_distances, get_pairwise_distances, centroid_coords)
 # Create list of neighboring municipalities with municipality *codes* rather
 # than row numbers from CO_shape
 muni_codes <- as.numeric(stringr::str_remove(CO_shape$ADM2_PCODE, 'CO'))
-neighbors_codes <- lapply(neighbors, function(x) muni_codes[x])
+neighbors_codes <- map(neighbors, function(x) muni_codes[x])
 names(neighbors_codes) <- muni_codes
 
 # geography only has data for 1049 municipalities while CO_shape has data for
@@ -553,7 +555,7 @@ impute_missing_var <- function(var_name) {
     neighbor_geography <- pull(geography[geography$municipality %in% x, var_name])
     mean(neighbor_geography, na.rm = TRUE)
   }
-  out <- lapply(neighbor_list, f)
+  out <- map(neighbor_list, f)
   out <- do.call(rbind, out)
   out <- data.frame(row.names(out), out[,1])
   names(out) <- c('municipality', paste0('impute_', var_name))
@@ -567,7 +569,7 @@ impute_missing_var <- function(var_name) {
 
 # Impute missing values for all variables *except* municipality (first column)
 # and store the result in a list
-imputed_geography <- lapply(names(geography)[-1], impute_missing_var)
+imputed_geography <- map(names(geography)[-1], impute_missing_var)
 
 imputed_geography <- imputed_geography |>
   reduce(full_join, by = 'municipality')
