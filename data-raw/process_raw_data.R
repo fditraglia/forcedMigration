@@ -69,7 +69,7 @@ neighbor_codes <- map(neighbors, \(x) CO_shape$municipality[x])
 names(neighbor_codes) <- CO_shape$municipality
 
 #-------------------------------------- Select and rename panel variables
-panel <- panel |> # Assignment pipe!
+panel <- panel |>
   filter(year %in% 1996:2008) |>  # Only use panel data from 1996-2008
   select(municipality,
          year,
@@ -119,8 +119,8 @@ get_V_flow_neighbors <- function(muni_code) {
 
 plan(multisession, workers = 8)
 
-V_flow_neighbors <- future_map(panel_munis, get_V_flow_neighbors)
-V_flow_neighbors <- list_rbind(V_flow_neighbors)
+V_flow_neighbors <- future_map(panel_munis, get_V_flow_neighbors) |>
+  list_rbind()
 
 
 panel <- panel |>
@@ -132,25 +132,56 @@ rm(V_flow_neighbors, get_V_flow_neighbors, munis, panel_munis)
 
 #------------------------------------------------------------------------------
 # The column landless_families in from Cross_section.dta was constructed by
-# Camilo's original RA. There are some discrepancies in this column. Our
-# procedure for constructing a measure of the number of landless families in a
-# municipality from the underlying census data is as follows. We assume, absent
-#evidence to the contrary, that there is at most one landowner per family.
-#------------------------------------------------------------------------------
-# 1. Calculate n_landowners by summing counts in each column "landown_*"
-# 2. Set n_families = pmax(num_families, n_landowners)
-# 3. Set n_landless = n_families - n_landowners
-#------------------------------------------------------------------------------
+# Camilo's original RA. There are some discrepancies in this column which we
+# resolve as follows:
+#
+# 1. Calculate the number of landowners by summing the counts in each column
+#   "landown_*". This information comes from the Cadastral census.
+#
+# 2. The number of families (from the Census) is given by num_families.
+#
+# 3. Call m the number of landowners and n the number of families. If we assume
+#    that there is at most one landowner per family, then m should be less than
+#    or equal to n. But in some cases m > n.
+#
+# 4. To address this we suppose that M ~ Poisson(mu) and N ~ Poisson(lambda).
+#    We know that mu < lambda and want to estimate the ratio r = mu / lambda.
+#    This is the share of landholding families. The share of landless families
+#    is omega = (1 - r). We calculate the Bayesian for r under the
+#    Poisson model, assuming conditional independence given the parameters, and
+#    flat priors. This immediately implies the posterior mean for omega, the
+#    share of landless. Crucially *this will never be exactly zero*.
+#-------------------------------------------------------------------------------
+
+get_omega <- function(m, n) {
+# Estimate the share of landless families (omega) from the number of landowners
+# (m) and the number of families (n) in the municipality, using the procedure
+# described above. Assumes that m > 0 and n > 1 but allows for NA values in
+# either. Vectorized.
+  log_I_denom <- pbeta(0.5, n, m + 1, lower.tail = FALSE, log = TRUE)
+  log_I_num <- pbeta(0.5, n - 1, m + 2, lower.tail = FALSE, log = TRUE)
+  r <- exp(log(m + 1) - log(n - 1) + (log_I_num - log_I_denom))
+  1 - r
+}
 
 cross_section <- cross_section |>
   rowwise(municipality) |>
   mutate(n_landowners = sum(c_across(starts_with('landown_')))) |>
   ungroup() |>
   rename(n_families_census = num_families) |>
-  mutate(n_families = pmax(n_families_census, n_landowners),
-         n_landless = n_families - n_landowners,
-         omega_n = n_landless / n_families) |>
+  mutate(omega = get_omega(m = n_landowners, n = n_families_census)) |>
   select(-landless_families)
+
+#cross_section <- cross_section |>
+#  rowwise(municipality) |>
+#  mutate(n_landowners = sum(c_across(starts_with('landown_')))) |>
+#  ungroup() |>
+#  rename(n_families_census = num_families) |>
+#  mutate(n_families = pmax(n_families_census, n_landowners),
+#         n_landless = n_families - n_landowners,
+#         omega_n = n_landless / n_families) |>
+#  select(-landless_families)
+
 
 
 #-------------------------------------------------------------------------------
@@ -172,11 +203,27 @@ cross_section <- cross_section |>
 # [500, 1000)
 # >=2000
 #-------------------------------------------------------------------------------
+#landowner_bins <- cross_section |>  # Number of families in each landholding "bin"
+#  select(n_landless, starts_with('landown_')) |>
+#  relocate(n_landless) |>  # Make this the first column
+#  rename(`0` = n_landless,
+#         `(0,1)` = landown_less_1,
+#         `[1,3)` = landown_1_3,
+#         `[3,5)` = landown_3_5,
+#         `[5,10)` = landown_5_10,
+#         `[10,15)` = landown_10_15,
+#         `[15,20)` = landown_15_20,
+#         `[20,50)` = landown_20_50,
+#         `[50,100)` = landown_50_100,
+#         `[100,200)` = landown_100_200,
+#         `[200,500)` = landown_200_500,
+#         `[500,1000)` = landown_500_1000,
+#         `[1000,2000)` = landown_1000_2000 ,
+#         `>=2000` = landown_2000_plus)
+
 landowner_bins <- cross_section |>  # Number of families in each landholding "bin"
-  select(n_landless, starts_with('landown_')) |>
-  relocate(n_landless) |>  # Make this the first column
-  rename(`0` = n_landless,
-         `(0,1)` = landown_less_1,
+  select(starts_with('landown_')) |>
+  rename(`(0,1)` = landown_less_1,
          `[1,3)` = landown_1_3,
          `[3,5)` = landown_3_5,
          `[5,10)` = landown_5_10,
@@ -190,12 +237,28 @@ landowner_bins <- cross_section |>  # Number of families in each landholding "bi
          `[1000,2000)` = landown_1000_2000 ,
          `>=2000` = landown_2000_plus)
 
+#landtotal_bins <- cross_section |>  # Total land in each landholding "bin"
+#  mutate(tot_land_0 = 0) |>  # landless families are those with exactly 0 land
+#  select(starts_with('tot_land_')) |>
+#  relocate(tot_land_0) |>  # Make this the first column
+#  rename(`0` = tot_land_0,
+#         `(0,1)` = tot_land_1,
+#         `[1,3)` = tot_land_2,
+#         `[3,5)` = tot_land_3,
+#         `[5,10)` = tot_land_4,
+#         `[10,15)` = tot_land_5,
+#         `[15,20)` = tot_land_6,
+#         `[20,50)` = tot_land_7,
+#         `[50,100)` = tot_land_8,
+#         `[100,200)` = tot_land_9,
+#         `[200,500)` = tot_land_10,
+#         `[500,1000)` = tot_land_11,
+#         `[1000,2000)` = tot_land_12,
+#         `>=2000` = tot_land_13)
+
 landtotal_bins <- cross_section |>  # Total land in each landholding "bin"
-  mutate(tot_land_0 = 0) |>  # landless families are those with exactly 0 land
   select(starts_with('tot_land_')) |>
-  relocate(tot_land_0) |>  # Make this the first column
-  rename(`0` = tot_land_0,
-         `(0,1)` = tot_land_1,
+  rename(`(0,1)` = tot_land_1,
          `[1,3)` = tot_land_2,
          `[3,5)` = tot_land_3,
          `[5,10)` = tot_land_4,
@@ -224,35 +287,45 @@ landtotal_bins <- cross_section |>  # Total land in each landholding "bin"
 #all.equal(temp$n_families, temp$n_families_census)
 #sum(temp$n_families > temp$n_families_census)
 
-estimate_share_landless <- function(count_cadastral, count_census) {
-# Vectorized; assumes n > 1 and m > 0; allows NA for either
-  m <- count_cadastral
-  n <- count_census
-  log_I_denom <- pbeta(0.5, n, m + 1, lower.tail = FALSE, log = TRUE)
-  log_I_num <- pbeta(0.5, n - 1, m + 2, lower.tail = FALSE, log = TRUE)
-  share_landed <- exp(log(m + 1) - log(n - 1) + (log_I_num - log_I_denom))
-  1 - share_landed
-}
-
-share_landless <- cross_section |>
-  mutate(
-    share_landless =  estimate_share_landless(n_landowners, n_families_census)
-    ) |>
-  pull(share_landless)
+#estimate_share_landless <- function(count_cadastral, count_census) {
+## Vectorized; assumes n > 1 and m > 0; allows NA for either
+#  m <- count_cadastral
+#  n <- count_census
+#  log_I_denom <- pbeta(0.5, n, m + 1, lower.tail = FALSE, log = TRUE)
+#  log_I_num <- pbeta(0.5, n - 1, m + 2, lower.tail = FALSE, log = TRUE)
+#  share_landed <- exp(log(m + 1) - log(n - 1) + (log_I_num - log_I_denom))
+#  1 - share_landed
+#}
+#
+#share_landless <- cross_section |>
+#  mutate(
+#    share_landless =  estimate_share_landless(n_landowners, n_families_census)
+#    ) |>
+#  pull(share_landless)
 
 
 #------------------------------------------------------------------------------
 
 
 # Construct a list of land distributions: one for each municipality
+#make_land_dist <- function(i) {
+#  total_land <- landtotal_bins[i,]
+#  n_families <- landowner_bins[i,]
+#  out <- data.frame(t(rbind(total_land = landtotal_bins[i,], n_families = landowner_bins[i,])))
+#  out$mean_land <- ifelse(out$n_families > 0, out$total_land / out$n_families, 0)
+#  out$frac_families <- out$n_families / sum(out$n_families)
+#  return(out)
+#}
+
 make_land_dist <- function(i) {
-  total_land <- landtotal_bins[i,]
-  n_families <- landowner_bins[i,]
-  out <- data.frame(t(rbind(total_land = landtotal_bins[i,], n_families = landowner_bins[i,])))
-  out$mean_land <- ifelse(out$n_families > 0, out$total_land / out$n_families, 0)
-  out$frac_families <- out$n_families / sum(out$n_families)
-  return(out)
+  rbind(total_land = landtotal_bins[i, ],
+        n_landowners = landowner_bins[i, ]) |>
+    t() |>
+    as.data.frame() |>
+    mutate(mean_land = if_else(n_landowners > 0, total_land / n_landowners, 0),
+           frac_landowners = n_landowners / sum(n_landowners))
 }
+
 land_distributions <- map(seq_len(nrow(cross_section)), make_land_dist)
 names(land_distributions) <- cross_section$municipality
 rm(make_land_dist, landowner_bins, landtotal_bins)
@@ -260,13 +333,19 @@ rm(make_land_dist, landowner_bins, landtotal_bins)
 # Function that computes summary statistics of the land distribution for use in
 # our LINEAR IV models. The non-linear IV models rely on the entire land distribution
 # stored in land_distributions
+
+#get_land_statistics <- function(x) {
+#  z <- x[-1,] # summary stats for *landholders* so remove landless
+#  z$frac_families <- z$frac_families / sum(z$frac_families)
+#  c('omega' = x$frac_families[1],
+#    'H1' = sum(asinh(z$mean_land) * z$frac_families),
+#    'H2' = sum(asinh(z$mean_land)^2 * z$frac_families),
+#    n_families = sum(x$n_families))
+#}
+
 get_land_statistics <- function(x) {
-  z <- x[-1,] # summary stats for *landholders* so remove landless
-  z$frac_families <- z$frac_families / sum(z$frac_families)
-  c('omega' = x$frac_families[1],
-    'H1' = sum(asinh(z$mean_land) * z$frac_families),
-    'H2' = sum(asinh(z$mean_land)^2 * z$frac_families),
-    n_families = sum(x$n_families))
+  c('H1' = sum(asinh(x$mean_land) * x$frac_landowners),
+    'H2' = sum(asinh(x$mean_land)^2 * x$frac_landowners))
 }
 
 land_statistics <- map(land_distributions, get_land_statistics)
@@ -277,8 +356,7 @@ rm(get_land_statistics)
 
 cross_section <- cross_section |>
   left_join(y = land_statistics) |>
-  mutate(omegaC = 1 - omega) |>  # It's convenient to have (1 - omega) as a separate variable
-  select(-omega_n) # This is identical to omega: share of landless -- don't need both
+  mutate(omegaC = 1 - omega)  # It's convenient to have (1 - omega) as a separate variable
 
 rm(land_statistics)
 
