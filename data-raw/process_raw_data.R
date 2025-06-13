@@ -176,6 +176,8 @@ cross_section <- cross_section |>
   mutate(omega = get_omega(m = n_landowners, n = n_families_census)) |>
   select(-landless_families)
 
+attr(cross_section$omega, 'label') <- 'Share of landless families (Bayes posterior mean)'
+
 
 #-------------------------------------------------------------------------------
 # We observe a discretized land distribution: we know the total amount of land
@@ -324,7 +326,7 @@ disagreement <- panel |>
   select(municipality, year, starts_with('D_')) |>
   group_by(municipality) |>
   summarise(across(.cols = starts_with('D_'),
-                   .fns = sum, na.rm = TRUE)) |>
+                   .fns = \(x) sum(x, na.rm = TRUE))) |>
   rowwise() |>
   filter(sum(c_across(starts_with('D_')) == 0) == 1) |>
   ungroup()
@@ -426,7 +428,7 @@ cross_section <- cross_section |>
 
   select(-starts_with('tot_land'), -starts_with('landown_'), -gini,
          -convexity_L, -starts_with('owners_'), -ends_with('_95'),
-         -starts_with('ratio_votes'), -n_families_census,
+         -starts_with('ratio_votes'),
          -contains('_signal'), -contains('educ_'), -dum_2001_land)
 
 
