@@ -264,6 +264,8 @@ cross_section <- cross_section |>
   left_join(y = land_statistics) |>
   mutate(omegaC = 1 - omega)  # It's convenient to have (1 - omega) as a separate variable
 
+attr(cross_section$omegaC, 'label') <- 'Share of landholding families (1 - omega) (Bayes posterior mean)'
+
 rm(land_statistics)
 
 # Cumulative violence in the final year of the panel, i.e. total violence, can
